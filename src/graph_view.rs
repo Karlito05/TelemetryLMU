@@ -104,11 +104,11 @@ impl GraphViewDataType {
 
     fn get_line_format(&self,t: &SharedMemoryObjectOut ,n_lines: i32, line: i32) -> String {
         match self {
-            GraphViewDataType::Rpm(v, ..) => {format!("{} RPM", (line as f64 / n_lines as f64) * self.get_max_value(t))}
-            GraphViewDataType::Speed(v, ..) => {format!("{} KM/H", (line as f64 / n_lines as f64) * self.get_max_value(t))}
-            GraphViewDataType::Throttle(v, ..) => {format!("{}%", (line as f64 / n_lines as f64) * self.get_max_value(t))}
-            GraphViewDataType::Brake(v, ..) => {format!("{}%", (line as f64 / n_lines as f64) * self.get_max_value(t))}
-            GraphViewDataType::Delta(v, s, ..) => {format!("{} s",(line as f64 / n_lines as f64) * self.get_max_value(t) - s)}
+            GraphViewDataType::Rpm(..) => {format!("{} RPM", (line as f64 / n_lines as f64) * self.get_max_value(t))}
+            GraphViewDataType::Speed(..) => {format!("{} KM/H", (line as f64 / n_lines as f64) * self.get_max_value(t))}
+            GraphViewDataType::Throttle(..) => {format!("{}%", (line as f64 / n_lines as f64) * self.get_max_value(t))}
+            GraphViewDataType::Brake(..) => {format!("{}%", (line as f64 / n_lines as f64) * self.get_max_value(t))}
+            GraphViewDataType::Delta(_, s, ..) => {format!("{} s",(line as f64 / n_lines as f64) * self.get_max_value(t) - s)}
         }
     }
 
