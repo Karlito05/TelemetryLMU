@@ -6,10 +6,10 @@ use crate::TELEMETRY;
 
 #[component]
 pub fn GraphView(data_type: GraphViewDataType, width: i32, height: i32) -> Element {
-    let mut data: Signal<Vec<(f64, f64)>> = use_signal(|| vec!());
+    let mut data: Signal<Vec<(Vec<f64>, f64)>> = use_signal(|| vec!());
     let mut lap: i32 = 0;
 
-    data.write().push((data_type.get_normalized_value(&TELEMETRY.read()), data_type.get_normalized_distance(&TELEMETRY.read())));
+    data.write().push((data_type.get_normalized_values(&TELEMETRY.read()), data_type.get_normalized_distance(&TELEMETRY.read())));
 
     if lap < data_type.get_lap(&TELEMETRY.read()) && data_type.get_normalized_distance(&TELEMETRY.read()) < 0.1 {
         lap = data_type.get_lap(&TELEMETRY.read());
@@ -18,21 +18,18 @@ pub fn GraphView(data_type: GraphViewDataType, width: i32, height: i32) -> Eleme
 
     rsx! {
         svg { width: width, height: height,
-                // Draw a simple polyline from data
-            polyline {
-                fill: "none",
-                stroke: "white",
-                stroke_width: "1",
-                points: data.read()
-                    .iter()
-                    .map(|(nx, ny)| {
-                        let x = ny * width as f64; // Flip Y so 0.0 is at the bottom
-                        let y = height as f64 - (nx * height as f64);
-                        format!("{x},{y}")
-                    })
-                    .collect::<Vec<_>>()
-                    .join(" ")
+
+            for i in 0..data.read()[0].0.len() {
+                polyline {
+                    fill: "none",
+                    stroke: "white",
+                    stroke_width: 1,
+                    points: data.read().iter().map(|(values, distance)| {
+                        format!("{}, {}, ", (distance * width as f64), (1.0 - values[i]) * height as f64)
+                    }).collect::<String>()
+                }
             }
+
             polyline {
                 fill: "none",
                 stroke: "white",
@@ -69,6 +66,7 @@ pub enum GraphViewDataType {
     Throttle (usize), //vehicle number
     Brake (usize), //vehicle number
     Delta (usize, f64), //vehicle number, range (how much up and down should the normalized value be referencing in seconds)
+    Pedals (usize),
 }
 
 impl GraphViewDataType {
@@ -79,16 +77,18 @@ impl GraphViewDataType {
             GraphViewDataType::Throttle(..) => {1.0}
             GraphViewDataType::Brake(..) => {1.0}
             GraphViewDataType::Delta(_, r) => {*r * 2.0}
+            GraphViewDataType::Pedals(..) => {1.0}
         }
     }
 
-    fn get_normalized_value(&self, t: &SharedMemoryObjectOut) -> f64 {
+    fn get_normalized_values(&self, t: &SharedMemoryObjectOut) -> Vec<f64> {
         match self {
-            GraphViewDataType::Rpm(v) => {t.telemetry.telemetry_info[*v].m_engine_rpm / self.get_max_value(t)}
-            GraphViewDataType::Speed(v) => {-t.telemetry.telemetry_info[*v].m_local_vel.z * 3.6 / self.get_max_value(t)}
-            GraphViewDataType::Throttle(v) => {t.telemetry.telemetry_info[*v].m_filtered_throttle / self.get_max_value(t)}
-            GraphViewDataType::Brake(v) => {t.telemetry.telemetry_info[*v].m_filtered_brake / self.get_max_value(t)}
-            GraphViewDataType::Delta(v, r) => {t.telemetry.telemetry_info[*v].m_delta_best.clamp(-*r, *r) + *r / self.get_max_value(t)}
+            GraphViewDataType::Rpm(v) => {vec!(t.telemetry.telemetry_info[*v].m_engine_rpm / self.get_max_value(t))}
+            GraphViewDataType::Speed(v) => {vec!(-t.telemetry.telemetry_info[*v].m_local_vel.z * 3.6 / self.get_max_value(t))}
+            GraphViewDataType::Throttle(v) => {vec!(t.telemetry.telemetry_info[*v].m_filtered_throttle / self.get_max_value(t))}
+            GraphViewDataType::Brake(v) => {vec!(t.telemetry.telemetry_info[*v].m_filtered_brake / self.get_max_value(t))}
+            GraphViewDataType::Delta(v, r) => {vec!(t.telemetry.telemetry_info[*v].m_delta_best.clamp(-*r, *r) + *r / self.get_max_value(t))}
+            GraphViewDataType::Pedals(v) => {vec!(t.telemetry.telemetry_info[*v].m_filtered_brake / self.get_max_value(t), t.telemetry.telemetry_info[*v].m_filtered_throttle / self.get_max_value(t))}
         }
     }
 
@@ -99,6 +99,7 @@ impl GraphViewDataType {
             GraphViewDataType::Throttle(v, ..) => {*v}
             GraphViewDataType::Brake(v, ..) => {*v}
             GraphViewDataType::Delta(v, ..) => {*v}
+            GraphViewDataType::Pedals(v, ..) => {*v}
         }
     }
 
@@ -106,9 +107,10 @@ impl GraphViewDataType {
         match self {
             GraphViewDataType::Rpm(..) => {format!("{} RPM", (line as f64 / n_lines as f64) * self.get_max_value(t))}
             GraphViewDataType::Speed(..) => {format!("{} KM/H", (line as f64 / n_lines as f64) * self.get_max_value(t))}
-            GraphViewDataType::Throttle(..) => {format!("{}%", (line as f64 / n_lines as f64) * self.get_max_value(t))}
-            GraphViewDataType::Brake(..) => {format!("{}%", (line as f64 / n_lines as f64) * self.get_max_value(t))}
+            GraphViewDataType::Throttle(..) => {format!("{}%", (line as f64 / n_lines as f64) * self.get_max_value(t) * 100.0)}
+            GraphViewDataType::Brake(..) => {format!("{}%", (line as f64 / n_lines as f64) * self.get_max_value(t) * 100.0)}
             GraphViewDataType::Delta(_, s, ..) => {format!("{} s",(line as f64 / n_lines as f64) * self.get_max_value(t) - s)}
+            GraphViewDataType::Pedals(..) => {format!("{}%", (line as f64 / n_lines as f64) * self.get_max_value(t) * 100.0)}
         }
     }
 

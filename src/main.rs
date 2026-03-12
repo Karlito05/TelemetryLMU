@@ -63,6 +63,13 @@ fn App() -> Element {
                 width: 1000,
                 height: 200,
             }
+
+                        div { class: "m-5"}
+            GraphView {
+                data_type: GraphViewDataType::Pedals(0),
+                width: 1000,
+                height: 200,
+            }
         }
     }
 }
