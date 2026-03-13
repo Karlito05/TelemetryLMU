@@ -6,6 +6,7 @@ use dioxus::prelude::*;
 use crate::telemetry::{get_mmap, update_telemetry, SharedMemoryObjectOut};
 use memmap2::Mmap;
 use graph_view::{GraphView, GraphViewDataType};
+use crate::graph_view::GraphViewStyle;
 
 mod telemetry;
 mod graph_view;
@@ -47,9 +48,15 @@ fn App() -> Element {
             }
             div { class: "m-5"}
             GraphView {
-                data_type: GraphViewDataType::Delta(0, 10.0),
+                data_type: GraphViewDataType::Delta(0, 3.0),
                 width: 1000,
                 height: 200,
+                style: GraphViewStyle {
+                    interline_count: 3,
+                    main_color: "white".to_string(),
+                    best_lap_color: vec!("rgba(255, 0, 0, 0.5)".to_string()),
+                    current_lap_colors: vec!("red".to_string()),
+                }
            }
             div { class: "m-5"}
             GraphView {
@@ -64,7 +71,7 @@ fn App() -> Element {
                 height: 200,
             }
 
-                        div { class: "m-5"}
+            div { class: "m-5"}
             GraphView {
                 data_type: GraphViewDataType::Pedals(0),
                 width: 1000,

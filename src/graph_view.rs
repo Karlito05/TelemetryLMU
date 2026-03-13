@@ -1,55 +1,97 @@
-use std::ops::Deref;
+use std::string::ToString;
+use dioxus::html::object::data;
 use dioxus::prelude::*;
 use crate::telemetry::{SharedMemoryObjectOut};
 use crate::TELEMETRY;
 
 
 #[component]
-pub fn GraphView(data_type: GraphViewDataType, width: i32, height: i32) -> Element {
-    let mut data: Signal<Vec<(Vec<f64>, f64)>> = use_signal(|| vec!());
-    let mut lap: i32 = 0;
+pub fn GraphView(data_type: GraphViewDataType, width: i32, height: i32, style: Option<GraphViewStyle>) -> Element {
+    let mut current_lap: Signal<Vec<(Vec<f64>, f64)>> = use_signal(|| vec!());
+    let mut best_lap: Signal<Vec<(Vec<f64>, f64)>> = use_signal(|| vec!());
+    let mut lap = use_signal(|| 0);
+    let mut style = style.unwrap_or(GraphViewStyle {
+        main_color: "white".to_string(),
+        current_lap_colors: vec!["red".to_string(), "blue".to_string(), "green".to_string(), "yellow".to_string()],
+        best_lap_color: vec!["rgba(255, 0, 0, 0.5)".to_string(), "rgba(0, 0, 255, 0.5)".to_string(), "rgba(0, 255, 0, 0.5)".to_string(), "rgba(255, 255, 0, 0.5)".to_string()],
+        interline_count: 4,
+    });
 
-    data.write().push((data_type.get_normalized_values(&TELEMETRY.read()), data_type.get_normalized_distance(&TELEMETRY.read())));
+    style.interline_count += 1;
 
-    if lap < data_type.get_lap(&TELEMETRY.read()) && data_type.get_normalized_distance(&TELEMETRY.read()) < 0.1 {
-        lap = data_type.get_lap(&TELEMETRY.read());
-        data.write().clear();
+    current_lap.write().push((data_type.get_normalized_values(&TELEMETRY.read()), data_type.get_normalized_distance(&TELEMETRY.read())));
+
+    if *lap.read() < data_type.get_lap(&TELEMETRY.read()) && data_type.get_normalized_distance(&TELEMETRY.read()) < 0.1 {
+
+        println!("New Lap");
+
+        *lap.write() = data_type.get_lap(&TELEMETRY.read());
+
+        if data_type.is_last_best(&TELEMETRY.read()) {
+            *best_lap.write() = {
+                let mut last_dist = 0.0;
+                current_lap.read().iter().filter_map(|(values, distance)| {
+
+                    if last_dist - 0.05 <= *distance { // -0.05 just to give it some leeway
+                        last_dist = *distance;
+                        Some((values.clone(), *distance))
+                    } else {
+                        None
+                    }
+                }).collect()
+            };
+        }
+
+        current_lap.write().clear();
     }
 
     rsx! {
         svg { width: width, height: height,
-
-            for i in 0..data.read()[0].0.len() {
-                polyline {
-                    fill: "none",
-                    stroke: "white",
-                    stroke_width: 1,
-                    points: data.read().iter().map(|(values, distance)| {
-                        format!("{}, {}, ", (distance * width as f64), (1.0 - values[i]) * height as f64)
-                    }).collect::<String>()
+            if current_lap.len() > 0 {
+                for i in 0..current_lap.read()[0].0.len() {
+                    polyline {
+                        fill: "none",
+                        stroke: style.current_lap_colors[i].clone(),
+                        stroke_width: 1.5,
+                        points: current_lap.read().iter().map(|(values, distance)| {
+                            format!("{}, {}, ", (distance * width as f64), (1.0 - values[i]) * height as f64)
+                        }).collect::<String>()
+                    }
+                }
+            }
+            if best_lap.len() > 0 {
+                for i in 0..best_lap.read()[0].0.len() {
+                    polyline {
+                        fill: "none",
+                        stroke: style.best_lap_color[i].clone(),
+                        stroke_width: 1,
+                        points: best_lap.read().iter().map(|(values, distance)| {
+                            format!("{}, {}, ", (distance * width as f64), (1.0 - values[i]) * height as f64)
+                        }).collect::<String>()
+                    }
                 }
             }
 
             polyline {
                 fill: "none",
-                stroke: "white",
+                stroke: style.main_color.clone(),
                 stroke_width: "2",
                 points: "0, 0, 0, {height}, {width}, {height},  {width}, 0, 0, 0"
             }
 
-            for i in (1..5).rev() {
+            for i in (1..style.interline_count).rev() {
                 text {
-                    fill: "white",
+                    fill: style.main_color.clone(),
                     font_size: "16px",
                     opacity: 0.6,
                     x: 5,
-                    y: ((i as f64 / 5.0) * height as f64) - 4.0,
-                    "{data_type.get_line_format(&TELEMETRY.read(), 5, -(i-5))}"
+                    y: ((i as f64 / style.interline_count as f64) * height as f64) - 4.0,
+                    "{data_type.get_line_format(&TELEMETRY.read(), style.interline_count, -(i-style.interline_count))}"
                 }
                 line {
-                    x1: "0", y1: (i as f64 / 5.0) * height as f64,
-                    x2: "{width}", y2: (i as f64 / 5.0) * height as f64,
-                    stroke: "white",
+                    x1: "0", y1: (i as f64 / style.interline_count as f64) * height as f64,
+                    x2: "{width}", y2: (i as f64 / style.interline_count as f64) * height as f64,
+                    stroke: style.main_color.clone(),
                     stroke_width: "0.5",
                     // 10px dash, 5px gap
                     stroke_dasharray: "10, 5"
@@ -57,6 +99,14 @@ pub fn GraphView(data_type: GraphViewDataType, width: i32, height: i32) -> Eleme
             }
         }
     }
+}
+
+#[derive(PartialEq, Clone, Debug)]
+pub struct GraphViewStyle {
+    pub main_color: String,
+    pub current_lap_colors: Vec<String>, // note that if there are only x lines only the x colors will be used, the rest will be ignored
+    pub best_lap_color: Vec<String>, // note that if there are only x lines only the x colors will be used, the rest will be ignored
+    pub interline_count: i32, // how many lines should be drawn in the background (for reference)
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
@@ -85,10 +135,10 @@ impl GraphViewDataType {
         match self {
             GraphViewDataType::Rpm(v) => {vec!(t.telemetry.telemetry_info[*v].m_engine_rpm / self.get_max_value(t))}
             GraphViewDataType::Speed(v) => {vec!(-t.telemetry.telemetry_info[*v].m_local_vel.z * 3.6 / self.get_max_value(t))}
-            GraphViewDataType::Throttle(v) => {vec!(t.telemetry.telemetry_info[*v].m_filtered_throttle / self.get_max_value(t))}
-            GraphViewDataType::Brake(v) => {vec!(t.telemetry.telemetry_info[*v].m_filtered_brake / self.get_max_value(t))}
-            GraphViewDataType::Delta(v, r) => {vec!(t.telemetry.telemetry_info[*v].m_delta_best.clamp(-*r, *r) + *r / self.get_max_value(t))}
-            GraphViewDataType::Pedals(v) => {vec!(t.telemetry.telemetry_info[*v].m_filtered_brake / self.get_max_value(t), t.telemetry.telemetry_info[*v].m_filtered_throttle / self.get_max_value(t))}
+            GraphViewDataType::Throttle(v) => {vec!(t.telemetry.telemetry_info[*v].m_unfiltered_throttle / self.get_max_value(t))}
+            GraphViewDataType::Brake(v) => {vec!(t.telemetry.telemetry_info[*v].m_unfiltered_brake / self.get_max_value(t))}
+            GraphViewDataType::Delta(v, r) => {vec!((t.telemetry.telemetry_info[*v].m_delta_best.clamp(-*r, *r) + *r) / self.get_max_value(t))}
+            GraphViewDataType::Pedals(v) => {vec!(t.telemetry.telemetry_info[*v].m_unfiltered_brake / self.get_max_value(t), t.telemetry.telemetry_info[*v].m_unfiltered_throttle / self.get_max_value(t))}
         }
     }
 
@@ -121,6 +171,13 @@ impl GraphViewDataType {
 
     fn get_lap(&self, t: &SharedMemoryObjectOut) -> i32 {
         t.telemetry.telemetry_info[self.get_car_number()].m_lap_number
+    }
+
+    fn is_last_best(&self, t: &SharedMemoryObjectOut) -> bool {
+        match self {
+            GraphViewDataType::Delta(..) => {false} // we can disable having the best lap for certain types where it isn't needed
+            _ => {t.scoring.veh_scoring_info[self.get_car_number()].m_last_lap_time <= t.scoring.veh_scoring_info[self.get_car_number()].m_best_lap_time}
+        }
     }
 }
 
