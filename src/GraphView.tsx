@@ -60,6 +60,7 @@ async function getDataPoint(type: string, carNum: number): Promise<DataPoint> {
         const raw = await invoke<unknown>("get_values", { teleType: type, carNum });
 
         if (!isDataPoint(raw)) {
+            console.log(raw);
             throw new Error("Telemetry payload is not a valid DataPoint.");
         }
 
@@ -95,10 +96,6 @@ async function getLap(type: string, carNum: number): Promise<number> {
     try {
         const raw = await invoke<number>("get_lap", { teleType: type, carNum });
 
-        if (!raw) {
-            throw new Error("Telemetry payload is not a valid DataPoint.");
-        }
-
         return raw;
     } catch (error) {
         if (error instanceof Error) {
@@ -128,6 +125,7 @@ function render(
     currentLap: DataPoint[],
     referenceLap: DataPoint[],
     style: GraphViewStyle,
+    type: string,
 ): void {
     const width = canvas?.clientWidth ?? canvas?.width ?? 0;
     const height = canvas?.clientHeight ?? canvas?.height ?? 0;
@@ -171,6 +169,7 @@ function render(
         maxVal: number,
         unit: string,
         graphName: string,
+        type: string,
     ) {
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
@@ -182,20 +181,36 @@ function render(
 
         const segments = Math.max(1, nLines) - 1;
 
-        for (let i = 0; i <= segments; i++) {
-            const t = i / segments;
-            const y = drawableBottom - t * drawableHeight;
+        if (type == "delta")
+            for (let i = 0; i <= segments; i++) {
+                const t = i / segments;
+                const y = drawableBottom - t * drawableHeight;
 
-            ctx.strokeStyle = "#FFFFFF40";
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(width, y);
-            ctx.stroke();
+                ctx.strokeStyle = "#FFFFFF40";
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
 
-            ctx.font = "14px 'inter', sans-serif";
-            ctx.fillStyle = "#FFFFFF70";
-            ctx.fillText(`${maxVal * t} ${unit}`, 0, y - 2);
-        }
+                ctx.font = "14px 'inter', sans-serif";
+                ctx.fillStyle = "#FFFFFF70";
+                ctx.fillText(`${-(maxVal / 2 - maxVal * t)} ${unit}`, 0, y - 2);
+            }
+        else
+            for (let i = 0; i <= segments; i++) {
+                const t = i / segments;
+                const y = drawableBottom - t * drawableHeight;
+
+                ctx.strokeStyle = "#FFFFFF40";
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+
+                ctx.font = "14px 'inter', sans-serif";
+                ctx.fillStyle = "#FFFFFF70";
+                ctx.fillText(`${maxVal * t} ${unit}`, 0, y - 2);
+            }
 
         ctx.save();
         ctx.font = "16px 'Days One', sans-serif";
@@ -213,7 +228,7 @@ function render(
 
     ctx.clearRect(0, 0, width, height);
 
-    renderBackground(canvas, style.baseColor, style.nLines, style.maxValue, style.unit, style.graphName);
+    renderBackground(canvas, style.baseColor, style.nLines, style.maxValue, style.unit, style.graphName, type);
 
     if (currentLap.length === 0 && referenceLap.length === 0) {
         ctx.font = "20px 'Days One', sans-serif";
@@ -275,7 +290,7 @@ function GraphView({ baseColor, nLines, type, carNum, graphName }: GraphViewProp
             // Keep drawing commands in CSS pixels while using a high-DPI buffer.
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-            render(canvas, currentLapRef.current, referenceLapRef.current, style.current);
+            render(canvas, currentLapRef.current, referenceLapRef.current, style.current, type);
         };
 
         const resizeObserver = new ResizeObserver(() => resizeCanvas());
@@ -293,7 +308,7 @@ function GraphView({ baseColor, nLines, type, carNum, graphName }: GraphViewProp
                         if (await isLastBest(type, carNum)) {
                             referenceLapRef.current = currentLapRef.current;
                             currentLapRef.current = [];
-                        }
+                        } else currentLapRef.current = [];
                     }
                     if (!active) {
                         return;
@@ -301,7 +316,7 @@ function GraphView({ baseColor, nLines, type, carNum, graphName }: GraphViewProp
                     if (dataPoint != currentLapRef.current[currentLapRef.current.length - 1])
                         currentLapRef.current = [...currentLapRef.current, dataPoint];
 
-                    render(canvas, currentLapRef.current, referenceLapRef.current, style.current);
+                    render(canvas, currentLapRef.current, referenceLapRef.current, style.current, type);
                 } catch (e) {
                     render(
                         canvas,
@@ -311,6 +326,7 @@ function GraphView({ baseColor, nLines, type, carNum, graphName }: GraphViewProp
                             // { distance: 0.8, values: [1, 0.6] },
                         ],
                         style.current,
+                        type,
                     ); // Can be used for testign purposes, but in prod this will handle rendering of the empty state.
                     console.log(e);
                 }
