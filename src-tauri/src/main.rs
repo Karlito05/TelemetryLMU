@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    test4_lib::run()
+    telemetry_lmu_lib::run()
 }

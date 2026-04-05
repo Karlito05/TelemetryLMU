@@ -3861,6 +3861,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "telemetry_lmu"
+version = "0.1.0"
+dependencies = [
+ "gloo-timers",
+ "memmap2",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-opener",
+ "tokio",
+]
+
+[[package]]
 name = "tempfile"
 version = "3.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3882,20 +3896,6 @@ dependencies = [
  "futf",
  "mac",
  "utf-8",
-]
-
-[[package]]
-name = "test4"
-version = "0.1.0"
-dependencies = [
- "gloo-timers",
- "memmap2",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-opener",
- "tokio",
 ]
 
 [[package]]
