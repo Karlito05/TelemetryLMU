@@ -196,6 +196,21 @@ function render(
                 ctx.fillStyle = "#FFFFFF70";
                 ctx.fillText(`${-(maxVal / 2 - maxVal * t)} ${unit}`, 0, y - 2);
             }
+        else if (maxVal == 1)
+            for (let i = 0; i <= segments; i++) {
+                const t = i / segments;
+                const y = drawableBottom - t * drawableHeight;
+
+                ctx.strokeStyle = "#FFFFFF40";
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+
+                ctx.font = "14px 'inter', sans-serif";
+                ctx.fillStyle = "#FFFFFF70";
+                ctx.fillText(`${maxVal * t * 100} ${unit}`, 0, y - 2);
+            }
         else
             for (let i = 0; i <= segments; i++) {
                 const t = i / segments;
@@ -308,11 +323,17 @@ function GraphView({ baseColor, nLines, type, carNum, graphName }: GraphViewProp
                         if (await isLastBest(type, carNum)) {
                             referenceLapRef.current = currentLapRef.current;
                             currentLapRef.current = [];
+                        } else if (referenceLapRef.current.length == 0) {
+                            referenceLapRef.current = currentLapRef.current;
+                            currentLapRef.current = [];
                         } else currentLapRef.current = [];
                     }
-                    if (!active) {
-                        return;
-                    }
+                    if (!active) return;
+
+                    if (currentLapRef.current.length != 0)
+                        if (dataPoint.distance < currentLapRef.current[currentLapRef.current.length - 1].distance - 0.5)
+                            currentLapRef.current = [];
+
                     if (dataPoint != currentLapRef.current[currentLapRef.current.length - 1])
                         currentLapRef.current = [...currentLapRef.current, dataPoint];
 

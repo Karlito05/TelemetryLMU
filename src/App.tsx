@@ -3,11 +3,22 @@ import GraphView from "./GraphView";
 function App() {
     return (
         <main className="w-screen h-screen overflow-hidden bg-[#16171C]">
-            <div className="w-full h-1/4">
-                <GraphView baseColor={"#9eff5d"} carNum={0} graphName="Throttle" nLines={3} type="throttle" />
-                <GraphView baseColor={"#ff5d5d"} carNum={0} graphName="Brake" nLines={3} type="brake" />
-                <GraphView baseColor={"#5dd1ff"} carNum={0} graphName="Engine RPM" nLines={3} type="rpm" />
-                <GraphView baseColor={"#e45dff"} carNum={0} graphName="Delta" nLines={3} type="delta" />
+            <div className="w-full h-full">
+                <div className="h-1/5">
+                    <GraphView baseColor={"#9eff5d"} carNum={0} graphName="Throttle" nLines={3} type="throttle" />
+                </div>
+                <div className="h-1/5">
+                    <GraphView baseColor={"#ff5d5d"} carNum={0} graphName="Brake" nLines={3} type="brake" />
+                </div>
+                <div className="h-1/5">
+                    <GraphView baseColor={"#5db1ff"} carNum={0} graphName="Engine RPM" nLines={3} type="rpm" />
+                </div>
+                <div className="h-1/5">
+                    <GraphView baseColor={"#cc5dff"} carNum={0} graphName="Delta" nLines={3} type="delta" />
+                </div>
+                <div className="h-1/5">
+                    <GraphView baseColor={"#efff5d"} carNum={0} graphName="Speed" nLines={3} type="speed" />
+                </div>
             </div>
         </main>
     );
