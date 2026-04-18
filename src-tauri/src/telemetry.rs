@@ -1,7 +1,5 @@
 use memmap2::Mmap;
 use std::fs::File;
-use std::mem::MaybeUninit;
-use std::ptr;
 
 //##################################################################################################
 //#                                                                                                #
@@ -15,19 +13,45 @@ pub fn get_mmap(path: &str) -> Mmap {
     unsafe { Mmap::map(&file).unwrap() }
 }
 
-pub fn update_telemetry(mmap: &Mmap) -> Option<SharedMemoryObjectOut> {
-    if mmap.len() < size_of::<SharedMemoryLayout>() {
+// pub fn update_telemetry(mmap: &Mmap) -> Option<SharedMemoryObjectOut> {
+//     if mmap.len() < size_of::<SharedMemoryLayout>() {
+//         return None;
+//     }
+//
+//     let mut out = MaybeUninit::<SharedMemoryLayout>::uninit();
+//     unsafe {
+//         ptr::copy_nonoverlapping(
+//             mmap.as_ptr(),
+//             out.as_mut_ptr() as *mut u8,
+//             size_of::<SharedMemoryLayout>(),
+//         );
+//         Some(out.assume_init().data)
+//     }
+// }
+
+pub fn update_telemetry(mmap: &Mmap) -> Option<Box<SharedMemoryObjectOut>> {
+    let layout_size = std::mem::size_of::<SharedMemoryLayout>();
+
+    if mmap.len() < layout_size {
         return None;
     }
 
-    let mut out = MaybeUninit::<SharedMemoryLayout>::uninit();
     unsafe {
-        ptr::copy_nonoverlapping(
+        // 1. Allocate space for the full layout directly on the HEAP
+        // This prevents the 300KB from ever touching the stack
+        let mut layout_ptr = Box::<SharedMemoryLayout>::new_uninit();
+
+        // 2. Copy directly from memory map to our heap pointer
+        std::ptr::copy_nonoverlapping(
             mmap.as_ptr(),
-            out.as_mut_ptr() as *mut u8,
-            size_of::<SharedMemoryLayout>(),
+            layout_ptr.as_mut_ptr() as *mut u8,
+            layout_size,
         );
-        Some(out.assume_init().data)
+
+        // 3. Convert to initialized and return just the .data field
+        // We box the result so the 300KB stays on the heap
+        let full_layout = layout_ptr.assume_init();
+        Some(Box::new(full_layout.data))
     }
 }
 
