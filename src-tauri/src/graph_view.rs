@@ -6,14 +6,6 @@ use tauri::{ipc::Channel, State};
 use tokio::time::sleep;
 
 #[derive(Clone, Serialize)]
-pub struct DataPointResponse {
-    pub values: Vec<f64>,
-    pub distance: f64,
-}
-
-// TODO: Implement error handling, Send deserialized output to keep it neat
-
-#[derive(Clone, Serialize)]
 #[serde(
     rename_all = "camelCase",
     rename_all_fields = "camelCase",
@@ -24,6 +16,10 @@ pub enum LapEvent {
     RenderingData { max_value: f64, unit: String },
     LapDataPoint { values: Vec<f64>, distance: f64 },
     LapFinished { was_best: bool },
+}
+
+pub struct MmapState {
+    pub mmap: Arc<Mmap>,
 }
 
 #[tauri::command]
@@ -73,80 +69,6 @@ pub fn lap_data_subscribe(
             sleep(Duration::from_millis(16)).await;
         }
     });
-}
-
-#[tauri::command]
-pub fn is_last_best(
-    state: State<'_, MmapState>,
-    tele_type: String,
-    car_num: usize,
-) -> Result<bool, String> {
-    let mmap = &state.mmap;
-    let telemetry = update_telemetry(mmap).ok_or_else(|| "TelemetryReadFailed".to_string())?;
-    let tele_type = GraphViewDataType::from_string(&tele_type, car_num);
-
-    Ok(tele_type.is_last_best(&telemetry))
-}
-
-#[tauri::command]
-pub fn get_lap(
-    state: State<'_, MmapState>,
-    tele_type: String,
-    car_num: usize,
-) -> Result<i32, String> {
-    let mmap = &state.mmap;
-    let telemetry = update_telemetry(mmap).ok_or_else(|| "TelemetryReadFailed".to_string())?;
-    let tele_type = GraphViewDataType::from_string(&tele_type, car_num);
-
-    Ok(tele_type.get_lap(&telemetry))
-}
-
-pub struct MmapState {
-    pub mmap: Arc<Mmap>,
-}
-
-#[tauri::command]
-pub fn get_values(
-    state: State<'_, MmapState>,
-    tele_type: String,
-    car_num: usize,
-) -> Result<DataPointResponse, String> {
-    let mmap = &state.mmap;
-    let telemetry = update_telemetry(mmap).ok_or_else(|| "TelemetryReadFailed".to_string())?;
-    let tele_type = GraphViewDataType::from_string(&tele_type, car_num);
-
-    if tele_type.is_data_valid(&telemetry) {
-        Ok(DataPointResponse {
-            values: tele_type.get_normalized_values(&telemetry),
-            distance: tele_type.get_normalized_distance(&telemetry),
-        })
-    } else {
-        Err("DataNotValid".to_string())
-    }
-}
-
-#[derive(Clone, Default, Serialize)]
-pub struct TelemetryContext {
-    pub max_value: f64,
-    pub unit: String,
-}
-
-#[tauri::command]
-pub fn get_context(
-    state: State<'_, MmapState>,
-    tele_type: String,
-    car_num: usize,
-) -> TelemetryContext {
-    let mmap = &state.mmap;
-
-    let telemetry = match update_telemetry(mmap) {
-        Some(t) => t,
-        None => return TelemetryContext::default(),
-    };
-
-    let tele_type = GraphViewDataType::from_string(&tele_type, car_num);
-
-    tele_type.get_telemetry_context(&telemetry)
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
@@ -240,23 +162,6 @@ impl GraphViewDataType {
                 t.scoring.veh_scoring_info[self.get_car_number()].m_last_lap_time
                     <= t.scoring.veh_scoring_info[self.get_car_number()].m_best_lap_time
             }
-        }
-    }
-
-    fn is_data_valid(&self, t: &SharedMemoryObjectOut) -> bool {
-        match self {
-            GraphViewDataType::Rpm(_) => self.get_normalized_values(t)[0].is_finite(),
-            GraphViewDataType::Speed(_) => self.get_normalized_values(t)[0].is_finite(),
-            GraphViewDataType::Throttle(_) => self.get_normalized_values(t)[0].is_finite(),
-            GraphViewDataType::Brake(_) => self.get_normalized_values(t)[0].is_finite(),
-            GraphViewDataType::Delta(_, _) => self.get_normalized_values(t)[0].is_finite(),
-        }
-    }
-
-    fn get_telemetry_context(&self, t: &SharedMemoryObjectOut) -> TelemetryContext {
-        TelemetryContext {
-            max_value: self.get_max_value(t),
-            unit: self.get_unit(),
         }
     }
 }
