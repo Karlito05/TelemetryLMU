@@ -1,79 +1,53 @@
-import litFlameIcon from "./assets/flame-lit.svg";
-import unlitFlameIcon from "./assets/flame-unlit.svg";
-import gearIcon from "./assets/gear.svg";
-import graphIcon from "./assets/graph.svg";
-import magGlassIcon from "./assets/magnifying-glass.svg";
-import reloadIcon from "./assets/reload.svg";
-import stopwatchIcon from "./assets/stopwatch.svg";
-import wheelIcon from "./assets/wheel.svg";
+import { SVGProps, ComponentType } from "react";
+import SettingsIcon from "./assets/gear.svg?react";
+import LiveTimingsIcon from "./assets/stopwatch.svg?react";
+import TelemetryIcon from "./assets/graph.svg?react";
+import AnalysisIcon from "./assets/analysis-icon.svg?react";
+import SetupsIcon from "./assets/setups.svg?react";
 
-type MenuButtonProps = {
-  text: string;
-  src: string;
-  onClick?: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
-  active?: boolean;
-};
-
-function MenuButton({ text, src, onClick, active }: MenuButtonProps) {
+function TopRow() {
   return (
-    <button
-      onClick={onClick}
-      className={` rounded-2xl w-full max-h-65 flex items-center active:bg-[#3B28CC] ${active ? " bg-[#3B28CC]" : "bg-[#16171cbf] hover:bg-[#16171c80]"}`}
-    >
-      <img src={src} className="w-15 h-15" />
-      <text className="font-[Electrolize] text-white text-2xl">{text}</text>
-    </button>
+    <div className="pt-2 pl-2 pr-2 flex justify-between">
+      <div className="rounded-full bg-blue-500 w-12 h-12 mask-clip-content">
+        <img />
+      </div>
+      <button className="hover:bg-[#FFFFFF18] rounded-full">
+        <SettingsIcon className="w-12 h-12" />
+      </button>
+    </div>
   );
 }
 
-type TopPillProps = {
-  isLit: boolean;
+type SidebarButtonProps = {
+  Icon: ComponentType<SVGProps<SVGSVGElement>>;
+  text: string;
 };
 
-function TopPill({ isLit }: TopPillProps) {
+function SidebarButton({ Icon, text }: SidebarButtonProps) {
   return (
-    <div className="bg-[#16171cbf] rounded-full p-1 h-full flex items-center">
-      <button className="hover:bg-[#16171c80] active:bg-[#3B28CC] rounded-md h-full flex items-center justify-center ">
-        <img src={gearIcon} className="h-8 w-8" />
-      </button>
-      <div className="flex items-center ml-auto">
-        <div className="flex items-center justify-center mr-1">
-          <img src={isLit ? litFlameIcon : unlitFlameIcon} className="h-7 w-7" />
-          <text className="font-[Electrolize] text-white text-lg">1 Day</text>
-        </div>
-        <div className="flex items-center justify-center mr-1">
-          <img src={reloadIcon} className="h-8 w-8" />
-          <text className="font-[Electrolize] text-white text-lg">12 Laps</text>
-        </div>
-        <div className="flex items-center justify-center mr-1">
-          <img src={wheelIcon} className="h-7 w-7" />
-          <text className="font-[Electrolize] text-white text-lg">1h 50min</text>
-        </div>
-      </div>
-    </div>
+    <button className="flex h-15 bg-[#16171CC0] rounded-2xl justify-start items-center p-2 hover:bg-[#FFFFFF18] active:bg-[#3B28CC]">
+      <Icon className=" h-10 w-10 mr-4" />
+      <div className="font-[Electrolize] text-white text-2xl">{text}</div>
+    </button>
   );
 }
 
 export default function Sidebar() {
   return (
-    <div className="bg-[#FFFFFF1a] h-full w-full rounded-2xl ml-2 min-w-90">
-      <div className="p-2">
-        <div className="h-12 mb-5">
-          <TopPill isLit={true} />
+    <div className="h-full w-full bg-[#FFFFFF18] rounded-4xl ">
+      <TopRow />
+      <div className="mt-4 pl-2 pr-2">
+        <div className="font-[Days_One] text-white text-3xl mb-2">ANALYZE</div>
+        <div className="flex flex-col gap-1">
+          <SidebarButton Icon={TelemetryIcon} text="Telemetry" />
+          <SidebarButton Icon={LiveTimingsIcon} text="Live Timings" />
+          <SidebarButton Icon={AnalysisIcon} text="Analysis" />
         </div>
-        <div>
-          <text className="text-white text-2xl font-[Days_One]">ANALYZE</text>
-          <div>
-            <div className="mb-1">
-              <MenuButton src={graphIcon} text="Telemetry" active={false} />
-            </div>
-            <div className="mb-1">
-              <MenuButton src={stopwatchIcon} text="Live Timing" active={false} />
-            </div>
-            <div className="mb-1">
-              <MenuButton src={magGlassIcon} text="Analysis" active={false} />
-            </div>
-          </div>
+      </div>
+      <div className="mt-4 pl-2 pr-2">
+        <div className="font-[Days_One] text-white text-3xl mb-2">PREPARE</div>
+        <div className="flex flex-col gap-1">
+          <SidebarButton Icon={SetupsIcon} text="Setups" />
         </div>
       </div>
     </div>
