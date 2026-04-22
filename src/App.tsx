@@ -1,42 +1,30 @@
-import GraphView from "./GraphView";
 import Sidebar from "./Sidebar";
+import Telemetry from "./telemetry";
+import { useState } from "react";
+
+export enum Page {
+  Telemetry,
+  LiveTimings,
+  Analysis,
+  Setups,
+}
 
 function App() {
+  let [curPage, setCurPage] = useState<Page>(0);
+
+  const PAGES = {
+    [Page.Telemetry]: <Telemetry />,
+    [Page.Analysis]: <div />,
+    [Page.LiveTimings]: <div />,
+    [Page.Setups]: <div />,
+  };
   return (
     <main className="w-screen h-screen overflow-hidden bg-[#16171C]">
       <div className="flex gap-3 h-full">
         <div className="w-1/5 min-w-80">
-          <Sidebar />
+          <Sidebar activePage={curPage} onPageChange={(id) => setCurPage(id)} />
         </div>
-        <div className=" h-full w-full">
-          <div className="h-1/5 p-1 ">
-            <GraphView
-              baseColor={"#9eff5d"}
-              carNum={0}
-              graphName="Throttle"
-              nLines={3}
-              type="throttle"
-            />
-          </div>
-          <div className="h-1/5 p-1">
-            <GraphView baseColor={"#ff5d5d"} carNum={0} graphName="Brake" nLines={3} type="brake" />
-          </div>
-          <div className="h-1/5 p-1">
-            <GraphView
-              baseColor={"#5db1ff"}
-              carNum={0}
-              graphName="Engine RPM"
-              nLines={3}
-              type="rpm"
-            />
-          </div>
-          <div className="h-1/5 p-1">
-            <GraphView baseColor={"#cc5dff"} carNum={0} graphName="Delta" nLines={3} type="delta" />
-          </div>
-          <div className="h-1/5 p-1">
-            <GraphView baseColor={"#efff5d"} carNum={0} graphName="Speed" nLines={3} type="speed" />
-          </div>
-        </div>
+        <div className="h-full w-full">{PAGES[curPage]}</div>
       </div>
     </main>
   );

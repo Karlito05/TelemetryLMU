@@ -18,7 +18,7 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![lap_data_subscribe])
+        .invoke_handler(tauri::generate_handler![lap_data_subscribe,])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
