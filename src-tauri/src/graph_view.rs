@@ -1,5 +1,5 @@
 use crate::telemetry::{update_telemetry, SharedMemoryObjectOut};
-use crate::BackendState;
+use crate::{BackendState, JoinHandleIdent};
 use memmap2::Mmap;
 use serde::Serialize;
 use std::sync::Mutex;
@@ -15,9 +15,18 @@ use tokio::time::sleep;
     content = "data"
 )]
 pub enum LapEvent {
-    RenderingData { max_value: f64, unit: String },
-    LapDataPoint { values: Vec<f64>, distance: f64 },
-    LapFinished { was_best: bool },
+    RenderingData {
+        max_value: f64,
+        unit: String,
+        id: String,
+    },
+    LapDataPoint {
+        values: Vec<f64>,
+        distance: f64,
+    },
+    LapFinished {
+        was_best: bool,
+    },
 }
 
 pub struct MmapState {
@@ -27,16 +36,17 @@ pub struct MmapState {
 #[tauri::command]
 pub fn lap_data_subscribe(
     state: State<'_, MmapState>,
-    full_mode: State<'_, Mutex<BackendState>>,
+    backend_state: State<'_, Mutex<BackendState>>,
     tele_type: String,
     car_num: usize,
     on_event: Channel<LapEvent>,
 ) {
-    if !full_mode.lock().unwrap().full_mode {
+    if !backend_state.lock().unwrap().full_mode {
         return;
     }
     let mmap_clone = Arc::clone(&state.mmap);
-    tauri::async_runtime::spawn(async move {
+    let id = format!("{tele_type}-{car_num}");
+    let join_handle = tauri::async_runtime::spawn(async move {
         let telemetry = update_telemetry(&mmap_clone)
             .ok_or_else(|| "TelemetryReadFailed".to_string())
             .unwrap();
@@ -48,6 +58,7 @@ pub fn lap_data_subscribe(
             .send(LapEvent::RenderingData {
                 max_value: tele_type.get_max_value(&telemetry),
                 unit: tele_type.get_unit(),
+                id: format!("{}-{car_num}", tele_type.to_string()),
             })
             .unwrap();
 
@@ -75,6 +86,33 @@ pub fn lap_data_subscribe(
             sleep(Duration::from_millis(16)).await;
         }
     });
+
+    backend_state
+        .lock()
+        .unwrap()
+        .threads
+        .push(JoinHandleIdent { id, join_handle });
+}
+
+#[tauri::command]
+pub async fn lap_data_unsubscribe(
+    backend_state: State<'_, Mutex<BackendState>>,
+    id: String,
+) -> Result<(), String> {
+    let mut i = 0;
+    for handle in &backend_state.lock().unwrap().threads {
+        if handle.id == id {
+            handle.join_handle.abort();
+            println!("Stopped thread {i}");
+            break;
+        } else {
+            i += 1;
+        }
+    }
+    if i != backend_state.lock().unwrap().threads.len() {
+        backend_state.lock().unwrap().threads.remove(i);
+    }
+    Ok(())
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
@@ -95,6 +133,15 @@ impl GraphViewDataType {
             "brake" => GraphViewDataType::Brake(car_num),
             "delta" => GraphViewDataType::Delta(car_num, 5.0),
             &_ => todo!(),
+        }
+    }
+    fn to_string(&self) -> String {
+        match self {
+            GraphViewDataType::Rpm(..) => "rpm".to_owned(),
+            GraphViewDataType::Speed(..) => "speed".to_owned(),
+            GraphViewDataType::Throttle(..) => "throttle".to_owned(),
+            GraphViewDataType::Brake(..) => "brake".to_owned(),
+            GraphViewDataType::Delta(..) => "delta".to_owned(),
         }
     }
 

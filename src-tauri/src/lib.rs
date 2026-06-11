@@ -8,8 +8,14 @@ use std::sync::Mutex;
 use tauri::Manager;
 use telemetry::get_mmap;
 
+pub struct JoinHandleIdent {
+    pub join_handle: tauri::async_runtime::JoinHandle<()>,
+    pub id: String,
+}
+
 pub struct BackendState {
     pub full_mode: bool,
+    pub threads: Vec<JoinHandleIdent>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -17,7 +23,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_devtools::init())
         .setup(|app| {
-            let backend = Mutex::new(BackendState { full_mode: false });
+            let backend = Mutex::new(BackendState {
+                full_mode: false,
+                threads: Vec::new(),
+            });
 
             let mmap = get_mmap("/dev/shm/LMU_Data", &backend);
 
@@ -30,7 +39,10 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![lap_data_subscribe,])
+        .invoke_handler(tauri::generate_handler![
+            lap_data_subscribe,
+            lap_data_unsubscribe
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

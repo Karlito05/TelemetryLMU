@@ -29,6 +29,7 @@ type LapEvent =
       data: {
         maxValue: number;
         unit: string;
+        id: string;
       };
     }
   | {
@@ -221,7 +222,7 @@ function resizeCanvas(
   render(canvas, currentLap, referenceLap, style, type);
 }
 
-const RESOLUTION = 10000;
+const RESOLUTION = 2000;
 
 function GraphView({ baseColor, nLines, type, carNum, graphName }: GraphViewProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -235,6 +236,7 @@ function GraphView({ baseColor, nLines, type, carNum, graphName }: GraphViewProp
   });
   const curLapRef = useRef<DataPoint[]>(new Array(RESOLUTION));
   const refLapRef = useRef<DataPoint[]>([]);
+  const id = useRef("");
 
   useEffect(() => {
     const onEvent = new Channel<LapEvent>();
@@ -244,6 +246,7 @@ function GraphView({ baseColor, nLines, type, carNum, graphName }: GraphViewProp
         case "renderingData":
           style.current.maxValue = message.data.maxValue;
           style.current.unit = message.data.unit;
+          id.current = message.data.id;
           break;
         case "lapDataPoint":
           const { distance, values } = message.data;
@@ -268,7 +271,11 @@ function GraphView({ baseColor, nLines, type, carNum, graphName }: GraphViewProp
       render(canvasRef.current, curLapRef.current, refLapRef.current, style.current, type);
     };
 
-    invoke("lap_data_subscribe", { teleType: type, carNum: carNum, onEvent: onEvent });
+    invoke("lap_data_subscribe", {
+      teleType: type,
+      carNum: carNum,
+      onEvent: onEvent,
+    });
 
     let wrapper = wrapperRef.current;
     let canvas = canvasRef.current;
@@ -281,6 +288,11 @@ function GraphView({ baseColor, nLines, type, carNum, graphName }: GraphViewProp
 
     resizeObserver.observe(wrapper);
     resizeCanvas(wrapper, canvas, curLapRef.current, refLapRef.current, style.current, type);
+
+    return () => {
+      console.log("unloading thread" + id);
+      invoke("lap_data_unsubscribe", { id: id.current });
+    };
   }, []);
 
   return (
