@@ -4,17 +4,29 @@ mod telemetry;
 
 use graph_view::*;
 use std::sync::Arc;
+use std::sync::Mutex;
 use tauri::Manager;
 use telemetry::get_mmap;
+
+pub struct BackendState {
+    pub full_mode: bool,
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_devtools::init())
         .setup(|app| {
+            let backend = Mutex::new(BackendState { full_mode: false });
+
+            let mmap = get_mmap("/dev/shm/LMU_Data", &backend);
+
+            app.manage(backend);
+
             app.manage(MmapState {
-                mmap: Arc::new(get_mmap("/dev/shm/LMU_Data")),
+                mmap: Arc::new(mmap),
             });
+
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())

@@ -26,3 +26,5 @@ memmap2 = "0.9.10"
 gloo-timers = "0.3.0"
 tokio = {version = "1.50.0", features = ['full'] }
 tauri-plugin-devtools = "2.1.0"
+log = "0.4.32"
+tempfile = "3.27.0"

@@ -6,7 +6,7 @@ export enum Page {
   Telemetry,
   LiveTimings,
   Analysis,
-  Setups,
+  Setups
 }
 
 function App() {

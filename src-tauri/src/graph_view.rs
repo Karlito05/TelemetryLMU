@@ -1,6 +1,8 @@
 use crate::telemetry::{update_telemetry, SharedMemoryObjectOut};
+use crate::BackendState;
 use memmap2::Mmap;
 use serde::Serialize;
+use std::sync::Mutex;
 use std::{sync::Arc, time::Duration};
 use tauri::{ipc::Channel, State};
 use tokio::time::sleep;
@@ -25,10 +27,14 @@ pub struct MmapState {
 #[tauri::command]
 pub fn lap_data_subscribe(
     state: State<'_, MmapState>,
+    full_mode: State<'_, Mutex<BackendState>>,
     tele_type: String,
     car_num: usize,
     on_event: Channel<LapEvent>,
 ) {
+    if !full_mode.lock().unwrap().full_mode {
+        return;
+    }
     let mmap_clone = Arc::clone(&state.mmap);
     tauri::async_runtime::spawn(async move {
         let telemetry = update_telemetry(&mmap_clone)

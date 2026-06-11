@@ -1,5 +1,9 @@
+use crate::BackendState;
+use log::{info, warn};
 use memmap2::Mmap;
 use std::fs::File;
+use std::sync::Mutex;
+use tempfile::NamedTempFile;
 
 //##################################################################################################
 //#                                                                                                #
@@ -8,8 +12,18 @@ use std::fs::File;
 //##################################################################################################
 const MAX_PATH: usize = 260;
 
-pub fn get_mmap(path: &str) -> Mmap {
-    let file = File::open(path).unwrap();
+pub fn get_mmap(path: &str, state: &Mutex<BackendState>) -> Mmap {
+    let file = match File::open(path) {
+        Ok(v) => {
+            state.lock().unwrap().full_mode = true;
+            v
+        }
+        Err(e) => {
+            warn!("Could not open telemetry file: {e}");
+            info!("Switching into no telemetry mode");
+            NamedTempFile::new().unwrap().into_file()
+        }
+    };
     unsafe { Mmap::map(&file).unwrap() }
 }
 
