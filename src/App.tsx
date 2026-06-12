@@ -1,5 +1,5 @@
-import Sidebar from "./Sidebar";
-import Telemetry from "./telemetry";
+import Sidebar from "./components/Sidebar";
+import Telemetry from "./pages/telemetry/telemetry";
 import { useState } from "react";
 
 export enum Page {

@@ -7,16 +7,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use tauri::Manager;
 use telemetry::get_mmap;
-
-pub struct JoinHandleIdent {
-    pub join_handle: tauri::async_runtime::JoinHandle<()>,
-    pub id: String,
-}
-
-pub struct BackendState {
-    pub full_mode: bool,
-    pub threads: Vec<JoinHandleIdent>,
-}
+use telemetry::BackendState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

@@ -1,4 +1,3 @@
-use crate::BackendState;
 use log::{info, warn};
 use memmap2::Mmap;
 use std::fs::File;
@@ -11,6 +10,17 @@ use tempfile::NamedTempFile;
 //#                                                                                                #
 //##################################################################################################
 const MAX_PATH: usize = 260;
+
+pub struct JoinHandleIdent {
+    pub join_handle: tauri::async_runtime::JoinHandle<()>,
+    pub id: String,
+}
+
+pub struct BackendState {
+    pub full_mode: bool,
+    pub threads: Vec<JoinHandleIdent>,
+}
+
 
 pub fn get_mmap(path: &str, state: &Mutex<BackendState>) -> Mmap {
     let file = match File::open(path) {

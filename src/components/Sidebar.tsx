@@ -1,10 +1,10 @@
 import { SVGProps, ComponentType } from "react";
-import SettingsIcon from "./assets/gear.svg?react";
-import LiveTimingsIcon from "./assets/stopwatch.svg?react";
-import TelemetryIcon from "./assets/graph.svg?react";
-import AnalysisIcon from "./assets/analysis-icon.svg?react";
-import SetupsIcon from "./assets/setups.svg?react";
-import { Page } from "./App.tsx";
+import SettingsIcon from "../assets/icons/gear.svg?react";
+import LiveTimingsIcon from "../assets/icons/stopwatch.svg?react";
+import TelemetryIcon from "../assets/icons/graph.svg?react";
+import AnalysisIcon from "../assets/icons/analysis-icon.svg?react";
+import SetupsIcon from "../assets/icons/setups.svg?react";
+import { Page } from "../App.tsx";
 
 function TopRow() {
   return (

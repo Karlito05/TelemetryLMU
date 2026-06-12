@@ -1,5 +1,5 @@
 use crate::telemetry::{update_telemetry, SharedMemoryObjectOut};
-use crate::{BackendState, JoinHandleIdent};
+use crate::telemetry::{BackendState, JoinHandleIdent};
 use memmap2::Mmap;
 use serde::Serialize;
 use std::sync::Mutex;
