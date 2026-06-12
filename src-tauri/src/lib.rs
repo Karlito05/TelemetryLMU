@@ -9,8 +9,14 @@ use tauri::Manager;
 use telemetry::get_mmap;
 use telemetry::BackendState;
 
+extern crate pretty_env_logger;
+#[macro_use] extern crate log;
+
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    pretty_env_logger::init();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_devtools::init())
         .setup(|app| {
