@@ -21,7 +21,6 @@ pub struct BackendState {
     pub threads: Vec<JoinHandleIdent>,
 }
 
-
 pub fn get_mmap(path: &str, state: &Mutex<BackendState>) -> Mmap {
     let file = match File::open(path) {
         Ok(v) => {
