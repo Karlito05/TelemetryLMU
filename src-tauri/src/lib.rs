@@ -42,7 +42,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             lap_data_subscribe,
             lap_data_unsubscribe,
-            get_drivers
+            get_drivers,
+            set_car_num
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

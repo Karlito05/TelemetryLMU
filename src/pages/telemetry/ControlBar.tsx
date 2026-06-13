@@ -10,9 +10,11 @@ type Driver = {
 
 export default function ControlBar() {
   const [drivers, setDrivers] = useState<MenuProps["items"]>([]);
+  const [curDriver, setCurDriver] = useState<string>("");
 
   useEffect(() => {
     invoke<Driver[]>("get_drivers").then((v) => {
+      setCurDriver(v[0].name);
       let items: MenuProps["items"] = v.map((driver) => ({
         label: driver.name,
         key: String(driver.index),
@@ -24,7 +26,16 @@ export default function ControlBar() {
 
   return (
     <div className="bg-[#FFFFFF18] h-full w-full rounded-3xl items-center flex justify-baseline p-2">
-      <DriverSelect drivers={drivers} layouts={layouts} />
+      <DriverSelect
+        drivers={drivers}
+        layouts={layouts}
+        onDriverSelect={(key, driverName) => {
+          const carNum = Number(key);
+          setCurDriver(driverName);
+          invoke("set_car_num", { carNum });
+        }}
+        curDriver={curDriver}
+      />
       <Spacer />
     </div>
   );
@@ -53,17 +64,46 @@ const layouts: MenuProps["items"] = [
 type DriverSelectProps = {
   drivers: MenuProps["items"];
   layouts: MenuProps["items"];
+  onDriverSelect?: (key: string, driverName: string) => void;
+  curDriver: string;
 };
 
-function DriverSelect({ drivers, layouts }: DriverSelectProps) {
-  let driver = "K. Lukes";
+function DriverSelect({
+  drivers,
+  layouts,
+  onDriverSelect,
+  curDriver,
+}: DriverSelectProps) {
   return (
     <div className="flex flex-col m-2 space-y-1">
       <div className="text-white flex items-center justify-between">
         Driver:
-        <Dropdown trigger={["click"]} menu={{ items: drivers }}>
+        <Dropdown
+          trigger={["click"]}
+          menu={{
+            items: drivers,
+            onClick: ({ key }) => {
+              const selectedDriver = drivers?.find(
+                (driver) =>
+                  driver &&
+                  typeof driver === "object" &&
+                  "key" in driver &&
+                  driver.key === key,
+              );
+
+              if (
+                selectedDriver &&
+                typeof selectedDriver === "object" &&
+                "label" in selectedDriver &&
+                typeof selectedDriver.label === "string"
+              ) {
+                onDriverSelect?.(key, selectedDriver.label);
+              }
+            },
+          }}
+        >
           <Button type="primary">
-            {driver}
+            {curDriver}
             <DownOutlined />
           </Button>
         </Dropdown>

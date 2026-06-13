@@ -1,5 +1,6 @@
 use crate::telemetry::{update_telemetry, SharedMemoryObjectOut};
 use crate::telemetry::{TelemetryState, JoinHandleIdent};
+use log::info;
 use memmap2::Mmap;
 use serde::Serialize;
 use std::sync::Mutex;
@@ -153,6 +154,13 @@ pub async fn get_drivers(mmap: State<'_, MmapState>) -> Result<Vec<Driver>,Strin
             drivers.push(Driver {index: i, name: name });}
         }
         Ok(drivers)
+}
+
+#[tauri::command]
+pub async fn set_car_num(graph_view_state: State<'_, Mutex<GraphViewState>>, car_num: usize) -> Result<(),String> {
+    graph_view_state.lock().unwrap().current_driver = car_num;
+    info!("Set current driver to {car_num}");
+    Ok(())
 }
 
 

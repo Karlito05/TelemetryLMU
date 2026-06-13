@@ -229,13 +229,7 @@ function resizeCanvas(
 
 const RESOLUTION = 2000;
 
-function GraphView({
-  baseColor,
-  nLines,
-  type,
-  carNum,
-  graphName,
-}: GraphViewProps) {
+function GraphView({ baseColor, nLines, type, graphName }: GraphViewProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const style = useRef<GraphViewStyle>({
