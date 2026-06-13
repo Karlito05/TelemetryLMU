@@ -229,7 +229,13 @@ function resizeCanvas(
 
 const RESOLUTION = 2000;
 
-function GraphView({ baseColor, nLines, type, graphName }: GraphViewProps) {
+function GraphView({
+  baseColor,
+  nLines,
+  carNum,
+  type,
+  graphName,
+}: GraphViewProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const style = useRef<GraphViewStyle>({
@@ -245,8 +251,11 @@ function GraphView({ baseColor, nLines, type, graphName }: GraphViewProps) {
 
   useEffect(() => {
     const onEvent = new Channel<LapEvent>();
+    let isActive = true;
 
     onEvent.onmessage = (message) => {
+      if (!isActive) return;
+
       switch (message.event) {
         case "renderingData":
           style.current.maxValue = message.data.maxValue;
@@ -287,6 +296,7 @@ function GraphView({ baseColor, nLines, type, graphName }: GraphViewProps) {
 
     invoke("lap_data_subscribe", {
       teleType: type,
+      carNum: carNum,
       onEvent: onEvent,
     });
 
@@ -317,10 +327,18 @@ function GraphView({ baseColor, nLines, type, graphName }: GraphViewProps) {
     );
 
     return () => {
+      isActive = false;
       console.log("unloading thread" + id);
       invoke("lap_data_unsubscribe", { id: id.current });
+      curLapRef.current = new Array(RESOLUTION);
+      refLapRef.current = [];
+
+      const ctx = canvasRef.current?.getContext("2d");
+      if (ctx && canvasRef.current) {
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      }
     };
-  }, []);
+  }, [carNum]);
 
   return (
     <div ref={wrapperRef} className="w-full h-full">

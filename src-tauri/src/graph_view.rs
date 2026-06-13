@@ -11,7 +11,6 @@ use tokio::time::sleep;
 
 pub struct GraphViewState {
     pub threads: Vec<JoinHandleIdent>,
-    pub current_driver: usize,
 }
 
 #[derive(Clone, Serialize)]
@@ -45,16 +44,17 @@ pub fn lap_data_subscribe(
     mmap: State<'_, MmapState>,
     telemetry_state: State<'_, Mutex<TelemetryState>>,
     graph_view_state: State<'_, Mutex<GraphViewState>>,
+    car_num: usize,
     tele_type: String,
     on_event: Channel<LapEvent>,
 ) {
     if !telemetry_state.lock().unwrap().full_mode {
         return;
     }
-    let car_num = graph_view_state.lock().unwrap().current_driver.clone();
     let mmap_clone = Arc::clone(&mmap.mmap);
     let id = format!("{tele_type}-{car_num}");
     let join_handle = tauri::async_runtime::spawn(async move {
+        info!("Current car num is {car_num}");
         let telemetry = update_telemetry(&mmap_clone)
             .ok_or_else(|| "TelemetryReadFailed".to_string())
             .unwrap();
@@ -155,14 +155,6 @@ pub async fn get_drivers(mmap: State<'_, MmapState>) -> Result<Vec<Driver>,Strin
         }
         Ok(drivers)
 }
-
-#[tauri::command]
-pub async fn set_car_num(graph_view_state: State<'_, Mutex<GraphViewState>>, car_num: usize) -> Result<(),String> {
-    graph_view_state.lock().unwrap().current_driver = car_num;
-    info!("Set current driver to {car_num}");
-    Ok(())
-}
-
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 enum GraphViewDataType {

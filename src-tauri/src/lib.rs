@@ -33,7 +33,7 @@ pub fn run() {
             app.manage(MmapState {
                 mmap: Arc::new(mmap),
             });
-            app.manage(Mutex::new(GraphViewState{threads: Vec::new(), current_driver: 0}));
+            app.manage(Mutex::new(GraphViewState{threads: Vec::new()}));
 
             Ok(())
         })
@@ -43,7 +43,6 @@ pub fn run() {
             lap_data_subscribe,
             lap_data_unsubscribe,
             get_drivers,
-            set_car_num
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

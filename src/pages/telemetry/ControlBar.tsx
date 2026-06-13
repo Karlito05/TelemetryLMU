@@ -8,7 +8,11 @@ type Driver = {
   name: string;
 };
 
-export default function ControlBar() {
+type ControlBarProps = {
+  setCurDriverNum: React.Dispatch<React.SetStateAction<number>>;
+};
+
+export default function ControlBar({ setCurDriverNum }: ControlBarProps) {
   const [drivers, setDrivers] = useState<MenuProps["items"]>([]);
   const [curDriver, setCurDriver] = useState<string>("");
 
@@ -32,7 +36,8 @@ export default function ControlBar() {
         onDriverSelect={(key, driverName) => {
           const carNum = Number(key);
           setCurDriver(driverName);
-          invoke("set_car_num", { carNum });
+          console.log("Set car num ", carNum);
+          setCurDriverNum(carNum);
         }}
         curDriver={curDriver}
       />
