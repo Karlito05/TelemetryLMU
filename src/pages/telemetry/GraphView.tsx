@@ -60,7 +60,11 @@ function render(
   const drawableBottom = height - margin;
   const drawableHeight = drawableBottom - drawableTop;
 
-  function renderLap(canvas: HTMLCanvasElement, lap: DataPoint[], Color: Color) {
+  function renderLap(
+    canvas: HTMLCanvasElement,
+    lap: DataPoint[],
+    Color: Color,
+  ) {
     const ctx = canvas.getContext("2d");
     if (!ctx || lap.length === 0) return;
 
@@ -191,7 +195,8 @@ function render(
     return;
   } else {
     if (currentLap.length != 0) renderLap(canvas, currentLap, style.baseColor);
-    if (referenceLap.length != 0) renderLap(canvas, referenceLap, `${style.baseColor}80`);
+    if (referenceLap.length != 0)
+      renderLap(canvas, referenceLap, `${style.baseColor}80`);
   }
 }
 
@@ -224,7 +229,13 @@ function resizeCanvas(
 
 const RESOLUTION = 2000;
 
-function GraphView({ baseColor, nLines, type, carNum, graphName }: GraphViewProps) {
+function GraphView({
+  baseColor,
+  nLines,
+  type,
+  carNum,
+  graphName,
+}: GraphViewProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const style = useRef<GraphViewStyle>({
@@ -261,14 +272,23 @@ function GraphView({ baseColor, nLines, type, carNum, graphName }: GraphViewProp
           };
           break;
         case "lapFinished":
-          if (message.data.wasBest || refLapRef.current.filter(Boolean).length < 500) {
+          if (
+            message.data.wasBest ||
+            refLapRef.current.filter(Boolean).length < 500
+          ) {
             refLapRef.current = curLapRef.current;
           }
           curLapRef.current = new Array(RESOLUTION);
           break;
       }
 
-      render(canvasRef.current, curLapRef.current, refLapRef.current, style.current, type);
+      render(
+        canvasRef.current,
+        curLapRef.current,
+        refLapRef.current,
+        style.current,
+        type,
+      );
     };
 
     invoke("lap_data_subscribe", {
@@ -283,11 +303,25 @@ function GraphView({ baseColor, nLines, type, carNum, graphName }: GraphViewProp
     if (!wrapper || !canvas) return;
 
     const resizeObserver = new ResizeObserver(() =>
-      resizeCanvas(wrapper, canvas, curLapRef.current, refLapRef.current, style.current, type),
+      resizeCanvas(
+        wrapper,
+        canvas,
+        curLapRef.current,
+        refLapRef.current,
+        style.current,
+        type,
+      ),
     );
 
     resizeObserver.observe(wrapper);
-    resizeCanvas(wrapper, canvas, curLapRef.current, refLapRef.current, style.current, type);
+    resizeCanvas(
+      wrapper,
+      canvas,
+      curLapRef.current,
+      refLapRef.current,
+      style.current,
+      type,
+    );
 
     return () => {
       console.log("unloading thread" + id);
