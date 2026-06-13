@@ -13,7 +13,6 @@ export default function Telemetry() {
       <div className="h-94/100">
         <div className="h-1/5 p-1 ">
           <GraphView
-            key={`throttle-${curDriverNum}`}
             baseColor={"#9eff5d"}
             carNum={curDriverNum}
             graphName="Throttle"
@@ -23,7 +22,6 @@ export default function Telemetry() {
         </div>
         <div className="h-1/5 p-1">
           <GraphView
-            key={`brake-${curDriverNum}`}
             baseColor={"#ff5d5d"}
             carNum={curDriverNum}
             graphName="Brake"
@@ -33,7 +31,6 @@ export default function Telemetry() {
         </div>
         <div className="h-1/5 p-1">
           <GraphView
-            key={`rpm-${curDriverNum}`}
             baseColor={"#5db1ff"}
             carNum={curDriverNum}
             graphName="Engine RPM"
@@ -43,7 +40,6 @@ export default function Telemetry() {
         </div>
         <div className="h-1/5 p-1">
           <GraphView
-            key={`delta-${curDriverNum}`}
             baseColor={"#cc5dff"}
             carNum={curDriverNum}
             graphName="Delta"
@@ -53,7 +49,6 @@ export default function Telemetry() {
         </div>
         <div className="h-1/5 p-1">
           <GraphView
-            key={`speed-${curDriverNum}`}
             baseColor={"#efff5d"}
             carNum={curDriverNum}
             graphName="Speed"
