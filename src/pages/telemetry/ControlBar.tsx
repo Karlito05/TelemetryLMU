@@ -1,10 +1,30 @@
 import { Dropdown, Button, MenuProps } from "antd";
 import { DownOutlined } from "@ant-design/icons";
+import { invoke } from "@tauri-apps/api/core";
+import { useEffect, useState } from "react";
+
+type Driver = {
+  index: number;
+  name: string;
+};
 
 export default function ControlBar() {
+  const [drivers, setDrivers] = useState<MenuProps["items"]>([]);
+
+  useEffect(() => {
+    invoke<Driver[]>("get_drivers").then((v) => {
+      let items: MenuProps["items"] = v.map((driver) => ({
+        label: driver.name,
+        key: String(driver.index),
+      }));
+
+      setDrivers(items);
+    });
+  }, []);
+
   return (
     <div className="bg-[#FFFFFF18] h-full w-full rounded-3xl items-center flex justify-baseline p-2">
-      <DriverSelect />
+      <DriverSelect drivers={drivers} layouts={layouts} />
       <Spacer />
     </div>
   );
@@ -13,21 +33,6 @@ export default function ControlBar() {
 function Spacer() {
   return <div className="h-90/100 w-0.5 bg-[#FFFFFF40] rounded-full"></div>;
 }
-
-const drivers: MenuProps["items"] = [
-  {
-    key: "1",
-    label: "Max",
-  },
-  {
-    key: "2",
-    label: "Paul Riciardo",
-  },
-  {
-    key: "3",
-    label: "Karel",
-  },
-];
 
 const layouts: MenuProps["items"] = [
   {
@@ -45,7 +50,12 @@ const layouts: MenuProps["items"] = [
   },
 ];
 
-function DriverSelect() {
+type DriverSelectProps = {
+  drivers: MenuProps["items"];
+  layouts: MenuProps["items"];
+};
+
+function DriverSelect({ drivers, layouts }: DriverSelectProps) {
   let driver = "K. Lukes";
   return (
     <div className="flex flex-col m-2 space-y-1">

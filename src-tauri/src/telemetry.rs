@@ -16,12 +16,11 @@ pub struct JoinHandleIdent {
     pub id: String,
 }
 
-pub struct BackendState {
+pub struct TelemetryState {
     pub full_mode: bool,
-    pub threads: Vec<JoinHandleIdent>,
 }
 
-pub fn get_mmap(path: &str, state: &Mutex<BackendState>) -> Mmap {
+pub fn get_mmap(path: &str, state: &Mutex<TelemetryState>) -> Mmap {
     let file = match File::open(path) {
         Ok(v) => {
             state.lock().unwrap().full_mode = true;

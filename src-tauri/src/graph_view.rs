@@ -1,11 +1,17 @@
 use crate::telemetry::{update_telemetry, SharedMemoryObjectOut};
-use crate::telemetry::{BackendState, JoinHandleIdent};
+use crate::telemetry::{TelemetryState, JoinHandleIdent};
 use memmap2::Mmap;
 use serde::Serialize;
 use std::sync::Mutex;
 use std::{sync::Arc, time::Duration};
 use tauri::{ipc::Channel, State};
 use tokio::time::sleep;
+
+
+pub struct GraphViewState {
+    pub threads: Vec<JoinHandleIdent>,
+    pub current_driver: usize,
+}
 
 #[derive(Clone, Serialize)]
 #[serde(
@@ -35,16 +41,17 @@ pub struct MmapState {
 
 #[tauri::command]
 pub fn lap_data_subscribe(
-    state: State<'_, MmapState>,
-    backend_state: State<'_, Mutex<BackendState>>,
+    mmap: State<'_, MmapState>,
+    telemetry_state: State<'_, Mutex<TelemetryState>>,
+    graph_view_state: State<'_, Mutex<GraphViewState>>,
     tele_type: String,
-    car_num: usize,
     on_event: Channel<LapEvent>,
 ) {
-    if !backend_state.lock().unwrap().full_mode {
+    if !telemetry_state.lock().unwrap().full_mode {
         return;
     }
-    let mmap_clone = Arc::clone(&state.mmap);
+    let car_num = graph_view_state.lock().unwrap().current_driver.clone();
+    let mmap_clone = Arc::clone(&mmap.mmap);
     let id = format!("{tele_type}-{car_num}");
     let join_handle = tauri::async_runtime::spawn(async move {
         let telemetry = update_telemetry(&mmap_clone)
@@ -87,7 +94,7 @@ pub fn lap_data_subscribe(
         }
     });
 
-    backend_state
+    graph_view_state
         .lock()
         .unwrap()
         .threads
@@ -96,11 +103,12 @@ pub fn lap_data_subscribe(
 
 #[tauri::command]
 pub async fn lap_data_unsubscribe(
-    backend_state: State<'_, Mutex<BackendState>>,
+    graph_view_state: State<'_, Mutex<GraphViewState>>,
     id: String,
 ) -> Result<(), String> {
     let mut i = 0;
-    for handle in &backend_state.lock().unwrap().threads {
+    for handle in &graph_view_state
+    .lock().unwrap().threads {
         if handle.id == id {
             handle.join_handle.abort();
             println!("Stopped thread {i}");
@@ -109,11 +117,44 @@ pub async fn lap_data_unsubscribe(
             i += 1;
         }
     }
-    if i != backend_state.lock().unwrap().threads.len() {
-        backend_state.lock().unwrap().threads.remove(i);
+    if i != graph_view_state.lock().unwrap().threads.len() {
+        graph_view_state.lock().unwrap().threads.remove(i);
     }
     Ok(())
 }
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct Driver {
+    pub index: usize,
+    pub name: String,
+}
+
+fn i8_array_to_string(buf: &[i8; 32]) -> String {
+    let bytes: Vec<u8> = buf
+        .iter()
+        .take_while(|&&b| b != 0)
+        .map(|b| *b as u8)
+        .collect();
+
+    String::from_utf8_lossy(&bytes).to_string()
+}
+
+#[tauri::command]
+pub async fn get_drivers(mmap: State<'_, MmapState>) -> Result<Vec<Driver>,String> {
+        let telemetry = update_telemetry(&mmap.mmap)
+            .ok_or_else(|| "TelemetryReadFailed".to_string())
+            .unwrap();
+        
+
+        let mut drivers: Vec<Driver> = Vec::new();
+        for i in 0..103 {
+            let name = i8_array_to_string(&telemetry.scoring.veh_scoring_info[i].m_driver_name);
+            if name != ""{
+            drivers.push(Driver {index: i, name: name });}
+        }
+        Ok(drivers)
+}
+
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 enum GraphViewDataType {

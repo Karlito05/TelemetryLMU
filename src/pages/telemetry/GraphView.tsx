@@ -293,7 +293,6 @@ function GraphView({
 
     invoke("lap_data_subscribe", {
       teleType: type,
-      carNum: carNum,
       onEvent: onEvent,
     });
 

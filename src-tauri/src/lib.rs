@@ -7,7 +7,8 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use tauri::Manager;
 use telemetry::get_mmap;
-use telemetry::BackendState;
+use telemetry::TelemetryState;
+use graph_view::GraphViewState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -21,9 +22,8 @@ pub fn run() {
                 .build(),
         )
         .setup(|app| {
-            let backend = Mutex::new(BackendState {
+            let backend = Mutex::new(TelemetryState {
                 full_mode: false,
-                threads: Vec::new(),
             });
 
             let mmap = get_mmap("/dev/shm/LMU_Data", &backend);
@@ -33,6 +33,7 @@ pub fn run() {
             app.manage(MmapState {
                 mmap: Arc::new(mmap),
             });
+            app.manage(Mutex::new(GraphViewState{threads: Vec::new(), current_driver: 0}));
 
             Ok(())
         })
@@ -40,7 +41,8 @@ pub fn run() {
         // .plugin(tauri_plugin_devtools::init())
         .invoke_handler(tauri::generate_handler![
             lap_data_subscribe,
-            lap_data_unsubscribe
+            lap_data_unsubscribe,
+            get_drivers
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
