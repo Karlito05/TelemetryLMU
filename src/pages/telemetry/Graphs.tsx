@@ -121,12 +121,17 @@ function GraphViewDummy({
     setGraphData(graphData);
   }
 
+  function handleDelete(index: number) {
+    graphData = [...graphData.slice(0, index), ...graphData.slice(index + 1)];
+    setGraphData(graphData);
+  }
+
   return (
     <div className="w-full h-full bg-[#FFFFFF40]">
       <ColorPicker
         defaultValue={graphData[index].baseColor}
         onChangeComplete={(color) =>
-          handleColorChange(index, color.toCssString())
+          handleColorChange(index, color.toHexString())
         }
       />
       <Input
@@ -146,9 +151,11 @@ function GraphViewDummy({
         }}
       >
         <Button type="primary">
+          {/*Fix: doesn't update in the frontend somehow*/}
           {graphData[index].type} <DownOutlined />
         </Button>
       </Dropdown>
+      <Button onClick={() => handleDelete(index)}>Delete</Button>
     </div>
   );
 }
