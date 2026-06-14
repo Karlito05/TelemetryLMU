@@ -10,14 +10,12 @@ export default function Telemetry() {
   const [graphData, setGraphData] = useState<GraphViewData[]>([
     {
       baseColor: "#9eff5d",
-      carNum: curDriverNum,
       graphName: "Throttle",
       nLines: 3,
       type: GraphViewType.Throttle,
     },
     {
       baseColor: "#ff5d5d",
-      carNum: curDriverNum,
       graphName: "Brake",
       nLines: 3,
       type: GraphViewType.Brake,
@@ -39,6 +37,7 @@ export default function Telemetry() {
       </div>
       <div className="h-94/100">
         <Graphs
+          curDriverNum={curDriverNum}
           editMode={editMode}
           graphData={graphData}
           setGraphData={setGraphData}

@@ -9,6 +9,7 @@ type GraphsProps = {
   setGraphData: (value: GraphViewData[]) => void;
   sizes: number[];
   setSizes: (value: number[]) => void;
+  curDriverNum: number;
 };
 
 export enum GraphViewType {
@@ -21,7 +22,6 @@ export enum GraphViewType {
 
 export type GraphViewData = {
   baseColor: string;
-  carNum: number;
   graphName: string;
   nLines: number;
   type: GraphViewType;
@@ -56,6 +56,7 @@ export default function Graphs({
   setGraphData,
   sizes,
   setSizes,
+  curDriverNum,
 }: GraphsProps) {
   return editMode ? (
     <Splitter vertical={true} className="w-full h-full" onResize={setSizes}>
@@ -74,7 +75,7 @@ export default function Graphs({
     <Splitter vertical={true} className="w-full h-full" onResize={setSizes}>
       {graphData.map((data, i) => (
         <Splitter.Panel key={data.type} resizable={editMode} size={sizes[i]}>
-          <GraphView {...data} />
+          <GraphView {...data} carNum={curDriverNum} />
         </Splitter.Panel>
       ))}
     </Splitter>
