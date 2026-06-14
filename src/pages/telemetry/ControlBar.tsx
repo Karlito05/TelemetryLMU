@@ -16,7 +16,6 @@ type ControlBarProps = {
   setEditMode: (value: boolean) => void;
   graphData: GraphViewData[];
   setGraphData: (value: GraphViewData[]) => void;
-  sizes: number[];
   setSizes: (value: number[]) => void;
 };
 
@@ -27,7 +26,6 @@ export default function ControlBar({
   setEditMode,
   graphData,
   setGraphData,
-  sizes,
   setSizes,
 }: ControlBarProps) {
   return (
@@ -39,7 +37,6 @@ export default function ControlBar({
           setGraphData={setGraphData}
           curDriverNum={curDriverNum}
           setSizes={setSizes}
-          sizes={sizes}
         />
       ) : (
         <NormalMode
@@ -56,7 +53,6 @@ type EditModeProps = {
   graphData: GraphViewData[];
   setGraphData: (value: GraphViewData[]) => void;
   curDriverNum: number;
-  sizes: number[];
   setSizes: (value: number[]) => void;
 };
 
@@ -65,7 +61,6 @@ function EditMode({
   graphData,
   setGraphData,
   curDriverNum,
-  sizes,
   setSizes,
 }: EditModeProps) {
   function handleAddGraph() {

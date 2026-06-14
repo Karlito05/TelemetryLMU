@@ -1,7 +1,6 @@
 import GraphView from "./GraphView";
 import { DownOutlined } from "@ant-design/icons";
 import { Dropdown, Splitter } from "antd";
-import { useState } from "react";
 import { ColorPicker, Input, InputNumber, MenuProps, Button } from "antd";
 
 type GraphsProps = {
@@ -66,7 +65,6 @@ export default function Graphs({
             graphData={graphData}
             setGraphData={setGraphData}
             index={i}
-            sizes={sizes}
             setSizes={setSizes}
           />
         </Splitter.Panel>
@@ -87,7 +85,6 @@ type GraphViewDummyProps = {
   graphData: GraphViewData[];
   setGraphData: (graphData: GraphViewData[]) => void;
   index: number;
-  sizes: number[];
   setSizes: (value: number[]) => void;
 };
 
@@ -95,7 +92,6 @@ function GraphViewDummy({
   graphData,
   setGraphData,
   index,
-  sizes,
   setSizes,
 }: GraphViewDummyProps) {
   function handleColorChange(index: number, color: string) {

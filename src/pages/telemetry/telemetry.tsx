@@ -34,7 +34,6 @@ export default function Telemetry() {
           setEditMode={setEditMode}
           graphData={graphData}
           setGraphData={setGraphData}
-          sizes={sizes}
           setSizes={setSizes}
         />
       </div>
