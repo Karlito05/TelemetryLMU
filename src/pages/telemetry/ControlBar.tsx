@@ -10,15 +10,19 @@ type Driver = {
 
 type ControlBarProps = {
   setCurDriverNum: React.Dispatch<React.SetStateAction<number>>;
+  editMode: boolean;
+  setEditMode: (value: boolean) => void;
 };
 
-export default function ControlBar({ setCurDriverNum }: ControlBarProps) {
-  const [editMode, setEditMode] = useState(false);
-
+export default function ControlBar({
+  setCurDriverNum,
+  editMode,
+  setEditMode,
+}: ControlBarProps) {
   return (
     <div className="bg-[#FFFFFF18] h-full w-full rounded-3xl items-center flex justify-baseline p-2">
       {editMode ? (
-        <EditMode />
+        <EditMode setEditMode={setEditMode} />
       ) : (
         <NormalMode
           setCurDriverNum={setCurDriverNum}
@@ -29,8 +33,12 @@ export default function ControlBar({ setCurDriverNum }: ControlBarProps) {
   );
 }
 
-function EditMode() {
-  return <></>;
+type EditModeProps = {
+  setEditMode: (value: boolean) => void;
+};
+
+function EditMode({ setEditMode }: EditModeProps) {
+  return <Button onClick={() => setEditMode(false)}>Quit Edit Mode</Button>;
 }
 
 type NormalModeProps = {
