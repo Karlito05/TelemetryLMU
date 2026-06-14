@@ -13,6 +13,32 @@ type ControlBarProps = {
 };
 
 export default function ControlBar({ setCurDriverNum }: ControlBarProps) {
+  const [editMode, setEditMode] = useState(false);
+
+  return (
+    <div className="bg-[#FFFFFF18] h-full w-full rounded-3xl items-center flex justify-baseline p-2">
+      {editMode ? (
+        <EditMode />
+      ) : (
+        <NormalMode
+          setCurDriverNum={setCurDriverNum}
+          setEditMode={setEditMode}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditMode() {
+  return <></>;
+}
+
+type NormalModeProps = {
+  setCurDriverNum: React.Dispatch<React.SetStateAction<number>>;
+  setEditMode: (value: boolean) => void;
+};
+
+function NormalMode({ setCurDriverNum, setEditMode }: NormalModeProps) {
   const [drivers, setDrivers] = useState<MenuProps["items"]>([]);
   const [curDriver, setCurDriver] = useState<string>("");
 
@@ -27,9 +53,8 @@ export default function ControlBar({ setCurDriverNum }: ControlBarProps) {
       setDrivers(items);
     });
   }, []);
-
   return (
-    <div className="bg-[#FFFFFF18] h-full w-full rounded-3xl items-center flex justify-baseline p-2">
+    <>
       <DriverSelect
         drivers={drivers}
         layouts={layouts}
@@ -39,29 +64,25 @@ export default function ControlBar({ setCurDriverNum }: ControlBarProps) {
           console.log("Set car num ", carNum);
           setCurDriverNum(carNum);
         }}
+        onLayoutSelect={(key) => {
+          if (key == "edit") {
+            setEditMode(true);
+          }
+        }}
         curDriver={curDriver}
       />
       <Spacer />
-    </div>
+    </>
   );
 }
-
 function Spacer() {
   return <div className="h-90/100 w-0.5 bg-[#FFFFFF40] rounded-full"></div>;
 }
 
 const layouts: MenuProps["items"] = [
-  {
-    key: "1",
-    label: "l1",
-  },
-  {
-    key: "2",
-    label: "l2",
-  },
   { type: "divider" },
   {
-    key: "3",
+    key: "edit",
     label: "edit",
   },
 ];
@@ -71,6 +92,7 @@ type DriverSelectProps = {
   layouts: MenuProps["items"];
   onDriverSelect?: (key: string, driverName: string) => void;
   curDriver: string;
+  onLayoutSelect?: (key: string) => void;
 };
 
 function DriverSelect({
@@ -78,6 +100,7 @@ function DriverSelect({
   layouts,
   onDriverSelect,
   curDriver,
+  onLayoutSelect,
 }: DriverSelectProps) {
   return (
     <div className="flex flex-col m-2 space-y-1">
@@ -115,7 +138,10 @@ function DriverSelect({
       </div>
       <div className="text-white flex items-center justify-between">
         Layout:
-        <Dropdown trigger={["click"]} menu={{ items: layouts }}>
+        <Dropdown
+          trigger={["click"]}
+          menu={{ items: layouts, onClick: ({ key }) => onLayoutSelect?.(key) }}
+        >
           <Button type="primary">
             Layout 1 <DownOutlined />
           </Button>
