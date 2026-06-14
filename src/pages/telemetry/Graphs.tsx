@@ -5,11 +5,14 @@ import { useState } from "react";
 import { ColorPicker, Input, InputNumber, MenuProps, Button } from "antd";
 
 type GraphsProps = {
-  curDriverNum: number;
   editMode: boolean;
+  graphData: GraphViewData[];
+  setGraphData: (value: GraphViewData[]) => void;
+  sizes: number[];
+  setSizes: (value: number[]) => void;
 };
 
-enum GraphViewType {
+export enum GraphViewType {
   Throttle = "throttle",
   Brake = "brake",
   Rpm = "rpm",
@@ -17,7 +20,7 @@ enum GraphViewType {
   Speed = "speed",
 }
 
-type GraphViewData = {
+export type GraphViewData = {
   baseColor: string;
   carNum: number;
   graphName: string;
@@ -48,24 +51,13 @@ const typeOptions: MenuProps["items"] = [
   },
 ];
 
-export default function Graphs({ curDriverNum, editMode }: GraphsProps) {
-  const [sizes, setSizes] = useState<(number | string)[]>(["25%", "75%"]);
-  const [graphData, setGraphData] = useState<GraphViewData[]>([
-    {
-      baseColor: "#9eff5d",
-      carNum: curDriverNum,
-      graphName: "Throttle",
-      nLines: 3,
-      type: GraphViewType.Throttle,
-    },
-    {
-      baseColor: "#ff5d5d",
-      carNum: curDriverNum,
-      graphName: "Brake",
-      nLines: 3,
-      type: GraphViewType.Brake,
-    },
-  ]);
+export default function Graphs({
+  editMode,
+  graphData,
+  setGraphData,
+  sizes,
+  setSizes,
+}: GraphsProps) {
   return editMode ? (
     <Splitter vertical={true} className="w-full h-full" onResize={setSizes}>
       {graphData.map((data, i) => (
@@ -74,6 +66,8 @@ export default function Graphs({ curDriverNum, editMode }: GraphsProps) {
             graphData={graphData}
             setGraphData={setGraphData}
             index={i}
+            sizes={sizes}
+            setSizes={setSizes}
           />
         </Splitter.Panel>
       ))}
@@ -93,55 +87,69 @@ type GraphViewDummyProps = {
   graphData: GraphViewData[];
   setGraphData: (graphData: GraphViewData[]) => void;
   index: number;
+  sizes: number[];
+  setSizes: (value: number[]) => void;
 };
 
 function GraphViewDummy({
   graphData,
   setGraphData,
   index,
+  sizes,
+  setSizes,
 }: GraphViewDummyProps) {
   function handleColorChange(index: number, color: string) {
-    graphData[index].baseColor = color;
-    setGraphData(graphData);
+    const newGD = [...graphData];
+    newGD[index] = { ...newGD[index], baseColor: color };
+    setGraphData(newGD);
   }
 
   function handleNameChange(index: number, name: string) {
-    graphData[index].graphName = name;
-    setGraphData(graphData);
+    const newGD = [...graphData];
+    newGD[index] = { ...newGD[index], graphName: name };
+    setGraphData(newGD);
   }
 
   function handleNLinesChange(index: number, nLines: number | null) {
-    if (!nLines) return;
-    graphData[index].nLines = nLines;
-    setGraphData(graphData);
+    if (nLines === null || nLines === undefined) return;
+    const newGD = [...graphData];
+    newGD[index] = { ...newGD[index], nLines };
+    setGraphData(newGD);
   }
 
   function handleTypeChange(index: number, type: GraphViewType) {
-    graphData[index].type = type;
-    setGraphData(graphData);
+    const newGD = [...graphData];
+    newGD[index] = { ...newGD[index], type };
+    setGraphData(newGD);
   }
 
   function handleDelete(index: number) {
-    graphData = [...graphData.slice(0, index), ...graphData.slice(index + 1)];
-    setGraphData(graphData);
+    const nGD = [...graphData.slice(0, index), ...graphData.slice(index + 1)];
+    setGraphData(nGD);
+    const newSizes: number[] = Array(nGD.length).fill(1 / nGD.length);
+    setSizes(newSizes);
   }
 
   return (
-    <div className="w-full h-full bg-[#FFFFFF40]">
+    <div
+      className={`w-full h-full`}
+      style={{ backgroundColor: `${graphData[index].baseColor}40` }}
+    >
       <ColorPicker
-        defaultValue={graphData[index].baseColor}
+        value={graphData[index].baseColor}
         onChangeComplete={(color) =>
           handleColorChange(index, color.toHexString())
         }
+        disabledAlpha={true}
       />
       <Input
-        defaultValue={graphData[index].graphName}
+        value={graphData[index].graphName}
         onChange={(e) => handleNameChange(index, e.target.value)}
       />
       <InputNumber
         min={2}
         max={10}
-        defaultValue={3}
+        value={graphData[index].nLines}
         onChange={(e) => handleNLinesChange(index, e)}
       />
       <Dropdown

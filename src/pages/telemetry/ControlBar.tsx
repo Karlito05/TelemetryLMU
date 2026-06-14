@@ -2,6 +2,7 @@ import { Dropdown, Button, MenuProps } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
+import { GraphViewData, GraphViewType } from "./Graphs";
 
 type Driver = {
   index: number;
@@ -9,20 +10,37 @@ type Driver = {
 };
 
 type ControlBarProps = {
+  curDriverNum: number;
   setCurDriverNum: React.Dispatch<React.SetStateAction<number>>;
   editMode: boolean;
   setEditMode: (value: boolean) => void;
+  graphData: GraphViewData[];
+  setGraphData: (value: GraphViewData[]) => void;
+  sizes: number[];
+  setSizes: (value: number[]) => void;
 };
 
 export default function ControlBar({
+  curDriverNum,
   setCurDriverNum,
   editMode,
   setEditMode,
+  graphData,
+  setGraphData,
+  sizes,
+  setSizes,
 }: ControlBarProps) {
   return (
     <div className="bg-[#FFFFFF18] h-full w-full rounded-3xl items-center flex justify-baseline p-2">
       {editMode ? (
-        <EditMode setEditMode={setEditMode} />
+        <EditMode
+          setEditMode={setEditMode}
+          graphData={graphData}
+          setGraphData={setGraphData}
+          curDriverNum={curDriverNum}
+          setSizes={setSizes}
+          sizes={sizes}
+        />
       ) : (
         <NormalMode
           setCurDriverNum={setCurDriverNum}
@@ -35,10 +53,42 @@ export default function ControlBar({
 
 type EditModeProps = {
   setEditMode: (value: boolean) => void;
+  graphData: GraphViewData[];
+  setGraphData: (value: GraphViewData[]) => void;
+  curDriverNum: number;
+  sizes: number[];
+  setSizes: (value: number[]) => void;
 };
 
-function EditMode({ setEditMode }: EditModeProps) {
-  return <Button onClick={() => setEditMode(false)}>Quit Edit Mode</Button>;
+function EditMode({
+  setEditMode,
+  graphData,
+  setGraphData,
+  curDriverNum,
+  sizes,
+  setSizes,
+}: EditModeProps) {
+  function handleAddGraph() {
+    const nGD = [
+      ...graphData,
+      {
+        baseColor: "#ff5d5d",
+        carNum: curDriverNum,
+        graphName: "Brake",
+        nLines: 3,
+        type: GraphViewType.Brake,
+      },
+    ];
+    setGraphData(nGD);
+    const newSizes: number[] = Array(nGD.length).fill(1 / nGD.length);
+    setSizes(newSizes);
+  }
+  return (
+    <>
+      <Button onClick={() => setEditMode(false)}>Quit Edit Mode</Button>
+      <Button onClick={() => handleAddGraph()}>Add Graph</Button>
+    </>
+  );
 }
 
 type NormalModeProps = {
