@@ -1,50 +1,72 @@
 import Graphs from "./Graphs.tsx";
 import ControlBar from "./ControlBar.tsx";
-import { useState } from "react";
+import { useState, createContext } from "react";
 import { GraphViewData, GraphViewType } from "./Graphs.tsx";
+
+type TelemetryContextType = {
+  curDriverNum: number;
+  setCurDriverNum: (value: number) => void;
+  editMode: boolean;
+  setEditMode: (value: boolean) => void;
+  graphData: GraphViewData[];
+  setGraphData: (value: GraphViewData[]) => void;
+  sizes: number[];
+  setSizes: (value: number[]) => void;
+};
+
+const defaultTelemetryContext: TelemetryContextType = {
+  curDriverNum: 0,
+  setCurDriverNum: () => {},
+  editMode: false,
+  setEditMode: () => {},
+  graphData: [],
+  setGraphData: () => {},
+  sizes: [0.5, 0.5],
+  setSizes: () => {},
+};
+
+export const TelemetryContext = createContext<TelemetryContextType>(
+  defaultTelemetryContext,
+);
 
 export default function Telemetry() {
   const [curDriverNum, setCurDriverNum] = useState(0);
   const [editMode, setEditMode] = useState(false);
-  const [sizes, setSizes] = useState<number[]>([25, 75]);
+  const [sizes, setSizes] = useState<number[]>([0.5, 0.5]);
   const [graphData, setGraphData] = useState<GraphViewData[]>([
     {
       baseColor: "#9eff5d",
-      graphName: "Throttle",
       nLines: 3,
       type: GraphViewType.Throttle,
     },
     {
       baseColor: "#ff5d5d",
-      graphName: "Brake",
       nLines: 3,
       type: GraphViewType.Brake,
     },
   ]);
 
   return (
-    <div className=" h-full w-full">
-      <div className="h-6/100 pb-0.5">
-        <ControlBar
-          curDriverNum={curDriverNum}
-          setCurDriverNum={setCurDriverNum}
-          editMode={editMode}
-          setEditMode={setEditMode}
-          graphData={graphData}
-          setGraphData={setGraphData}
-          setSizes={setSizes}
-        />
+    <TelemetryContext.Provider
+      value={{
+        curDriverNum,
+        setCurDriverNum,
+        editMode,
+        setEditMode,
+        sizes,
+        setSizes,
+        graphData,
+        setGraphData,
+      }}
+    >
+      <div className=" h-full w-full">
+        <div className="h-6/100 pb-0.5">
+          <ControlBar />
+        </div>
+        <div className="h-94/100">
+          <Graphs />
+        </div>
       </div>
-      <div className="h-94/100">
-        <Graphs
-          curDriverNum={curDriverNum}
-          editMode={editMode}
-          graphData={graphData}
-          setGraphData={setGraphData}
-          sizes={sizes}
-          setSizes={setSizes}
-        />
-      </div>
-    </div>
+    </TelemetryContext.Provider>
   );
 }

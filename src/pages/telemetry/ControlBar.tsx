@@ -1,99 +1,53 @@
 import { Dropdown, Button, MenuProps } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import { invoke } from "@tauri-apps/api/core";
-import { useEffect, useState } from "react";
-import { GraphViewData, GraphViewType } from "./Graphs";
+import { useContext, useEffect, useState } from "react";
+import { GraphViewType } from "./Graphs";
+import { TelemetryContext } from "./telemetry";
 
 type Driver = {
   index: number;
   name: string;
 };
 
-type ControlBarProps = {
-  curDriverNum: number;
-  setCurDriverNum: React.Dispatch<React.SetStateAction<number>>;
-  editMode: boolean;
-  setEditMode: (value: boolean) => void;
-  graphData: GraphViewData[];
-  setGraphData: (value: GraphViewData[]) => void;
-  setSizes: (value: number[]) => void;
-};
-
-export default function ControlBar({
-  curDriverNum,
-  setCurDriverNum,
-  editMode,
-  setEditMode,
-  graphData,
-  setGraphData,
-  setSizes,
-}: ControlBarProps) {
+export default function ControlBar() {
+  const c = useContext(TelemetryContext);
   return (
     <div className="bg-[#FFFFFF18] h-full w-full rounded-3xl items-center flex justify-baseline p-2">
-      {editMode ? (
-        <EditMode
-          setEditMode={setEditMode}
-          graphData={graphData}
-          setGraphData={setGraphData}
-          curDriverNum={curDriverNum}
-          setSizes={setSizes}
-        />
-      ) : (
-        <NormalMode
-          setCurDriverNum={setCurDriverNum}
-          setEditMode={setEditMode}
-        />
-      )}
+      {c.editMode ? <EditMode /> : <NormalMode />}
     </div>
   );
 }
 
-type EditModeProps = {
-  setEditMode: (value: boolean) => void;
-  graphData: GraphViewData[];
-  setGraphData: (value: GraphViewData[]) => void;
-  curDriverNum: number;
-  setSizes: (value: number[]) => void;
-};
-
-function EditMode({
-  setEditMode,
-  graphData,
-  setGraphData,
-  curDriverNum,
-  setSizes,
-}: EditModeProps) {
+function EditMode() {
+  const c = useContext(TelemetryContext);
   function handleAddGraph() {
     const nGD = [
-      ...graphData,
+      ...c.graphData,
       {
         baseColor: "#ff5d5d",
-        carNum: curDriverNum,
+        carNum: c.curDriverNum,
         graphName: "Brake",
         nLines: 3,
         type: GraphViewType.Brake,
       },
     ];
-    setGraphData(nGD);
+    c.setGraphData(nGD);
     const newSizes: number[] = Array(nGD.length).fill(1 / nGD.length);
-    setSizes(newSizes);
+    c.setSizes(newSizes);
   }
   return (
     <>
-      <Button onClick={() => setEditMode(false)}>Quit Edit Mode</Button>
+      <Button onClick={() => c.setEditMode(false)}>Quit Edit Mode</Button>
       <Button onClick={() => handleAddGraph()}>Add Graph</Button>
     </>
   );
 }
 
-type NormalModeProps = {
-  setCurDriverNum: React.Dispatch<React.SetStateAction<number>>;
-  setEditMode: (value: boolean) => void;
-};
-
-function NormalMode({ setCurDriverNum, setEditMode }: NormalModeProps) {
+function NormalMode() {
   const [drivers, setDrivers] = useState<MenuProps["items"]>([]);
   const [curDriver, setCurDriver] = useState<string>("");
+  const c = useContext(TelemetryContext);
 
   useEffect(() => {
     invoke<Driver[]>("get_drivers").then((v) => {
@@ -115,22 +69,20 @@ function NormalMode({ setCurDriverNum, setEditMode }: NormalModeProps) {
           const carNum = Number(key);
           setCurDriver(driverName);
           console.log("Set car num ", carNum);
-          setCurDriverNum(carNum);
+          c.setCurDriverNum(carNum);
         }}
         onLayoutSelect={(key) => {
           if (key == "edit") {
-            setEditMode(true);
+            c.setEditMode(true);
           }
         }}
         curDriver={curDriver}
       />
-      <Spacer />
     </>
   );
 }
-function Spacer() {
-  return <div className="h-90/100 w-0.5 bg-[#FFFFFF40] rounded-full"></div>;
-}
+
+// TODO: Factor this out somehow
 
 const layouts: MenuProps["items"] = [
   { type: "divider" },

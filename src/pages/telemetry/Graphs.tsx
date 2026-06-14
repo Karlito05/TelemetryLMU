@@ -2,15 +2,8 @@ import GraphView from "./GraphView";
 import { DownOutlined } from "@ant-design/icons";
 import { Dropdown, Splitter } from "antd";
 import { ColorPicker, Input, InputNumber, MenuProps, Button } from "antd";
-
-type GraphsProps = {
-  editMode: boolean;
-  graphData: GraphViewData[];
-  setGraphData: (value: GraphViewData[]) => void;
-  sizes: number[];
-  setSizes: (value: number[]) => void;
-  curDriverNum: number;
-};
+import { useContext } from "react";
+import { TelemetryContext } from "./telemetry";
 
 export enum GraphViewType {
   Throttle = "throttle",
@@ -22,7 +15,7 @@ export enum GraphViewType {
 
 export type GraphViewData = {
   baseColor: string;
-  graphName: string;
+  // graphName: string;
   nLines: number;
   type: GraphViewType;
 };
@@ -50,32 +43,33 @@ const typeOptions: MenuProps["items"] = [
   },
 ];
 
-export default function Graphs({
-  editMode,
-  graphData,
-  setGraphData,
-  sizes,
-  setSizes,
-  curDriverNum,
-}: GraphsProps) {
-  return editMode ? (
-    <Splitter vertical={true} className="w-full h-full" onResize={setSizes}>
-      {graphData.map((data, i) => (
-        <Splitter.Panel key={data.type} resizable={editMode} size={sizes[i]}>
-          <GraphViewDummy
-            graphData={graphData}
-            setGraphData={setGraphData}
-            index={i}
-            setSizes={setSizes}
-          />
+export default function Graphs() {
+  const c = useContext(TelemetryContext);
+  return c.editMode ? (
+    <Splitter vertical={true} className="w-full h-full" onResize={c.setSizes}>
+      {c.graphData.map((data, i) => (
+        <Splitter.Panel
+          key={data.type}
+          resizable={c.editMode}
+          size={c.sizes[i]}
+        >
+          <GraphViewDummy index={i} />
         </Splitter.Panel>
       ))}
     </Splitter>
   ) : (
-    <Splitter vertical={true} className="w-full h-full" onResize={setSizes}>
-      {graphData.map((data, i) => (
-        <Splitter.Panel key={data.type} resizable={editMode} size={sizes[i]}>
-          <GraphView {...data} carNum={curDriverNum} />
+    <Splitter vertical={true} className="w-full h-full" onResize={c.setSizes}>
+      {c.graphData.map((data, i) => (
+        <Splitter.Panel
+          key={data.type}
+          resizable={c.editMode}
+          size={c.sizes[i]}
+        >
+          <GraphView
+            {...data}
+            graphName={data.type.charAt(0).toUpperCase() + data.type.slice(1)}
+            carNum={c.curDriverNum}
+          />
         </Splitter.Panel>
       ))}
     </Splitter>
@@ -83,70 +77,66 @@ export default function Graphs({
 }
 
 type GraphViewDummyProps = {
-  graphData: GraphViewData[];
-  setGraphData: (graphData: GraphViewData[]) => void;
   index: number;
-  setSizes: (value: number[]) => void;
 };
 
-function GraphViewDummy({
-  graphData,
-  setGraphData,
-  index,
-  setSizes,
-}: GraphViewDummyProps) {
+function GraphViewDummy({ index }: GraphViewDummyProps) {
+  const c = useContext(TelemetryContext);
   function handleColorChange(index: number, color: string) {
-    const newGD = [...graphData];
+    const newGD = [...c.graphData];
     newGD[index] = { ...newGD[index], baseColor: color };
-    setGraphData(newGD);
+    c.setGraphData(newGD);
   }
 
-  function handleNameChange(index: number, name: string) {
-    const newGD = [...graphData];
-    newGD[index] = { ...newGD[index], graphName: name };
-    setGraphData(newGD);
-  }
+  // function handleNameChange(index: number, name: string) {
+  //   const newGD = [...c.graphData];
+  //   newGD[index] = { ...newGD[index], graphName: name };
+  //   c.setGraphData(newGD);
+  // }
 
   function handleNLinesChange(index: number, nLines: number | null) {
     if (nLines === null || nLines === undefined) return;
-    const newGD = [...graphData];
+    const newGD = [...c.graphData];
     newGD[index] = { ...newGD[index], nLines };
-    setGraphData(newGD);
+    c.setGraphData(newGD);
   }
 
   function handleTypeChange(index: number, type: GraphViewType) {
-    const newGD = [...graphData];
+    const newGD = [...c.graphData];
     newGD[index] = { ...newGD[index], type };
-    setGraphData(newGD);
+    c.setGraphData(newGD);
   }
 
   function handleDelete(index: number) {
-    const nGD = [...graphData.slice(0, index), ...graphData.slice(index + 1)];
-    setGraphData(nGD);
+    const nGD = [
+      ...c.graphData.slice(0, index),
+      ...c.graphData.slice(index + 1),
+    ];
+    c.setGraphData(nGD);
     const newSizes: number[] = Array(nGD.length).fill(1 / nGD.length);
-    setSizes(newSizes);
+    c.setSizes(newSizes);
   }
 
   return (
     <div
       className={`w-full h-full`}
-      style={{ backgroundColor: `${graphData[index].baseColor}40` }}
+      style={{ backgroundColor: `${c.graphData[index].baseColor}40` }}
     >
       <ColorPicker
-        value={graphData[index].baseColor}
+        value={c.graphData[index].baseColor}
         onChangeComplete={(color) =>
           handleColorChange(index, color.toHexString())
         }
         disabledAlpha={true}
       />
-      <Input
-        value={graphData[index].graphName}
+      {/* <Input
+        value={c.graphData[index].graphName}
         onChange={(e) => handleNameChange(index, e.target.value)}
-      />
+      /> */}
       <InputNumber
         min={2}
         max={10}
-        value={graphData[index].nLines}
+        value={c.graphData[index].nLines}
         onChange={(e) => handleNLinesChange(index, e)}
       />
       <Dropdown
@@ -156,8 +146,9 @@ function GraphViewDummy({
         }}
       >
         <Button type="primary">
-          {/*Fix: doesn't update in the frontend somehow*/}
-          {graphData[index].type} <DownOutlined />
+          {c.graphData[index].type.charAt(0).toUpperCase() +
+            c.graphData[index].type.slice(1)}
+          <DownOutlined />
         </Button>
       </Dropdown>
       <Button onClick={() => handleDelete(index)}>Delete</Button>
