@@ -263,15 +263,13 @@ function GraphView({
           id.current = message.data.id;
           break;
         case "lapDataPoint":
-          const { distance, values } = message.data;
-          const canvas = canvasRef.current;
-          if (!canvas) return;
+          if (!canvasRef.current) return;
 
-          const index = Math.floor(distance * (RESOLUTION - 1));
-
-          curLapRef.current[index] = {
-            values: [...values],
-            distance: distance,
+          curLapRef.current[
+            Math.floor(message.data.distance * (RESOLUTION - 1))
+          ] = {
+            values: [...message.data.values],
+            distance: message.data.distance,
           };
           break;
         case "lapFinished":
@@ -300,8 +298,8 @@ function GraphView({
       onEvent: onEvent,
     });
 
-    let wrapper = wrapperRef.current;
-    let canvas = canvasRef.current;
+    const wrapper = wrapperRef.current;
+    const canvas = canvasRef.current;
 
     if (!wrapper || !canvas) return;
 

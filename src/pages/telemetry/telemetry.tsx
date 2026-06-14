@@ -4,7 +4,7 @@ import { useState } from "react";
 import { GraphViewData, GraphViewType } from "./Graphs.tsx";
 
 export default function Telemetry() {
-  let [curDriverNum, setCurDriverNum] = useState(0);
+  const [curDriverNum, setCurDriverNum] = useState(0);
   const [editMode, setEditMode] = useState(false);
   const [sizes, setSizes] = useState<number[]>([25, 75]);
   const [graphData, setGraphData] = useState<GraphViewData[]>([

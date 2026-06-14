@@ -27,7 +27,13 @@ type SidebarButtonProps = {
   onClick: (id: Page) => void;
 };
 
-function SidebarButton({ Icon, text, isActive, id, onClick }: SidebarButtonProps) {
+function SidebarButton({
+  Icon,
+  text,
+  isActive,
+  id,
+  onClick,
+}: SidebarButtonProps) {
   return (
     <button
       className={`flex h-15 rounded-2xl justify-start items-center p-2 ${!isActive ? "bg-[#16171CC0] hover:bg-[#FFFFFF18] active:bg-[#3B28CC]" : "bg-[#3B28CC]"}`}

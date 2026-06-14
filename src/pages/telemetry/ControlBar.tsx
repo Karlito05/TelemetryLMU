@@ -98,7 +98,7 @@ function NormalMode({ setCurDriverNum, setEditMode }: NormalModeProps) {
   useEffect(() => {
     invoke<Driver[]>("get_drivers").then((v) => {
       setCurDriver(v[0].name);
-      let items: MenuProps["items"] = v.map((driver) => ({
+      const items: MenuProps["items"] = v.map((driver) => ({
         label: driver.name,
         key: String(driver.index),
       }));

@@ -6,11 +6,11 @@ export enum Page {
   Telemetry,
   LiveTimings,
   Analysis,
-  Setups
+  Setups,
 }
 
 function App() {
-  let [curPage, setCurPage] = useState<Page>(0);
+  const [curPage, setCurPage] = useState<Page>(0);
 
   const PAGES = {
     [Page.Telemetry]: <Telemetry />,
