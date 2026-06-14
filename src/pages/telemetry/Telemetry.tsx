@@ -1,7 +1,8 @@
 import Graphs from "./graphs/Graphs.tsx";
 import ControlBar from "./controlBar/ControlBar.tsx";
 import { useState, createContext } from "react";
-import { GraphViewData, GraphViewType } from "./graphs/Graphs.tsx";
+import { GraphViewData } from "./graphs/Graphs.tsx";
+import { GraphViewType } from "./graphs/graphTypes";
 
 type TelemetryContextType = {
   curDriverNum: number;

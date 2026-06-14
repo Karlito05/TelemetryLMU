@@ -3,14 +3,7 @@ import GraphViewDummy from "./GraphViewDummy";
 import { Splitter } from "antd";
 import { useContext } from "react";
 import { TelemetryContext } from "../Telemetry";
-
-export enum GraphViewType {
-  Throttle = "throttle",
-  Brake = "brake",
-  Rpm = "rpm",
-  Delta = "delta",
-  Speed = "speed",
-}
+import { GraphViewType } from "./graphTypes";
 
 export type GraphViewData = {
   baseColor: string;
