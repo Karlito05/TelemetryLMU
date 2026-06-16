@@ -64,7 +64,7 @@ export default function Telemetry() {
         <div className="h-6/100 pb-0.5">
           <ControlBar />
         </div>
-        <div className="h-94/100">
+        <div className="h-94/100 max-h-94/100 overflow-y-auto">
           <Graphs />
         </div>
       </div>

@@ -6,16 +6,20 @@ import { Button } from "antd";
 export default function EditLayout() {
   const c = useContext(TelemetryContext);
   function handleAddGraph() {
-    const nGD = [
-      ...c.graphData,
-      {
-        baseColor: "#ff5d5d",
-        carNum: c.curDriverNum,
-        graphName: "Brake",
-        nLines: 3,
-        type: GraphViewType.Brake,
-      },
-    ];
+    let nGD = [...c.graphData];
+    if (c.graphData.length < 10) {
+      nGD = [
+        ...c.graphData,
+        {
+          baseColor: "#ff5d5d",
+          nLines: 3,
+          type: GraphViewType.Brake,
+        },
+      ];
+    } else {
+      alert("Can't have more than 10 Graphs");
+    }
+
     c.setGraphData(nGD);
     const newSizes: number[] = Array(nGD.length).fill(1 / nGD.length);
     c.setSizes(newSizes);

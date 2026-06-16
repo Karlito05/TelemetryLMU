@@ -21,6 +21,7 @@ export default function Graphs() {
           key={data.type}
           resizable={c.editMode}
           size={c.sizes[i]}
+          min="10%"
         >
           <GraphViewDummy index={i} />
         </Splitter.Panel>
