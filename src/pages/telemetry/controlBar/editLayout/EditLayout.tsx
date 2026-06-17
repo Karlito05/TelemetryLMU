@@ -24,9 +24,13 @@ export default function EditLayout() {
     const newSizes: number[] = Array(nGD.length).fill(1 / nGD.length);
     c.setSizes(newSizes);
   }
+  function handleSave() {}
+  function handleSaveAs() {}
   return (
     <>
-      <Button onClick={() => c.setEditMode(false)}>Quit Edit Mode</Button>
+      <Button onClick={() => c.setEditMode(false)}>Cancel</Button>
+      <Button onClick={handleSave}>Save</Button>
+      <Button onClick={handleSaveAs}>Save As</Button>
       <Button onClick={() => handleAddGraph()}>Add Graph</Button>
     </>
   );
