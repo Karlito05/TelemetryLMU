@@ -19,7 +19,7 @@ function App() {
     [Page.Setups]: <div />,
   };
   return (
-    <main className="w-screen h-screen overflow-hidden bg-[#16171C]">
+    <main className="w-screen h-screen overflow-hidden bg-[#16171C] p-2">
       <div className="flex gap-3 h-full">
         <div className="w-1/5 min-w-80">
           <Sidebar activePage={curPage} onPageChange={(id) => setCurPage(id)} />

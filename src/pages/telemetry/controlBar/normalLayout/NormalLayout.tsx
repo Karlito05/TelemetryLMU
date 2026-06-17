@@ -11,7 +11,12 @@ export default function NormalLayout() {
 
   useEffect(() => {
     invoke<Driver[]>("get_drivers").then((v) => {
-      setCurDriver(v[0].name);
+      try {
+        setCurDriver(v[0].name);
+      } catch (e) {
+        console.error("No drivers found. The game is probably not runing.");
+        setCurDriver("N/A");
+      }
       const items: MenuProps["items"] = v.map((driver) => ({
         label: driver.name,
         key: String(driver.index),

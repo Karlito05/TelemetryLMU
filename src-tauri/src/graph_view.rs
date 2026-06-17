@@ -1,6 +1,6 @@
 use crate::telemetry::{update_telemetry, SharedMemoryObjectOut};
 use crate::telemetry::{TelemetryState, JoinHandleIdent};
-use log::info;
+use log::{info, error};
 use memmap2::Mmap;
 use serde::Serialize;
 use std::sync::Mutex;
@@ -112,7 +112,7 @@ pub async fn lap_data_unsubscribe(
     .lock().unwrap().threads {
         if handle.id == id {
             handle.join_handle.abort();
-            println!("Stopped thread {i}");
+            info!("Stopped thread {i}");
             break;
         } else {
             i += 1;
@@ -120,6 +120,12 @@ pub async fn lap_data_unsubscribe(
     }
     if i != graph_view_state.lock().unwrap().threads.len() {
         graph_view_state.lock().unwrap().threads.remove(i);
+    } else {
+        error!("Failed to remove thread {id}")
+    }
+    let remaining_threads = graph_view_state.lock().unwrap().threads.len();
+    if remaining_threads != 0 {
+        info!("There are {} more remaining threads", remaining_threads)
     }
     Ok(())
 }

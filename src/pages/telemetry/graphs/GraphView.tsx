@@ -21,6 +21,7 @@ type GraphViewProps = {
   type: string;
   carNum: number;
   graphName: string;
+  componentStyle?: React.CSSProperties;
 };
 
 type LapEvent =
@@ -235,6 +236,7 @@ function GraphView({
   carNum,
   type,
   graphName,
+  componentStyle,
 }: GraphViewProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -326,8 +328,15 @@ function GraphView({
 
     return () => {
       isActive = false;
-      console.log("unloading thread" + id);
-      invoke("lap_data_unsubscribe", { id: id.current });
+      // This is a fix for the strict mode in react. This really should't happen in prod cos its basically a race condition
+      // TODO: This fix
+      if (id.current == "") {
+        console.log(`ID is not set. Failing back to id: ${type}-${carNum}`);
+        invoke("lap_data_unsubscribe", { id: `${type}-${carNum}` });
+      } else {
+        console.log(`Invoked lap_data_unsubscribe with id: ${id.current}`);
+        invoke("lap_data_unsubscribe", { id: id.current });
+      }
       curLapRef.current = new Array(RESOLUTION);
       refLapRef.current = [];
 
@@ -340,7 +349,11 @@ function GraphView({
 
   return (
     <div ref={wrapperRef} className="w-full h-full">
-      <canvas ref={canvasRef} className="block w-full h-full rounded-xl" />
+      <canvas
+        ref={canvasRef}
+        className="block w-full h-full"
+        style={{ ...componentStyle }}
+      />
     </div>
   );
 }

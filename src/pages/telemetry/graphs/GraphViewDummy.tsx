@@ -52,7 +52,7 @@ export default function GraphViewDummy({ index }: GraphViewDummyProps) {
         disabledAlpha={true}
       />
       <InputNumber
-        min={2}
+        min={3}
         max={10}
         value={c.graphData[index].nLines}
         onChange={(e) => handleNLinesChange(index, e)}
