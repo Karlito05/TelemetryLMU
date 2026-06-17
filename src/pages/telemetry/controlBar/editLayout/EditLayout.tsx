@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { TelemetryContext } from "../../Telemetry";
-import { GraphViewType } from "../../graphs/graphTypes";
 import { Button } from "antd";
+import { GraphViewType } from "../../store";
 
 export default function EditLayout() {
   const c = useContext(TelemetryContext);

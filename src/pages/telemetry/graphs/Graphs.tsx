@@ -3,14 +3,6 @@ import GraphViewDummy from "./GraphViewDummy";
 import { Splitter } from "antd";
 import { useContext } from "react";
 import { TelemetryContext } from "../Telemetry";
-import { GraphViewType } from "./graphTypes";
-
-export type GraphViewData = {
-  baseColor: string;
-  // graphName: string;
-  nLines: number;
-  type: GraphViewType;
-};
 
 export default function Graphs() {
   const c = useContext(TelemetryContext);

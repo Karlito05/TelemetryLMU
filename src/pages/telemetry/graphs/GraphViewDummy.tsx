@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { TelemetryContext } from "../Telemetry";
-import { GraphViewType } from "./graphTypes";
 import { ColorPicker, Button, Dropdown, InputNumber, MenuProps } from "antd";
+import { GraphViewType } from "../store";
 import { DownOutlined } from "@ant-design/icons";
 
 type GraphViewDummyProps = {

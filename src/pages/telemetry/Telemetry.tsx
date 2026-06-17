@@ -1,8 +1,7 @@
 import Graphs from "./graphs/Graphs.tsx";
 import ControlBar from "./controlBar/ControlBar.tsx";
 import { useState, createContext } from "react";
-import { GraphViewData } from "./graphs/Graphs.tsx";
-import { GraphViewType } from "./graphs/graphTypes";
+import { GraphViewData, GraphViewType, Layouts } from "./store.ts";
 
 type TelemetryContextType = {
   curDriverNum: number;
@@ -13,6 +12,10 @@ type TelemetryContextType = {
   setGraphData: (value: GraphViewData[]) => void;
   sizes: number[];
   setSizes: (value: number[]) => void;
+  layouts: Layouts[];
+  setLayouts: (value: Layouts[]) => void;
+  activeLayout: number;
+  setActiveLayout: (value: number) => void;
 };
 
 const defaultTelemetryContext: TelemetryContextType = {
@@ -24,6 +27,10 @@ const defaultTelemetryContext: TelemetryContextType = {
   setGraphData: () => {},
   sizes: [0.5, 0.5],
   setSizes: () => {},
+  layouts: [],
+  setLayouts: () => {},
+  activeLayout: 0,
+  setActiveLayout: () => {},
 };
 
 export const TelemetryContext = createContext<TelemetryContextType>(
@@ -46,7 +53,10 @@ export default function Telemetry() {
       type: GraphViewType.Brake,
     },
   ]);
-
+  const [layouts, setLayouts] = useState<Layouts[]>([
+    { name: "DLayout", scales: [0.5, 0.5], graphData: graphData },
+  ]);
+  const [activeLayout, setActiveLayout] = useState<number>(0);
   return (
     <TelemetryContext.Provider
       value={{
@@ -58,6 +68,10 @@ export default function Telemetry() {
         setSizes,
         graphData,
         setGraphData,
+        layouts,
+        setLayouts,
+        activeLayout,
+        setActiveLayout,
       }}
     >
       <div className=" h-full w-full">

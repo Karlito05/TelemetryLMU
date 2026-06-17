@@ -7,6 +7,7 @@ type DriverLayoutWidgetProps = {
   onDriverSelect?: (key: string, driverName: string) => void;
   curDriver: string;
   onLayoutSelect?: (key: string) => void;
+  curLayout: string;
 };
 
 export default function DriverLayoutWidget({
@@ -15,6 +16,7 @@ export default function DriverLayoutWidget({
   onDriverSelect,
   curDriver,
   onLayoutSelect,
+  curLayout,
 }: DriverLayoutWidgetProps) {
   return (
     <div className="flex flex-col m-2 space-y-1">
@@ -57,7 +59,8 @@ export default function DriverLayoutWidget({
           menu={{ items: layouts, onClick: ({ key }) => onLayoutSelect?.(key) }}
         >
           <Button type="primary">
-            Layout 1 <DownOutlined />
+            {curLayout}
+            <DownOutlined />
           </Button>
         </Dropdown>
       </div>
