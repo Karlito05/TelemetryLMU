@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { TelemetryContext } from "../../Telemetry";
 import { Button } from "antd";
 import { GraphViewType } from "../../store";
+import { setLayouts } from "../../store";
 
 export default function EditLayout() {
   const c = useContext(TelemetryContext);
@@ -33,6 +34,7 @@ export default function EditLayout() {
     let newLayouts = c.layouts;
     newLayouts[c.activeLayout].graphData = c.graphData;
     newLayouts[c.activeLayout].scales = c.sizes;
+    setLayouts(newLayouts);
     c.setLayouts(newLayouts);
     c.setEditMode(false);
   }
@@ -44,6 +46,7 @@ export default function EditLayout() {
       name: name ? name : "Layout " + c.layouts.length + 1,
       scales: c.sizes,
     });
+    setLayouts(newLayouts);
     c.setLayouts(newLayouts);
     c.setEditMode(false);
   }
@@ -54,6 +57,7 @@ export default function EditLayout() {
         ...c.layouts.slice(0, c.activeLayout),
         ...c.layouts.slice(c.activeLayout + 1),
       ];
+      setLayouts(newLayouts);
       c.setActiveLayout(0);
       c.setLayouts(newLayouts);
       c.setEditMode(false);
