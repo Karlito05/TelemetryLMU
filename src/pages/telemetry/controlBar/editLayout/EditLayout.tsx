@@ -36,7 +36,17 @@ export default function EditLayout() {
     c.setLayouts(newLayouts);
     c.setEditMode(false);
   }
-  function handleSaveAs() {}
+  function handleSaveAs() {
+    let newLayouts = c.layouts;
+    const name = prompt("How would you like this layout to be named: ");
+    newLayouts.push({
+      graphData: c.graphData,
+      name: name ? name : "Layout " + c.layouts.length + 1,
+      scales: c.sizes,
+    });
+    c.setLayouts(newLayouts);
+    c.setEditMode(false);
+  }
   return (
     <>
       <Button onClick={handleCancel}>Cancel</Button>

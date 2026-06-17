@@ -6,6 +6,7 @@ import { TelemetryContext } from "../Telemetry";
 
 export default function Graphs() {
   const c = useContext(TelemetryContext);
+  const activeLayout = c.layouts[c.activeLayout];
   return c.editMode ? (
     <Splitter vertical={true} className="w-full h-full" onResize={c.setSizes}>
       {c.graphData.map((data, i) => (
@@ -37,15 +38,15 @@ export default function Graphs() {
     </Splitter>
   ) : (
     <Splitter vertical={true} className="w-full h-full" onResize={c.setSizes}>
-      {c.layouts[c.activeLayout].graphData.map((data, i) => (
+      {activeLayout.graphData.map((data, i) => (
         <Splitter.Panel
-          key={data.type}
+          key={`${c.activeLayout}-${data.type}-${i}`}
           resizable={c.editMode}
-          size={c.layouts[c.activeLayout].scales[i]}
+          size={activeLayout.scales[i]}
           style={
             i == 0
               ? { paddingBottom: "0.125rem" }
-              : i == c.graphData.length - 1
+              : i == activeLayout.graphData.length - 1
                 ? { paddingTop: "0.125rem" }
                 : { paddingTop: "0.125rem", paddingBottom: "0.125rem" }
           }
@@ -54,13 +55,14 @@ export default function Graphs() {
             {...data}
             graphName={data.type.charAt(0).toUpperCase() + data.type.slice(1)}
             carNum={c.curDriverNum}
+            key={`${c.activeLayout}-${data.type}-${i}`}
             componentStyle={
               i == 0
                 ? {
                     borderTopLeftRadius: "1.5rem",
                     borderTopRightRadius: "1.5rem",
                   }
-                : i == c.graphData.length - 1
+                : i == activeLayout.graphData.length - 1
                   ? {
                       borderBottomLeftRadius: "1.5rem",
                       borderBottomRightRadius: "1.5rem",

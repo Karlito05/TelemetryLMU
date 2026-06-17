@@ -345,7 +345,7 @@ function GraphView({
         ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       }
     };
-  }, [carNum]);
+  }, [baseColor, nLines, carNum, type, graphName]);
 
   return (
     <div ref={wrapperRef} className="w-full h-full">
