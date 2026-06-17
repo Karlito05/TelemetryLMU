@@ -37,11 +37,11 @@ export default function Graphs() {
     </Splitter>
   ) : (
     <Splitter vertical={true} className="w-full h-full" onResize={c.setSizes}>
-      {c.graphData.map((data, i) => (
+      {c.layouts[c.activeLayout].graphData.map((data, i) => (
         <Splitter.Panel
           key={data.type}
           resizable={c.editMode}
-          size={c.sizes[i]}
+          size={c.layouts[c.activeLayout].scales[i]}
           style={
             i == 0
               ? { paddingBottom: "0.125rem" }

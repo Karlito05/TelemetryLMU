@@ -24,11 +24,22 @@ export default function EditLayout() {
     const newSizes: number[] = Array(nGD.length).fill(1 / nGD.length);
     c.setSizes(newSizes);
   }
-  function handleSave() {}
+  function handleCancel() {
+    c.setSizes(c.layouts[c.activeLayout].scales);
+    c.setGraphData(c.layouts[c.activeLayout].graphData);
+    c.setEditMode(false);
+  }
+  function handleSave() {
+    let newLayouts = c.layouts;
+    newLayouts[c.activeLayout].graphData = c.graphData;
+    newLayouts[c.activeLayout].scales = c.sizes;
+    c.setLayouts(newLayouts);
+    c.setEditMode(false);
+  }
   function handleSaveAs() {}
   return (
     <>
-      <Button onClick={() => c.setEditMode(false)}>Cancel</Button>
+      <Button onClick={handleCancel}>Cancel</Button>
       <Button onClick={handleSave}>Save</Button>
       <Button onClick={handleSaveAs}>Save As</Button>
       <Button onClick={() => handleAddGraph()}>Add Graph</Button>

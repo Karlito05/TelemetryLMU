@@ -54,7 +54,7 @@ export default function Telemetry() {
     },
   ]);
   const [layouts, setLayouts] = useState<Layouts[]>([
-    { name: "DLayout", scales: [0.5, 0.5], graphData: graphData },
+    { name: "DLayout", scales: sizes, graphData: graphData },
   ]);
   const [activeLayout, setActiveLayout] = useState<number>(0);
   return (
