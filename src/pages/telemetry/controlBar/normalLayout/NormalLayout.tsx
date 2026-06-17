@@ -24,6 +24,8 @@ export default function NormalLayout() {
       c.setEditMode(true);
     } else {
       c.setActiveLayout(Number(key));
+      c.setGraphData(c.layouts[Number(key)].graphData);
+      c.setSizes(c.layouts[Number(key)].scales);
       setCurLayout(c.layouts[Number(key)].name);
     }
   }
@@ -31,12 +33,12 @@ export default function NormalLayout() {
   useEffect(() => {
     invoke<Driver[]>("get_drivers").then((v) => {
       try {
-        setCurDriver(v[0].name);
+        setCurDriver(v[c.curDriverNum].name);
       } catch (e) {
         console.error("No drivers found. The game is probably not runing.");
         setCurDriver("N/A");
       }
-      setCurLayout(c.layouts[0].name);
+      setCurLayout(c.layouts[c.activeLayout].name);
       const items: MenuProps["items"] = v.map((driver) => ({
         label: driver.name,
         key: String(driver.index),
