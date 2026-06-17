@@ -1,13 +1,12 @@
 use crate::telemetry::{update_telemetry, SharedMemoryObjectOut};
-use crate::telemetry::{TelemetryState, JoinHandleIdent};
-use log::{info, error};
+use crate::telemetry::{JoinHandleIdent, TelemetryState};
+use log::{error, info};
 use memmap2::Mmap;
 use serde::Serialize;
 use std::sync::Mutex;
 use std::{sync::Arc, time::Duration};
 use tauri::{ipc::Channel, State};
 use tokio::time::sleep;
-
 
 pub struct GraphViewState {
     pub threads: Vec<JoinHandleIdent>,
@@ -108,8 +107,7 @@ pub async fn lap_data_unsubscribe(
     id: String,
 ) -> Result<(), String> {
     let mut i = 0;
-    for handle in &graph_view_state
-    .lock().unwrap().threads {
+    for handle in &graph_view_state.lock().unwrap().threads {
         if handle.id == id {
             handle.join_handle.abort();
             info!("Stopped thread {i}");
@@ -147,19 +145,22 @@ fn i8_array_to_string(buf: &[i8; 32]) -> String {
 }
 
 #[tauri::command]
-pub async fn get_drivers(mmap: State<'_, MmapState>) -> Result<Vec<Driver>,String> {
-        let telemetry = update_telemetry(&mmap.mmap)
-            .ok_or_else(|| "TelemetryReadFailed".to_string())
-            .unwrap();
-        
+pub async fn get_drivers(mmap: State<'_, MmapState>) -> Result<Vec<Driver>, String> {
+    let telemetry = update_telemetry(&mmap.mmap)
+        .ok_or_else(|| "TelemetryReadFailed".to_string())
+        .unwrap();
 
-        let mut drivers: Vec<Driver> = Vec::new();
-        for i in 0..103 {
-            let name = i8_array_to_string(&telemetry.scoring.veh_scoring_info[i].m_driver_name);
-            if name != ""{
-            drivers.push(Driver {index: i, name: name });}
+    let mut drivers: Vec<Driver> = Vec::new();
+    for i in 0..103 {
+        let name = i8_array_to_string(&telemetry.scoring.veh_scoring_info[i].m_driver_name);
+        if name != "" {
+            drivers.push(Driver {
+                index: i,
+                name: name,
+            });
         }
-        Ok(drivers)
+    }
+    Ok(drivers)
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]

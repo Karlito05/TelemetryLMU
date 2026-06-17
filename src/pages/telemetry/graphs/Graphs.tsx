@@ -24,7 +24,22 @@ export default function Graphs() {
           min="10%"
           style={{ paddingTop: "0.25rem", paddingBottom: "0.25rem" }}
         >
-          <GraphViewDummy index={i} />
+          <GraphViewDummy
+            index={i}
+            style={
+              i == 0
+                ? {
+                    borderTopLeftRadius: "1.5rem",
+                    borderTopRightRadius: "1.5rem",
+                  }
+                : i == c.graphData.length - 1
+                  ? {
+                      borderBottomLeftRadius: "1.5rem",
+                      borderBottomRightRadius: "1.5rem",
+                    }
+                  : {}
+            }
+          />
         </Splitter.Panel>
       ))}
     </Splitter>

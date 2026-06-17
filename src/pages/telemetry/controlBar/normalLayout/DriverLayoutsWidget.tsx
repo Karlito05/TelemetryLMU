@@ -18,7 +18,7 @@ export default function DriverLayoutWidget({
 }: DriverLayoutWidgetProps) {
   return (
     <div className="flex flex-col m-2 space-y-1">
-      <div className="text-white flex items-center justify-between">
+      <div className="text-white flex gap-3 items-center justify-between">
         Driver:
         <Dropdown
           trigger={["click"]}
@@ -50,7 +50,7 @@ export default function DriverLayoutWidget({
           </Button>
         </Dropdown>
       </div>
-      <div className="text-white flex items-center justify-between">
+      <div className="text-white flex gap-3 items-center justify-between">
         Layout:
         <Dropdown
           trigger={["click"]}

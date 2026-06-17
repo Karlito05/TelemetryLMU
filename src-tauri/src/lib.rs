@@ -2,17 +2,18 @@
 mod graph_view;
 mod telemetry;
 
+use graph_view::GraphViewState;
 use graph_view::*;
 use std::sync::Arc;
 use std::sync::Mutex;
 use tauri::Manager;
 use telemetry::get_mmap;
 use telemetry::TelemetryState;
-use graph_view::GraphViewState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .filter(|metadata| !metadata.target().starts_with("tracing"))
@@ -22,9 +23,7 @@ pub fn run() {
                 .build(),
         )
         .setup(|app| {
-            let backend = Mutex::new(TelemetryState {
-                full_mode: false,
-            });
+            let backend = Mutex::new(TelemetryState { full_mode: false });
 
             let mmap = get_mmap("/dev/shm/LMU_Data", &backend);
 
@@ -33,7 +32,9 @@ pub fn run() {
             app.manage(MmapState {
                 mmap: Arc::new(mmap),
             });
-            app.manage(Mutex::new(GraphViewState{threads: Vec::new()}));
+            app.manage(Mutex::new(GraphViewState {
+                threads: Vec::new(),
+            }));
 
             Ok(())
         })

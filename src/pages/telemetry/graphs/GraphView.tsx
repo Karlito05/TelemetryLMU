@@ -145,7 +145,7 @@ function render(
 
         ctx.font = "14px 'inter', sans-serif";
         ctx.fillStyle = "#FFFFFF70";
-        ctx.fillText(`${maxVal * t * 100} ${unit}`, 0, y - 2);
+        ctx.fillText(`${Math.trunc(maxVal * t * 100)} ${unit}`, 0, y - 2);
       }
     else
       for (let i = 0; i <= segments; i++) {
@@ -160,7 +160,7 @@ function render(
 
         ctx.font = "14px 'inter', sans-serif";
         ctx.fillStyle = "#FFFFFF70";
-        ctx.fillText(`${maxVal * t} ${unit}`, 0, y - 2);
+        ctx.fillText(`${Math.trunc(maxVal * t)} ${unit}`, 0, y - 2);
       }
 
     ctx.save();

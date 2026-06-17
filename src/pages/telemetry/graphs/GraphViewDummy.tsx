@@ -6,9 +6,10 @@ import { DownOutlined } from "@ant-design/icons";
 
 type GraphViewDummyProps = {
   index: number;
+  style?: React.CSSProperties;
 };
 
-export default function GraphViewDummy({ index }: GraphViewDummyProps) {
+export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
   const c = useContext(TelemetryContext);
   function handleColorChange(index: number, color: string) {
     const newGD = [...c.graphData];
@@ -41,35 +42,57 @@ export default function GraphViewDummy({ index }: GraphViewDummyProps) {
 
   return (
     <div
-      className={`w-full h-full`}
-      style={{ backgroundColor: `${c.graphData[index].baseColor}40` }}
+      className={
+        "w-full h-full flex gap-6 text-white text-2xl font-[Electrolize] p-3"
+      }
+      style={{ backgroundColor: `${c.graphData[index].baseColor}40`, ...style }}
     >
-      <ColorPicker
-        value={c.graphData[index].baseColor}
-        onChangeComplete={(color) =>
-          handleColorChange(index, color.toHexString())
-        }
-        disabledAlpha={true}
-      />
-      <InputNumber
-        min={3}
-        max={10}
-        value={c.graphData[index].nLines}
-        onChange={(e) => handleNLinesChange(index, e)}
-      />
-      <Dropdown
-        menu={{
-          items: typeOptions,
-          onClick: ({ key }) => handleTypeChange(index, key as GraphViewType),
-        }}
-      >
-        <Button type="primary">
-          {c.graphData[index].type.charAt(0).toUpperCase() +
-            c.graphData[index].type.slice(1)}
-          <DownOutlined />
+      <div className="flex gap-3 h-fit">
+        {"Color:"}
+        <ColorPicker
+          showText
+          value={c.graphData[index].baseColor}
+          onChangeComplete={(color) =>
+            handleColorChange(index, color.toHexString())
+          }
+          disabledAlpha={true}
+        />
+      </div>
+
+      <div className="flex gap-3 h-fit">
+        {"Gridlines:"}
+        <InputNumber
+          min={3}
+          max={10}
+          value={c.graphData[index].nLines}
+          onChange={(e) => handleNLinesChange(index, e)}
+        />
+      </div>
+
+      <div className="flex gap-3 h-fit">
+        {"Graph Type:"}
+        <Dropdown
+          menu={{
+            items: typeOptions,
+            onClick: ({ key }) => handleTypeChange(index, key as GraphViewType),
+          }}
+        >
+          <Button type="primary">
+            {c.graphData[index].type.charAt(0).toUpperCase() +
+              c.graphData[index].type.slice(1)}
+            <DownOutlined />
+          </Button>
+        </Dropdown>
+      </div>
+
+      <div className="flex gap-3 h-fit">
+        <Button
+          onClick={() => handleDelete(index)}
+          style={{ background: "#C00000" }}
+        >
+          Delete
         </Button>
-      </Dropdown>
-      <Button onClick={() => handleDelete(index)}>Delete</Button>
+      </div>
     </div>
   );
 }
