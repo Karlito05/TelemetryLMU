@@ -47,12 +47,29 @@ export default function EditLayout() {
     c.setLayouts(newLayouts);
     c.setEditMode(false);
   }
+
+  function handleRemove() {
+    if (c.layouts.length > 1) {
+      const newLayouts = [
+        ...c.layouts.slice(0, c.activeLayout),
+        ...c.layouts.slice(c.activeLayout + 1),
+      ];
+      c.setActiveLayout(0);
+      c.setLayouts(newLayouts);
+      c.setEditMode(false);
+    } else {
+      alert(
+        "Can't remove layout. You must have at least one more layout to remove this one.",
+      );
+    }
+  }
   return (
     <>
       <Button onClick={handleCancel}>Cancel</Button>
       <Button onClick={handleSave}>Save</Button>
       <Button onClick={handleSaveAs}>Save As</Button>
       <Button onClick={() => handleAddGraph()}>Add Graph</Button>
+      <Button onClick={handleRemove}>Remove</Button>
     </>
   );
 }
