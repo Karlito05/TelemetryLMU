@@ -4,7 +4,7 @@ export default function Titlebar() {
   const appWindow = getCurrentWindow();
   return (
     <div
-      className="w-full h-7 flex justify-end items-center pr-4 gap-3"
+      className="w-full h-7 fixed top-0 left-0 right-0 flex justify-end items-center pr-4 gap-3"
       data-tauri-drag-region
     >
       <button

@@ -28,14 +28,14 @@ function App() {
     >
       <main className="w-screen h-screen overflow-hidden bg-[#16171C]  rounded-3xl">
         <Titlebar />
-        <div className="flex gap-3 h-full p-2 pt-0">
+        <div className="flex gap-3 h-full w-full p-2 pt-7">
           <div className="w-1/6 min-w-80">
             <Sidebar
               activePage={curPage}
               onPageChange={(id) => setCurPage(id)}
             />
           </div>
-          <div className="h-full w-full">{PAGES[curPage]}</div>
+          <div className="w-full">{PAGES[curPage]}</div>
         </div>
       </main>
     </ConfigProvider>

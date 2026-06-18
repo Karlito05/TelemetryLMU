@@ -32,3 +32,11 @@
 *[data-tauri-drag-region] {
   app-region: drag;
 }
+
+* {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
