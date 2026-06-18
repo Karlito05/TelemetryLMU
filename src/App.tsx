@@ -2,6 +2,7 @@ import Sidebar from "./components/Sidebar";
 import Telemetry from "./pages/telemetry/Telemetry";
 import { useState } from "react";
 import { ConfigProvider, theme } from "antd";
+import Titlebar from "./components/Titlebar";
 
 export enum Page {
   Telemetry,
@@ -25,9 +26,10 @@ function App() {
         algorithm: theme.darkAlgorithm,
       }}
     >
-      <main className="w-screen h-screen overflow-hidden bg-[#16171C] p-2">
-        <div className="flex gap-3 h-full">
-          <div className="w-1/5 min-w-80">
+      <main className="w-screen h-screen overflow-hidden bg-[#16171C]  rounded-3xl">
+        <Titlebar />
+        <div className="flex gap-3 h-full p-2 pt-0">
+          <div className="w-1/6 min-w-80">
             <Sidebar
               activePage={curPage}
               onPageChange={(id) => setCurPage(id)}
