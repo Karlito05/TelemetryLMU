@@ -13,6 +13,7 @@ export enum Page {
 
 function App() {
   const [curPage, setCurPage] = useState<Page>(0);
+  const [isOpen, setIsOpen] = useState(true);
 
   const PAGES = {
     [Page.Telemetry]: <Telemetry />,
@@ -29,10 +30,12 @@ function App() {
       <main className="w-screen h-screen overflow-hidden bg-[#16171C]  rounded-3xl">
         <Titlebar />
         <div className="flex gap-3 h-full w-full p-2 pt-7">
-          <div className="w-1/6 min-w-80">
+          <div className={isOpen ? "w-1/7 min-w-80" : "w-3/100"}>
             <Sidebar
               activePage={curPage}
               onPageChange={(id) => setCurPage(id)}
+              setIsOpen={setIsOpen}
+              isOpen={isOpen}
             />
           </div>
           <div className="w-full">{PAGES[curPage]}</div>
