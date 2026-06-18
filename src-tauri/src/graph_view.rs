@@ -1,6 +1,6 @@
 use crate::telemetry::{update_telemetry, SharedMemoryObjectOut};
 use crate::telemetry::{JoinHandleIdent, TelemetryState};
-use log::{error, info};
+use log::{error, info, warn};
 use memmap2::Mmap;
 use serde::Serialize;
 use std::sync::Mutex;
@@ -52,11 +52,16 @@ pub fn lap_data_subscribe(
     }
     let mmap_clone = Arc::clone(&mmap.mmap);
     let id = format!("{tele_type}-{car_num}");
+    let id_for_log = id.clone();
     let join_handle = tauri::async_runtime::spawn(async move {
         info!("Current car num is {car_num}");
-        let telemetry = update_telemetry(&mmap_clone)
-            .ok_or_else(|| "TelemetryReadFailed".to_string())
-            .unwrap();
+        let telemetry = match update_telemetry(&mmap_clone) {
+            Some(v) => v,
+            None => {
+                warn!("Telemetry read failed on subscribe for thread {id_for_log}");
+                return;
+            }
+        };
         let tele_type = GraphViewDataType::from_string(&tele_type, car_num);
         let mut current_lap = 0;
 
@@ -71,9 +76,14 @@ pub fn lap_data_subscribe(
 
         loop {
             // Main data distribution logic
-            let telemetry = update_telemetry(&mmap_clone)
-                .ok_or_else(|| "TelemetryReadFailed".to_string())
-                .unwrap();
+            let telemetry = match update_telemetry(&mmap_clone) {
+                Some(v) => v,
+                None => {
+                    // No live producer currently available; keep thread alive.
+                    sleep(Duration::from_millis(100)).await;
+                    continue;
+                }
+            };
 
             if tele_type.get_lap(&telemetry) != current_lap {
                 current_lap = tele_type.get_lap(&telemetry);
@@ -147,8 +157,7 @@ fn i8_array_to_string(buf: &[i8; 32]) -> String {
 #[tauri::command]
 pub async fn get_drivers(mmap: State<'_, MmapState>) -> Result<Vec<Driver>, String> {
     let telemetry = update_telemetry(&mmap.mmap)
-        .ok_or_else(|| "TelemetryReadFailed".to_string())
-        .unwrap();
+        .ok_or_else(|| "TelemetryReadFailed".to_string())?;
 
     let mut drivers: Vec<Driver> = Vec::new();
     for i in 0..103 {

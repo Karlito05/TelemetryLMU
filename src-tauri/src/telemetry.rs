@@ -1,8 +1,15 @@
-use log::{info, warn};
 use memmap2::Mmap;
+#[cfg(not(target_os = "windows"))]
+use log::{info, warn};
+#[cfg(not(target_os = "windows"))]
 use std::fs::File;
 use std::sync::Mutex;
-use tempfile::NamedTempFile;
+#[cfg(target_os = "windows")]
+use windows_sys::Win32::Foundation::CloseHandle;
+#[cfg(target_os = "windows")]
+use windows_sys::Win32::System::Memory::{
+    MapViewOfFile, OpenFileMappingW, UnmapViewOfFile, FILE_MAP_READ,
+};
 
 //##################################################################################################
 //#                                                                                                #
@@ -20,6 +27,13 @@ pub struct TelemetryState {
     pub full_mode: bool,
 }
 
+fn mmap_fallback() -> Mmap {
+    let file = tempfile::NamedTempFile::new().unwrap().into_file();
+    file.set_len(1).unwrap();
+    unsafe { Mmap::map(&file).unwrap() }
+}
+
+#[cfg(not(target_os = "windows"))]
 pub fn get_mmap(path: &str, state: &Mutex<TelemetryState>) -> Mmap {
     let file = match File::open(path) {
         Ok(v) => {
@@ -29,10 +43,17 @@ pub fn get_mmap(path: &str, state: &Mutex<TelemetryState>) -> Mmap {
         Err(e) => {
             warn!("Could not open telemetry file: {e}");
             info!("Switching into no telemetry mode");
-            NamedTempFile::new().unwrap().into_file()
+            return mmap_fallback();
         }
     };
     unsafe { Mmap::map(&file).unwrap() }
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_mmap(_path: &str, state: &Mutex<TelemetryState>) -> Mmap {
+    // Windows telemetry is read from the named mapping object directly in update_telemetry.
+    state.lock().unwrap().full_mode = true;
+    mmap_fallback()
 }
 
 // pub fn update_telemetry(mmap: &Mmap) -> Option<SharedMemoryObjectOut> {
@@ -51,6 +72,7 @@ pub fn get_mmap(path: &str, state: &Mutex<TelemetryState>) -> Mmap {
 //     }
 // }
 
+#[cfg(not(target_os = "windows"))]
 pub fn update_telemetry(mmap: &Mmap) -> Option<Box<SharedMemoryObjectOut>> {
     let layout_size = std::mem::size_of::<SharedMemoryLayout>();
 
@@ -72,6 +94,43 @@ pub fn update_telemetry(mmap: &Mmap) -> Option<Box<SharedMemoryObjectOut>> {
 
         // 3. Convert to initialized and return just the .data field
         // We box the result so the 300KB stays on the heap
+        let full_layout = layout_ptr.assume_init();
+        Some(Box::new(full_layout.data))
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn update_telemetry(_mmap: &Mmap) -> Option<Box<SharedMemoryObjectOut>> {
+    const LMU_SHARED_MEMORY_FILE: &str = "LMU_Data";
+
+    let layout_size = std::mem::size_of::<SharedMemoryLayout>();
+    let name_wide: Vec<u16> = LMU_SHARED_MEMORY_FILE
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
+
+    unsafe {
+        let mapping_handle = OpenFileMappingW(FILE_MAP_READ, 0, name_wide.as_ptr());
+        if mapping_handle.is_null() {
+            return None;
+        }
+
+        let mapped_view = MapViewOfFile(mapping_handle, FILE_MAP_READ, 0, 0, layout_size);
+        if mapped_view.Value.is_null() {
+            CloseHandle(mapping_handle);
+            return None;
+        }
+
+        let mut layout_ptr = Box::<SharedMemoryLayout>::new_uninit();
+        std::ptr::copy_nonoverlapping(
+            mapped_view.Value as *const u8,
+            layout_ptr.as_mut_ptr() as *mut u8,
+            layout_size,
+        );
+
+        UnmapViewOfFile(mapped_view);
+        CloseHandle(mapping_handle);
+
         let full_layout = layout_ptr.assume_init();
         Some(Box::new(full_layout.data))
     }
