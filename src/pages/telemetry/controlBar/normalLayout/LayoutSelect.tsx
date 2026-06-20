@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../../components/ui/select";
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import { TelemetryContext } from "@/pages/telemetry/Telemetry";
 
 export default function LayoutSelect() {

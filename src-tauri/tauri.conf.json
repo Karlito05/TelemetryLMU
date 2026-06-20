@@ -15,7 +15,9 @@
         "title": "TelemetryLMU",
         "decorations": true,
         "maximized": true,
-        "shadow": true
+        "shadow": true,
+        "minWidth": 800,
+        "minHeight": 600
       }
     ],
     "security": {
