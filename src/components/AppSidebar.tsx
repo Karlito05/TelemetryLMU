@@ -2,7 +2,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarTrigger,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,

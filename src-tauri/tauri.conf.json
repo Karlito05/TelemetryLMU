@@ -13,7 +13,7 @@
     "windows": [
       {
         "title": "TelemetryLMU",
-        "decorations": false,
+        "decorations": true,
         "maximized": true,
         "transparent": true,
         "shadow": true
