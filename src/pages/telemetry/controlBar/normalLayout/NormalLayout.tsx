@@ -6,7 +6,7 @@ export default function NormalLayout() {
   return (
     <>
       <DriverSelect />
-      <Separator />
+      <Separator orientation="vertical" className="mx-2 my-1" />
       <LayoutSelect />
     </>
   );
