@@ -25,7 +25,7 @@ export function AppSidebar({
   setActivePage: (value: Page) => void;
 }) {
   return (
-    <Sidebar>
+    <Sidebar variant="floating">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
