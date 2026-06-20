@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { TelemetryContext } from "../../Telemetry";
-import { Button } from "antd";
+import { Button } from "@/components/ui/button";
 import { GraphViewType } from "../../store";
 import { setLayouts } from "../../store";
 

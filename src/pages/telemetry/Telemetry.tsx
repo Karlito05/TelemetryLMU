@@ -79,8 +79,8 @@ export default function Telemetry() {
         setActiveLayout,
       }}
     >
-      <div className="flex h-full min-h-0 w-full flex-col gap-2">
-        <div className="h-[6%] shrink-0 pb-2">
+      <div className="flex h-full min-h-0px w-full flex-col gap-2">
+        <div className="shrink-0 min-h-10 pb-1">
           <ControlBar />
         </div>
         <div className="min-h-0 flex-1">

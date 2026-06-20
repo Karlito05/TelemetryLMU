@@ -3,6 +3,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { TelemetryContext } from "../../Telemetry";
 import { MenuProps } from "antd";
 import DriverLayoutWidget from "./DriverLayoutsWidget";
+import DriverSelect from "./DriverSelect";
+import LayoutSelect from "./LayoutSelect";
 
 export default function NormalLayout() {
   const [drivers, setDrivers] = useState<MenuProps["items"]>([]);
@@ -49,7 +51,7 @@ export default function NormalLayout() {
   }, []);
   return (
     <>
-      <DriverLayoutWidget
+      {/* <DriverLayoutWidget
         drivers={drivers}
         layouts={layouts}
         onDriverSelect={(key, driverName) => {
@@ -61,7 +63,9 @@ export default function NormalLayout() {
         onLayoutSelect={handleLayout}
         curDriver={curDriver}
         curLayout={curLayout}
-      />
+      /> */}
+      <DriverSelect />
+      <LayoutSelect />
     </>
   );
 }
