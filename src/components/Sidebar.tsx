@@ -5,7 +5,6 @@ import TelemetryIcon from "../assets/icons/graph.svg?react";
 import AnalysisIcon from "../assets/icons/analysis-icon.svg?react";
 import SetupsIcon from "../assets/icons/setups.svg?react";
 import { Page } from "../App.tsx";
-import { useState } from "react";
 import { Divider } from "antd";
 
 type TopRowProps = {
