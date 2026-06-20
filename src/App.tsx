@@ -1,8 +1,10 @@
-import Sidebar from "./components/Sidebar";
-import Telemetry from "./pages/telemetry/Telemetry";
+import Sidebar from "@/components/Sidebar";
+import Telemetry from "@/pages/telemetry/Telemetry";
 import { useState } from "react";
-import { ConfigProvider, theme } from "antd";
-import Titlebar from "./components/Titlebar";
+import Titlebar from "@/components/Titlebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "./components/AppSidebar";
+import { ThemeProvider } from "./components/theme-provider";
 
 export enum Page {
   Telemetry,
@@ -13,8 +15,6 @@ export enum Page {
 
 function App() {
   const [curPage, setCurPage] = useState<Page>(0);
-  const [isOpen, setIsOpen] = useState(true);
-
   const PAGES = {
     [Page.Telemetry]: <Telemetry />,
     [Page.Analysis]: <div />,
@@ -22,26 +22,15 @@ function App() {
     [Page.Setups]: <div />,
   };
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: theme.darkAlgorithm,
-      }}
-    >
-      <main className="w-screen h-screen overflow-hidden bg-[#16171C]  rounded-3xl">
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <SidebarProvider>
         <Titlebar />
-        <div className="flex gap-3 h-full w-full p-2 pt-7">
-          <div className={isOpen ? "w-1/7 min-w-80" : "w-3/100"}>
-            <Sidebar
-              activePage={curPage}
-              onPageChange={(id) => setCurPage(id)}
-              setIsOpen={setIsOpen}
-              isOpen={isOpen}
-            />
-          </div>
-          <div className="w-full">{PAGES[curPage]}</div>
-        </div>
-      </main>
-    </ConfigProvider>
+        <AppSidebar activePage={curPage} setActivePage={setCurPage} />
+        <main className="bg-background h-[100% Important!] w-full">
+          {PAGES[curPage]}
+        </main>
+      </SidebarProvider>
+    </ThemeProvider>
   );
 }
 
