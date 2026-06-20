@@ -79,11 +79,13 @@ export default function Telemetry() {
         setActiveLayout,
       }}
     >
-      <div className="h-6/100 pb-2">
-        <ControlBar />
-      </div>
-      <div className="h-94/100">
-        <Graphs />
+      <div className="flex h-full min-h-0 w-full flex-col gap-2">
+        <div className="h-[6%] shrink-0 pb-2">
+          <ControlBar />
+        </div>
+        <div className="min-h-0 flex-1">
+          <Graphs />
+        </div>
       </div>
     </TelemetryContext.Provider>
   );
