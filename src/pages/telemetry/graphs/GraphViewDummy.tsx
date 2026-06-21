@@ -1,11 +1,18 @@
 import { useContext } from "react";
 import { TelemetryContext } from "../Telemetry";
-import { Dropdown, MenuProps } from "antd";
 import { GraphViewType } from "../store";
-import { DownOutlined } from "@ant-design/icons";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ColorPicker } from "@/components/ui/color-picker";
+
 type GraphViewDummyProps = {
   index: number;
   style?: React.CSSProperties;
@@ -13,6 +20,7 @@ type GraphViewDummyProps = {
 
 export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
   const c = useContext(TelemetryContext);
+
   function handleColorChange(index: number, color: string) {
     const newGD = [...c.graphData];
     newGD[index] = { ...newGD[index], baseColor: color };
@@ -48,10 +56,20 @@ export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
   return (
     <div
       className={
-        "w-full h-full flex gap-6 text-white text-2xl font-[Electrolize] p-3"
+        "w-full h-full flex gap-6 text-white text-xl font-[Electrolize] p-3"
       }
       style={{ backgroundColor: `${c.graphData[index].baseColor}40`, ...style }}
     >
+      <div className="flex gap-3 h-fit justify-center items-center">
+        {"Color: "}
+        <ColorPicker
+          size={"sm"}
+          value={c.graphData[index].baseColor}
+          onChange={(v) => {
+            handleColorChange(index, v.toString());
+          }}
+        />
+      </div>
       {/* <div className="flex gap-3 h-fit">
         {"Color:"}
         <ColorPicker
@@ -63,64 +81,46 @@ export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
           disabledAlpha={true}
         />
       </div> */}
-      <div className="flex gap-3 h-fit">
+      <div className="flex gap-3 h-fit justify-center items-center">
         {"Gridlines:"}
-        <NumberInput
-          defaultValue={c.graphData[index].nLines ?? ""}
-          onValueChange={(v) => handleNLinesChange(index, v)}
-          min={3}
-          max={10}
-        />
+        <div className="flex">
+          <NumberInput
+            defaultValue={c.graphData[index].nLines ?? ""}
+            onValueChange={(v) => handleNLinesChange(index, v)}
+            min={3}
+            max={10}
+          />
+        </div>
       </div>
 
-      <div className="flex gap-3 h-fit">
+      <div className="flex gap-3 h-fit justify-center items-center">
         {"Graph Type:"}
-        <Dropdown
-          menu={{
-            items: typeOptions,
-            onClick: ({ key }) => handleTypeChange(index, key as GraphViewType),
-          }}
+        <Select
+          value={c.graphData[index].type}
+          onValueChange={(value) =>
+            handleTypeChange(index, value as GraphViewType)
+          }
         >
-          <Button>
-            {c.graphData[index].type.charAt(0).toUpperCase() +
-              c.graphData[index].type.slice(1)}
-            <DownOutlined />
-          </Button>
-        </Dropdown>
+          <SelectTrigger>
+            <SelectValue placeholder="Select graph type" />
+          </SelectTrigger>
+          <SelectContent position="popper">
+            <SelectGroup>
+              {Object.values(GraphViewType).map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex gap-3 h-fit">
-        <Button
-          onClick={() => handleDelete(index)}
-          style={{ background: "#C00000" }}
-        >
+        <Button onClick={() => handleDelete(index)} className="bg-destructive">
           Delete
         </Button>
       </div>
     </div>
   );
 }
-
-//TODO: Somehow link this to one main type
-const typeOptions: MenuProps["items"] = [
-  {
-    key: GraphViewType.Throttle,
-    label: "Throttle",
-  },
-  {
-    key: GraphViewType.Brake,
-    label: "Brake",
-  },
-  {
-    key: GraphViewType.Rpm,
-    label: "Rpm",
-  },
-  {
-    key: GraphViewType.Delta,
-    label: "Delta",
-  },
-  {
-    key: GraphViewType.Speed,
-    label: "Speed",
-  },
-];

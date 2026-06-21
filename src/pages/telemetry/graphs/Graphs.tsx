@@ -37,18 +37,17 @@ export default function Graphs() {
             style={
               i == 0
                 ? {
-                    borderTopLeftRadius: "1.5rem",
-                    borderTopRightRadius: "1.5rem",
+                    borderTopLeftRadius: "1rem",
+                    borderTopRightRadius: "1rem",
                   }
                 : i == c.graphData.length - 1
                   ? {
-                      borderBottomLeftRadius: "1.5rem",
-                      borderBottomRightRadius: "1.5rem",
+                      borderBottomLeftRadius: "1rem",
+                      borderBottomRightRadius: "1rem",
                     }
                   : {}
             }
           />
-          {c.graphData.length - 1 != i ? <ResizableHandle withHandle /> : <></>}
         </ResizablePanel>
       ))}
     </ResizablePanelGroup>
@@ -70,17 +69,16 @@ export default function Graphs() {
               {...data}
               graphName={data.type.charAt(0).toUpperCase() + data.type.slice(1)}
               carNum={c.curDriverNum}
-              // key={`${c.activeLayout}-${data.type}-${i}`}
               componentStyle={
                 i == 0
                   ? {
-                      borderTopLeftRadius: "1.5rem",
-                      borderTopRightRadius: "1.5rem",
+                      borderTopLeftRadius: "1rem",
+                      borderTopRightRadius: "1rem",
                     }
                   : i == activeLayout.graphData.length - 1
                     ? {
-                        borderBottomLeftRadius: "1.5rem",
-                        borderBottomRightRadius: "1.5rem",
+                        borderBottomLeftRadius: "1rem",
+                        borderBottomRightRadius: "1rem",
                       }
                     : {}
               }
