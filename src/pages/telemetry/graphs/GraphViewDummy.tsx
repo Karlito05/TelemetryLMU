@@ -1,9 +1,11 @@
 import { useContext } from "react";
 import { TelemetryContext } from "../Telemetry";
-import { ColorPicker, Button, Dropdown, InputNumber, MenuProps } from "antd";
+import { Dropdown, MenuProps } from "antd";
 import { GraphViewType } from "../store";
 import { DownOutlined } from "@ant-design/icons";
-
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 type GraphViewDummyProps = {
   index: number;
   style?: React.CSSProperties;
@@ -19,6 +21,7 @@ export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
 
   function handleNLinesChange(index: number, nLines: number | null) {
     if (nLines === null || nLines === undefined) return;
+    if (nLines < 3 || nLines > 10) return;
     const newGD = [...c.graphData];
     newGD[index] = { ...newGD[index], nLines };
     c.setGraphData(newGD);
@@ -36,7 +39,9 @@ export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
       ...c.graphData.slice(index + 1),
     ];
     c.setGraphData(nGD);
-    const newSizes: number[] = Array(nGD.length).fill(1 / nGD.length);
+    const newSizes: string[] = Array(nGD.length).fill(
+      (1 / nGD.length).toString() + "%",
+    );
     c.setSizes(newSizes);
   }
 
@@ -47,7 +52,7 @@ export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
       }
       style={{ backgroundColor: `${c.graphData[index].baseColor}40`, ...style }}
     >
-      <div className="flex gap-3 h-fit">
+      {/* <div className="flex gap-3 h-fit">
         {"Color:"}
         <ColorPicker
           showText
@@ -57,15 +62,14 @@ export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
           }
           disabledAlpha={true}
         />
-      </div>
-
+      </div> */}
       <div className="flex gap-3 h-fit">
         {"Gridlines:"}
-        <InputNumber
+        <NumberInput
+          defaultValue={c.graphData[index].nLines ?? ""}
+          onValueChange={(v) => handleNLinesChange(index, v)}
           min={3}
           max={10}
-          value={c.graphData[index].nLines}
-          onChange={(e) => handleNLinesChange(index, e)}
         />
       </div>
 
@@ -77,7 +81,7 @@ export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
             onClick: ({ key }) => handleTypeChange(index, key as GraphViewType),
           }}
         >
-          <Button type="primary">
+          <Button>
             {c.graphData[index].type.charAt(0).toUpperCase() +
               c.graphData[index].type.slice(1)}
             <DownOutlined />
