@@ -5,8 +5,7 @@ import TelemetryIcon from "../assets/icons/graph.svg?react";
 import AnalysisIcon from "../assets/icons/analysis-icon.svg?react";
 import SetupsIcon from "../assets/icons/setups.svg?react";
 import { Page } from "../App.tsx";
-import { Divider } from "antd";
-
+import { Separator } from "./ui/separator.tsx";
 type TopRowProps = {
   isOpen: boolean;
   setIsOpen: (value: boolean) => void;
@@ -87,7 +86,7 @@ export default function Sidebar({
             ANALYZE
           </div>
         ) : (
-          <Divider />
+          <Separator />
         )}
         <div className="flex flex-col gap-1">
           <SidebarButton
@@ -122,7 +121,7 @@ export default function Sidebar({
             PREPARE
           </div>
         ) : (
-          <Divider />
+          <Separator />
         )}
         <div className="flex flex-col gap-1">
           <SidebarButton
