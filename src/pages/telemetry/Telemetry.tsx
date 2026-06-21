@@ -10,8 +10,8 @@ type TelemetryContextType = {
   setEditMode: (value: boolean) => void;
   graphData: GraphViewData[];
   setGraphData: (value: GraphViewData[]) => void;
-  sizes: number[];
-  setSizes: (value: number[]) => void;
+  sizes: string[];
+  setSizes: (value: string[]) => void;
   layouts: Layouts[];
   setLayouts: (value: Layouts[]) => void;
   activeLayout: number;
@@ -25,7 +25,7 @@ const defaultTelemetryContext: TelemetryContextType = {
   setEditMode: () => {},
   graphData: [],
   setGraphData: () => {},
-  sizes: [0.5, 0.5],
+  sizes: ["50%", "50%"],
   setSizes: () => {},
   layouts: [],
   setLayouts: () => {},
@@ -40,7 +40,7 @@ export const TelemetryContext = createContext<TelemetryContextType>(
 export default function Telemetry() {
   const [curDriverNum, setCurDriverNum] = useState(0);
   const [editMode, setEditMode] = useState(false);
-  const [sizes, setSizes] = useState<number[]>([0.5, 0.5]);
+  const [sizes, setSizes] = useState(["50%", "50%"]);
   const [graphData, setGraphData] = useState<GraphViewData[]>([
     {
       baseColor: "#9eff5d",

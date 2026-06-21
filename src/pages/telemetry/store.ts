@@ -2,7 +2,7 @@ import { load } from "@tauri-apps/plugin-store";
 
 export type Layouts = {
   name: string;
-  scales: number[];
+  scales: string[];
   graphData: GraphViewData[];
 };
 

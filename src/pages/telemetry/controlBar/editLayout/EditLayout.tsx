@@ -7,8 +7,10 @@ import { GraphViewType } from "../../store";
 import { setLayouts } from "../../store";
 import { toast } from "sonner";
 
+// Todo: Refactor this :)
 export default function EditLayout() {
   const c = useContext(TelemetryContext);
+
   function handleAddGraph() {
     let nGD = [...c.graphData];
     if (c.graphData.length < 10) {
@@ -25,7 +27,9 @@ export default function EditLayout() {
     }
 
     c.setGraphData(nGD);
-    const newSizes: number[] = Array(nGD.length).fill(1 / nGD.length);
+    const newSizes: string[] = Array(nGD.length).fill(
+      (100 / nGD.length).toString() + "%",
+    );
     c.setSizes(newSizes);
   }
   function handleCancel() {
