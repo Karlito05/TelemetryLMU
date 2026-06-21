@@ -4,7 +4,7 @@
   Telemetry LMU
 </h1>
 
-An application for visualising the Le Mans Ultimate telemetry.
+An application for visualizing the Le Mans Ultimate telemetry.
 ## Features
 ### Live Timings
 See your (or any other driver's) data plotted live!
