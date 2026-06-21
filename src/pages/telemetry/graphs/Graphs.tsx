@@ -2,11 +2,7 @@ import GraphView from "./GraphView";
 import GraphViewDummy from "./GraphViewDummy";
 import { useContext } from "react";
 import { TelemetryContext } from "../Telemetry";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
+import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { PanelSize } from "react-resizable-panels";
 
 export default function Graphs() {
