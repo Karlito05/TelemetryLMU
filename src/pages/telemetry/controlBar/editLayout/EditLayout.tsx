@@ -1,8 +1,11 @@
+"use client";
+
 import { useContext } from "react";
 import { TelemetryContext } from "../../Telemetry";
 import { Button } from "@/components/ui/button";
 import { GraphViewType } from "../../store";
 import { setLayouts } from "../../store";
+import { toast } from "sonner";
 
 export default function EditLayout() {
   const c = useContext(TelemetryContext);
@@ -18,7 +21,7 @@ export default function EditLayout() {
         },
       ];
     } else {
-      alert("Can't have more than 10 Graphs");
+      toast("Can't have more than 10 Graphs");
     }
 
     c.setGraphData(nGD);
@@ -62,18 +65,33 @@ export default function EditLayout() {
       c.setLayouts(newLayouts);
       c.setEditMode(false);
     } else {
-      alert(
-        "Can't remove layout. You must have at least one more layout to remove this one.",
-      );
+      toast("Can't remove layout.", {
+        description:
+          "You must have at least one more layout to remove this one.",
+        action: {
+          label: "Ok",
+          onClick: () => {},
+        },
+      });
     }
   }
   return (
     <>
-      <Button onClick={handleCancel}>Cancel</Button>
-      <Button onClick={handleSave}>Save</Button>
-      <Button onClick={handleSaveAs}>Save As</Button>
-      <Button onClick={() => handleAddGraph()}>Add Graph</Button>
-      <Button onClick={handleRemove}>Remove</Button>
+      <Button variant={"outline"} onClick={handleCancel}>
+        Cancel
+      </Button>
+      <Button variant={"outline"} onClick={handleSave}>
+        Save
+      </Button>
+      <Button variant={"outline"} onClick={handleSaveAs}>
+        Save As
+      </Button>
+      <Button variant={"outline"} onClick={() => handleAddGraph()}>
+        Add Graph
+      </Button>
+      <Button variant={"outline"} onClick={handleRemove}>
+        Remove
+      </Button>
     </>
   );
 }

@@ -6,7 +6,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 export default function NormalLayout() {
   return (
     <>
-      <SidebarTrigger />
+      <SidebarTrigger className="pl-2" />
       <Separator orientation="vertical" className="mx-2 my-1" />
       <DriverSelect />
       <Separator orientation="vertical" className="mx-2 my-1" />
