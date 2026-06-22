@@ -1,14 +1,58 @@
-<p align="center"> <img src="https://github.com/Karlito05/TelemetryLMU/blob/main/src-tauri/icons/128x128.png" width="128" alt="Our Logo"/>
+<p align="center">
+  <img 
+src="https://github.com/Karlito05/TelemetryLMU/blob/main/srcsrc="https://github.com/Karlito05/TelemetryLMU/blob/min/src-tauri/icons/128x128.png" width="128" alt="Our Logo"/>
 </p>
-<h1 align="center">
-  Telemetry LMU
-</h1>
 
-An application for visualizing the Le Mans Ultimate telemetry.
-## Features
-### Live Timings
-See your (or any other driver's) data plotted live!
-- Fully customisable layout and graphs
-- Multiple graph types to chose from
+<h1 align="center">Telemetry LMU</h1>
 
-More comming soon!
+<p align="center">
+  <strong>The ultimate real-time telemetry visualization 
+tool for Le Mans Ultimate.</strong>
+</p>
+
+<p align="center">
+  <img 
+src="https://img.shields.io/github/license/Karlito05/Telemetsrc="https://img.shields.io/github/license/Karlito05/TelemetryLMU" alt="License">
+  <img 
+src="https://img.shields.io/github/stars/Karlito05/Telemetrysrc="https://img.shields.io/github/stars/Karlito05/TelemetryLMU" alt="Stars">
+  <img 
+src="https://img.shields.io/github/issues/Karlito05/Telemetrsrc="https://img.shields.io/github/issues/Karlito05/TelemetryLMU" alt="Issues">
+</p>
+
+## ✨ Features
+
+### ⏱️ Live Timings
+
+Experience real-time data plotting for yourself and your
+competitors!
+
+- ✅ **Customizable Layouts:** Tailor the UI to your
+  preference.
+- ✅ **Advanced Graphing:** Choose from multiple graph
+  types to suit your needs.
+- 🚀 **Coming Soon:** More advanced analytics and features
+  are on the roadmap!
+
+## 🚀 Installation
+
+### 🪟 Windows
+
+1. Navigate to the [Releases
+   Page](https://github.com/Karlito05/TelemetryLMU/releases).
+2. Download and run the latest `.exe` installer.
+
+### 🐧 Linux
+
+1. **Prerequisite:** Install
+   [simshmbridge](https://github.com/Karlito05/simshmbridge).
+2. Download the `.rpm` or `.deb` package from our
+   [Releases](https://github.com/Karlito05/TelemetryLMU/release[Releases]https://github.com/Karlito05/TelemetryLMU/releases).
+
+> **Note on AUR:** Support is coming soon! Currently,
+> registration is temporarily disabled due to security
+> maintenance.
+
+---
+
+<p align="center">Built for the Le Mans Ultimate community 
+🏎️</p>

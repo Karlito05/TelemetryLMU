@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "TelemetryLMU",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "identifier": "com.karlito.telemetry-lmu",
   "build": {
     "beforeDevCommand": "bun run dev",
@@ -26,7 +26,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["deb", "rpm", "nsis"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

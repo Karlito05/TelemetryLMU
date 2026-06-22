@@ -1,0 +1,31 @@
+pkgname=telemetry-lmu
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Description of your app"
+arch=('x86_64')
+url="https://github.com/Karlito05/TelemetryLMU"
+license=('MIT')
+depends=('cairo' 'desktop-file-utils' 'gdk-pixbuf2' 'glib2' 'gtk3' 'hicolor-icon-theme' 'libsoup' 'pango' 'webkit2gtk-4.1')
+options=('!strip' '!emptydirs')
+install=${pkgname}.install
+source_x86_64=("${url}/releases/download/v${pkgver}/TelemetryLMU_${pkgver}_amd64.deb")
+sha256sums_x86_64=('c2e64750ee738e8ac285e24abcb784b8ce86ad8468e253c221ef7ecbb768e3b5')
+package() {
+  cd "$srcdir"
+
+  ar x TelemetryLMU_${pkgver}_amd64.deb
+  tar -xf data.tar.* -C "$pkgdir"
+
+  install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/TelemetryLMU.desktop" << 'EOF'
+[Desktop Entry]
+Categories=
+Comment=A Tauri App
+Exec=env WEBKIT_DISABLE_COMPOSITING_MODE=1 GDK_BACKEND=x11 telemetry_lmu
+StartupWMClass=telemetry_lmu
+Icon=telemetry_lmu
+Name=TelemetryLMU
+Terminal=false
+Type=Application
+EOF
+
+}

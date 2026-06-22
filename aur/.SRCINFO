@@ -1,0 +1,23 @@
+pkgbase = telemetry-lmu
+	pkgdesc = Description of your app
+	pkgver = 0.1.0
+	pkgrel = 1
+	url = https://github.com/Karlito05/TelemetryLMU
+	install = telemetry-lmu.install
+	arch = x86_64
+	license = MIT
+	depends = cairo
+	depends = desktop-file-utils
+	depends = gdk-pixbuf2
+	depends = glib2
+	depends = gtk3
+	depends = hicolor-icon-theme
+	depends = libsoup
+	depends = pango
+	depends = webkit2gtk-4.1
+	options = !strip
+	options = !emptydirs
+	source_x86_64 = https://github.com/Karlito05/TelemetryLMU/releases/download/v0.1.0/TelemetryLMU_0.1.0_amd64.deb
+	sha256sums_x86_64 = c2e64750ee738e8ac285e24abcb784b8ce86ad8468e253c221ef7ecbb768e3b5
+
+pkgname = telemetry-lmu
