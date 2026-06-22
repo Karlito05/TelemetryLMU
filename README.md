@@ -11,8 +11,7 @@ tool for Le Mans Ultimate.</strong>
 </p>
 
 <p align="center">
-  <img 
-src="https://img.shields.io/github/license/Karlito05/TelemetryLMU" alt="License">
+  <img alt="GitHub License" src="https://img.shields.io/github/license/Karlito05/TelemetryLMU">
   <img 
 src="https://img.shields.io/github/stars/Karlito05/TelemetryLMU" alt="Stars">
   <img 
