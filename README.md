@@ -28,10 +28,9 @@ competitors!
 
 - ✅ **Customizable Layouts:** Tailor the UI to your
   preference.
-- ✅ **Advanced Graphing:** Choose from multiple graph
+- ✅ **Graphing:** Choose from multiple graph
   types to suit your needs.
-- 🚀 **Coming Soon:** More advanced analytics and features
-  are on the roadmap!
+- 🚀 **Coming Soon:** More features are comming soon.
 
 ## 🚀 Installation
 
