@@ -50,6 +50,7 @@ competitors!
 > **Note on AUR:** Support is coming soon! Currently,
 > registration is temporarily disabled due to security
 > maintenance.
+> For now you can just clone this repo, `cd aur` and run `makepkg -si`
 
 ---
 
