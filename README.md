@@ -1,6 +1,6 @@
 <p align="center">
   <img 
-src="https://github.com/Karlito05/TelemetryLMU/blob/main/srcsrc="https://github.com/Karlito05/TelemetryLMU/blob/min/src-tauri/icons/128x128.png" width="128" alt="Our Logo"/>
+src="https://github.com/Karlito05/TelemetryLMU/blob/main/src-tauri/icons/128x128.png" width="128" alt="Our Logo"/>
 </p>
 
 <h1 align="center">Telemetry LMU</h1>
@@ -12,11 +12,11 @@ tool for Le Mans Ultimate.</strong>
 
 <p align="center">
   <img 
-src="https://img.shields.io/github/license/Karlito05/Telemetsrc="https://img.shields.io/github/license/Karlito05/TelemetryLMU" alt="License">
+src="https://img.shields.io/github/license/Karlito05/TelemetryLMU" alt="License">
   <img 
-src="https://img.shields.io/github/stars/Karlito05/Telemetrysrc="https://img.shields.io/github/stars/Karlito05/TelemetryLMU" alt="Stars">
+src="https://img.shields.io/github/stars/Karlito05/TelemetryLMU" alt="Stars">
   <img 
-src="https://img.shields.io/github/issues/Karlito05/Telemetrsrc="https://img.shields.io/github/issues/Karlito05/TelemetryLMU" alt="Issues">
+src="https://img.shields.io/github/issues/Karlito05/TelemetryLMU" alt="Issues">
 </p>
 
 ## ✨ Features
@@ -37,8 +37,7 @@ competitors!
 
 ### 🪟 Windows
 
-1. Navigate to the [Releases
-   Page](https://github.com/Karlito05/TelemetryLMU/releases).
+1. Navigate to the [Releases Page](https://github.com/Karlito05/TelemetryLMU/releases).
 2. Download and run the latest `.exe` installer.
 
 ### 🐧 Linux
@@ -46,7 +45,7 @@ competitors!
 1. **Prerequisite:** Install
    [simshmbridge](https://github.com/Karlito05/simshmbridge).
 2. Download the `.rpm` or `.deb` package from our
-   [Releases](https://github.com/Karlito05/TelemetryLMU/release[Releases]https://github.com/Karlito05/TelemetryLMU/releases).
+   [Releases](https://github.com/Karlito05/TelemetryLMU/release).
 
 > **Note on AUR:** Support is coming soon! Currently,
 > registration is temporarily disabled due to security
