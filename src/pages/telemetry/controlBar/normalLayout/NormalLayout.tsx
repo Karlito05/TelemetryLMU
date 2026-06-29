@@ -2,6 +2,7 @@ import { Separator } from "@/components/ui/separator";
 import DriverSelect from "./DriverSelect";
 import LayoutSelect from "./LayoutSelect";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import Timing from "./Timing";
 
 export default function NormalLayout() {
   return (
@@ -11,6 +12,8 @@ export default function NormalLayout() {
       <DriverSelect />
       <Separator orientation="vertical" className="mx-2 my-1" />
       <LayoutSelect />
+      {/* <Separator orientation="vertical" className="mx-2 my-1" />
+      <Timing /> */}
     </>
   );
 }
