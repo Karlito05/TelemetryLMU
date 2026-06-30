@@ -2,6 +2,7 @@ import Graphs from "./graphs/Graphs.tsx";
 import ControlBar from "./controlBar/ControlBar.tsx";
 import { useState, createContext, useEffect } from "react";
 import { getLayouts, GraphViewData, GraphViewType, Layouts } from "./store.ts";
+import { invoke } from "@tauri-apps/api/core";
 
 type TelemetryContextType = {
   curDriverNum: number;
@@ -53,15 +54,26 @@ export default function Telemetry() {
       type: GraphViewType.Brake,
     },
   ]);
+
   const [layouts, setLayouts] = useState<Layouts[]>([
     { name: "Default", scales: sizes, graphData: graphData },
   ]);
+
   useEffect(() => {
     getLayouts().then((v) => {
       if (v) setLayouts(v);
     });
   }, []);
+
   const [activeLayout, setActiveLayout] = useState<number>(0);
+
+  useEffect(() => {
+    invoke("spawn_logger", { carNum: curDriverNum });
+    return () => {
+      invoke("despawn_logger");
+    };
+  }, [curDriverNum]);
+
   return (
     <TelemetryContext.Provider
       value={{

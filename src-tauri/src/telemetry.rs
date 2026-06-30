@@ -1,6 +1,6 @@
-use memmap2::Mmap;
 #[cfg(not(target_os = "windows"))]
 use log::{info, warn};
+use memmap2::Mmap;
 #[cfg(not(target_os = "windows"))]
 use std::fs::File;
 use std::sync::Mutex;
@@ -134,6 +134,16 @@ pub fn update_telemetry(_mmap: &Mmap) -> Option<Box<SharedMemoryObjectOut>> {
         let full_layout = layout_ptr.assume_init();
         Some(Box::new(full_layout.data))
     }
+}
+
+pub fn i8_array_to_string(buf: &[i8; 32]) -> String {
+    let bytes: Vec<u8> = buf
+        .iter()
+        .take_while(|&&b| b != 0)
+        .map(|b| *b as u8)
+        .collect();
+
+    String::from_utf8_lossy(&bytes).to_string()
 }
 
 #[repr(u32)]

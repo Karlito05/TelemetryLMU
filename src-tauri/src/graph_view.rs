@@ -1,5 +1,5 @@
+use crate::telemetry::{i8_array_to_string, JoinHandleIdent, TelemetryState};
 use crate::telemetry::{update_telemetry, SharedMemoryObjectOut};
-use crate::telemetry::{JoinHandleIdent, TelemetryState};
 use log::{error, info, warn};
 use memmap2::Mmap;
 use serde::Serialize;
@@ -10,6 +10,10 @@ use tokio::time::sleep;
 
 pub struct GraphViewState {
     pub threads: Vec<JoinHandleIdent>,
+}
+
+pub struct MmapState {
+    pub mmap: Arc<Mmap>,
 }
 
 #[derive(Clone, Serialize)]
@@ -34,8 +38,10 @@ pub enum LapEvent {
     },
 }
 
-pub struct MmapState {
-    pub mmap: Arc<Mmap>,
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct Driver {
+    pub index: usize,
+    pub name: String,
 }
 
 #[tauri::command]
@@ -138,26 +144,10 @@ pub async fn lap_data_unsubscribe(
     Ok(())
 }
 
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct Driver {
-    pub index: usize,
-    pub name: String,
-}
-
-fn i8_array_to_string(buf: &[i8; 32]) -> String {
-    let bytes: Vec<u8> = buf
-        .iter()
-        .take_while(|&&b| b != 0)
-        .map(|b| *b as u8)
-        .collect();
-
-    String::from_utf8_lossy(&bytes).to_string()
-}
-
 #[tauri::command]
 pub async fn get_drivers(mmap: State<'_, MmapState>) -> Result<Vec<Driver>, String> {
-    let telemetry = update_telemetry(&mmap.mmap)
-        .ok_or_else(|| "TelemetryReadFailed".to_string())?;
+    let telemetry =
+        update_telemetry(&mmap.mmap).ok_or_else(|| "TelemetryReadFailed".to_string())?;
 
     let mut drivers: Vec<Driver> = Vec::new();
     for i in 0..103 {
@@ -172,9 +162,12 @@ pub async fn get_drivers(mmap: State<'_, MmapState>) -> Result<Vec<Driver>, Stri
     Ok(drivers)
 }
 
+pub const GRAPH_VIEW_DATA_TYPE_COUNT: i32 = 5;
+
 #[derive(PartialEq, Clone, Copy, Debug)]
-enum GraphViewDataType {
-    Rpm(usize),        //vehicle number
+#[repr(usize)]
+pub enum GraphViewDataType {
+    Rpm(usize) = 0,    //vehicle number
     Speed(usize),      //vehicle number
     Throttle(usize),   //vehicle number
     Brake(usize),      //vehicle number
@@ -182,7 +175,7 @@ enum GraphViewDataType {
 }
 
 impl GraphViewDataType {
-    fn from_string(str: &str, car_num: usize) -> GraphViewDataType {
+    pub fn from_string(str: &str, car_num: usize) -> GraphViewDataType {
         match str {
             "rpm" => GraphViewDataType::Rpm(car_num),
             "speed" => GraphViewDataType::Speed(car_num),
@@ -192,7 +185,18 @@ impl GraphViewDataType {
             &_ => todo!(),
         }
     }
-    fn to_string(&self) -> String {
+    pub fn from_int(int: i32, car_num: usize) -> GraphViewDataType {
+        match int {
+            0 => GraphViewDataType::Rpm(car_num),
+            1 => GraphViewDataType::Speed(car_num),
+            2 => GraphViewDataType::Throttle(car_num),
+            3 => GraphViewDataType::Brake(car_num),
+            4 => GraphViewDataType::Delta(car_num, 5.0),
+            _ => todo!(),
+        }
+    }
+
+    pub fn to_string(&self) -> String {
         match self {
             GraphViewDataType::Rpm(..) => "rpm".to_owned(),
             GraphViewDataType::Speed(..) => "speed".to_owned(),
@@ -202,7 +206,7 @@ impl GraphViewDataType {
         }
     }
 
-    fn get_max_value(&self, t: &SharedMemoryObjectOut) -> f64 {
+    pub fn get_max_value(&self, t: &SharedMemoryObjectOut) -> f64 {
         match self {
             GraphViewDataType::Rpm(v) => t.telemetry.telemetry_info[*v].m_engine_max_rpm,
             GraphViewDataType::Speed(..) => 350.0, // This can be implemented conditionally based on the class :)
@@ -212,7 +216,7 @@ impl GraphViewDataType {
         }
     }
 
-    fn get_normalized_values(&self, t: &SharedMemoryObjectOut) -> Vec<f64> {
+    pub fn get_normalized_values(&self, t: &SharedMemoryObjectOut) -> Vec<f64> {
         match self {
             GraphViewDataType::Rpm(v) => {
                 vec![t.telemetry.telemetry_info[*v].m_engine_rpm / self.get_max_value(t)]
@@ -235,7 +239,7 @@ impl GraphViewDataType {
         }
     }
 
-    fn get_unit(&self) -> String {
+    pub fn get_unit(&self) -> String {
         match self {
             GraphViewDataType::Rpm(_) => "RPM".to_owned(),
             GraphViewDataType::Speed(_) => "km/h".to_owned(),
@@ -245,7 +249,7 @@ impl GraphViewDataType {
         }
     }
 
-    fn get_car_number(&self) -> usize {
+    pub fn get_car_number(&self) -> usize {
         match self {
             GraphViewDataType::Rpm(v, ..) => *v,
             GraphViewDataType::Speed(v, ..) => *v,
@@ -255,17 +259,17 @@ impl GraphViewDataType {
         }
     }
 
-    fn get_normalized_distance(&self, telemetry: &SharedMemoryObjectOut) -> f64 {
+    pub fn get_normalized_distance(&self, telemetry: &SharedMemoryObjectOut) -> f64 {
         // this returns the distance of how far in a lap the car is
         telemetry.scoring.veh_scoring_info[self.get_car_number()].m_lap_dist
             / telemetry.scoring.scoring_info.m_lap_dist
     }
 
-    fn get_lap(&self, t: &SharedMemoryObjectOut) -> i32 {
+    pub fn get_lap(&self, t: &SharedMemoryObjectOut) -> i32 {
         t.telemetry.telemetry_info[self.get_car_number()].m_lap_number
     }
 
-    fn is_last_best(&self, t: &SharedMemoryObjectOut) -> bool {
+    pub fn is_last_best(&self, t: &SharedMemoryObjectOut) -> bool {
         match self {
             GraphViewDataType::Delta(..) => false, // we can disable having the best lap for certain types where it isn't needed
             _ => {

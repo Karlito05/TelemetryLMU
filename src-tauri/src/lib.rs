@@ -1,14 +1,18 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 mod graph_view;
+mod lap_stores;
 mod telemetry;
 
 use graph_view::GraphViewState;
 use graph_view::*;
+use lap_stores::{despawn_logger, spawn_logger};
 use std::sync::Arc;
 use std::sync::Mutex;
 use tauri::Manager;
 use telemetry::get_mmap;
 use telemetry::TelemetryState;
+
+use crate::lap_stores::LoggerSate;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -28,6 +32,7 @@ pub fn run() {
             let mmap = get_mmap("/dev/shm/LMU_Data", &backend);
 
             app.manage(backend);
+            app.manage(Mutex::new(LoggerSate { loggers: vec![] }));
 
             app.manage(MmapState {
                 mmap: Arc::new(mmap),
@@ -44,6 +49,8 @@ pub fn run() {
             lap_data_subscribe,
             lap_data_unsubscribe,
             get_drivers,
+            spawn_logger,
+            despawn_logger,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
