@@ -29,9 +29,13 @@ struct LapInfo {
 #[derive(Debug, Clone, serde::Serialize)]
 struct LapData {
     data_type: String,
-    data: Vec<(Vec<f64>, f64)>, //values + distance
+    data: Vec<DataPoint>, //values + distance
 }
-
+#[derive(Debug, Clone, serde::Serialize)]
+struct DataPoint {
+    values: Vec<f64>,
+    distance: f64,
+}
 #[tauri::command]
 pub async fn spawn_logger(
     mmap: State<'_, MmapState>,
@@ -85,10 +89,14 @@ pub async fn spawn_logger(
 
                 for i in 0..GRAPH_VIEW_DATA_TYPE_COUNT {
                     let graph_type = GraphViewDataType::from_int(i, car_num);
-                    save_data.data[i as usize].data.push((
-                        graph_type.get_normalized_values(&telemetry),
-                        graph_type.get_normalized_distance(&telemetry),
-                    ))
+                    // FIX THIS
+                    // if graph_type.to_string() == "delta".to_owned() {
+                    //     continue;
+                    // };
+                    save_data.data[i as usize].data.push(DataPoint {
+                        values: graph_type.get_normalized_values(&telemetry),
+                        distance: graph_type.get_normalized_distance(&telemetry),
+                    })
                 }
 
                 sleep(Duration::from_millis(16)).await;

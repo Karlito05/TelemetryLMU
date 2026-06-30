@@ -50,6 +50,14 @@ export default function Graphs() {
   ) : (
     <div className="h-full">
       {activeLayout.graphData.map((data, i) => {
+        let refData = undefined;
+        if (c.activeReference) {
+          refData = c.activeReference.data;
+          refData = refData.filter((val) => {
+            return val.data_type == data.type.toString();
+          });
+          console.log(refData);
+        }
         return (
           <div
             style={{
@@ -65,6 +73,7 @@ export default function Graphs() {
               {...data}
               graphName={data.type.charAt(0).toUpperCase() + data.type.slice(1)}
               carNum={c.curDriverNum}
+              refLap={refData ? refData[0].data : undefined}
               componentStyle={
                 i == 0
                   ? {

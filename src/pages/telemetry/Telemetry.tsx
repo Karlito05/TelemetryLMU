@@ -3,6 +3,7 @@ import ControlBar from "./controlBar/ControlBar.tsx";
 import { useState, createContext, useEffect } from "react";
 import { getLayouts, GraphViewData, GraphViewType, Layouts } from "./store.ts";
 import { invoke } from "@tauri-apps/api/core";
+import { SaveData } from "./controlBar/normalLayout/ReferenceSelect.tsx";
 
 type TelemetryContextType = {
   curDriverNum: number;
@@ -17,6 +18,8 @@ type TelemetryContextType = {
   setLayouts: (value: Layouts[]) => void;
   activeLayout: number;
   setActiveLayout: (value: number) => void;
+  activeReference: SaveData | null;
+  setActiveRefence: (value: SaveData | null) => void;
 };
 
 const defaultTelemetryContext: TelemetryContextType = {
@@ -32,6 +35,8 @@ const defaultTelemetryContext: TelemetryContextType = {
   setLayouts: () => {},
   activeLayout: 0,
   setActiveLayout: () => {},
+  activeReference: null,
+  setActiveRefence: () => {},
 };
 
 export const TelemetryContext = createContext<TelemetryContextType>(
@@ -42,6 +47,7 @@ export default function Telemetry() {
   const [curDriverNum, setCurDriverNum] = useState(0);
   const [editMode, setEditMode] = useState(false);
   const [sizes, setSizes] = useState(["50%", "50%"]);
+  const [activeReference, setActiveRefence] = useState<SaveData | null>(null);
   const [graphData, setGraphData] = useState<GraphViewData[]>([
     {
       baseColor: "#9eff5d",
@@ -54,7 +60,6 @@ export default function Telemetry() {
       type: GraphViewType.Brake,
     },
   ]);
-
   const [layouts, setLayouts] = useState<Layouts[]>([
     { name: "Default", scales: sizes, graphData: graphData },
   ]);
@@ -89,6 +94,8 @@ export default function Telemetry() {
         setLayouts,
         activeLayout,
         setActiveLayout,
+        activeReference,
+        setActiveRefence,
       }}
     >
       <div className="flex h-full min-h-0px w-full flex-col gap-2">

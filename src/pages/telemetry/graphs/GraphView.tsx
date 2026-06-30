@@ -2,7 +2,7 @@ import { invoke, Channel } from "@tauri-apps/api/core";
 import type { Color } from "@tauri-apps/api/webview";
 import { useEffect, useRef } from "react";
 
-type DataPoint = {
+export type DataPoint = {
   values: number[];
   distance: number;
 };
@@ -22,6 +22,7 @@ type GraphViewProps = {
   carNum: number;
   graphName: string;
   componentStyle?: React.CSSProperties;
+  refLap?: DataPoint[];
 };
 
 type LapEvent =
@@ -230,6 +231,34 @@ function resizeCanvas(
 
 const RESOLUTION = 2000;
 
+function downsampleByDistance(
+  data: DataPoint[],
+  targetCount: number,
+): DataPoint[] {
+  if (data.length === 0) return [];
+  if (data.length <= targetCount) return data;
+
+  const step = 1 / (targetCount - 1);
+  const result: DataPoint[] = [];
+
+  let searchIndex = 0;
+  for (let i = 0; i < targetCount; i++) {
+    const targetDist = i * step;
+
+    while (
+      searchIndex < data.length - 1 &&
+      Math.abs(data[searchIndex + 1].distance - targetDist) <=
+        Math.abs(data[searchIndex].distance - targetDist)
+    ) {
+      searchIndex++;
+    }
+
+    result.push(data[searchIndex]);
+  }
+
+  return result;
+}
+
 function GraphView({
   baseColor,
   nLines,
@@ -237,6 +266,7 @@ function GraphView({
   type,
   graphName,
   componentStyle,
+  refLap,
 }: GraphViewProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -248,8 +278,16 @@ function GraphView({
     nLines: nLines,
   });
   const curLapRef = useRef<DataPoint[]>(new Array(RESOLUTION));
-  const refLapRef = useRef<DataPoint[]>([]);
+  const refLapRef = useRef<DataPoint[]>(refLap ? refLap : []);
   const id = useRef("");
+
+  useEffect(() => {
+    if (refLap) {
+      refLapRef.current = downsampleByDistance(refLap, RESOLUTION);
+    } else {
+      refLapRef.current = [];
+    }
+  }, [refLap]);
 
   useEffect(() => {
     const onEvent = new Channel<LapEvent>();
@@ -276,8 +314,10 @@ function GraphView({
           break;
         case "lapFinished":
           if (
-            message.data.wasBest ||
-            refLapRef.current.filter(Boolean).length < 500
+            (message.data.wasBest ||
+              refLapRef.current.filter(Boolean).length < 500) &&
+            type != "delta" &&
+            !refLap
           ) {
             refLapRef.current = curLapRef.current;
           }
