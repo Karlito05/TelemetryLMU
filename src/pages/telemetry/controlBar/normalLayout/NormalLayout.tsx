@@ -2,7 +2,6 @@ import { Separator } from "@/components/ui/separator";
 import DriverSelect from "./DriverSelect";
 import LayoutSelect from "./LayoutSelect";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import Timing from "./Timing";
 import ReferenceSelect from "./ReferenceSelect";
 
 export default function NormalLayout() {
