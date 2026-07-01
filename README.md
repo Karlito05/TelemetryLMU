@@ -29,7 +29,7 @@ competitors!
   preference.
 - ✅ **Graphing:** Choose from multiple graph
   types to suit your needs.
-- 🚀 **Coming Soon:** More features are comming soon.
+- 🚀 **Coming Soon:** More features are comming soon. In the meantime you can check the [plan]()
 
 ## 🚀 Installation
 
