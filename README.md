@@ -29,7 +29,7 @@ competitors!
   preference.
 - ✅ **Graphing:** Choose from multiple graph
   types to suit your needs.
-- 🚀 **Coming Soon:** More features are comming soon. In the meantime you can check the [plan]()
+- 🚀 **Coming Soon:** More features are comming soon. In the meantime you can check the [plan](https://github.com/Karlito05/TelemetryLMU/blob/main/PLAN.md)
 
 ## 🚀 Installation
 
