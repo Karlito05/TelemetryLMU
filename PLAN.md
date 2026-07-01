@@ -45,8 +45,7 @@ This file exists to keep the project scoped and organized — and to stop scope 
 ## Current Tasks
 
 - [ ] Design the app in Figma
-  - [ ] Establish a general design language
-  - [ ] Design the layout (sidebar, navigation, etc.)
+  - [x] Design the layout (sidebar, navigation, etc.)
   - [ ] Design the Graph View
   - [ ] Design the Map View
   - [ ] Design the Championship View
