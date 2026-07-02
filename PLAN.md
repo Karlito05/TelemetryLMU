@@ -32,6 +32,7 @@ This file exists to keep the project scoped and organized — and to stop scope 
 - Shows all drivers in a lobby plus their position on a map
 - Clicking a driver shows all available status info about them
 - Room for some nice QoL features
+- Tire state, Lap times, Car state, General info (car, class, name), Fuel levels
 
 ### 🛠️ General Requirements
 
@@ -46,7 +47,7 @@ This file exists to keep the project scoped and organized — and to stop scope 
 
 - [ ] Design the app in Figma
   - [x] Design the layout (sidebar, navigation, etc.)
-  - [ ] Design the Graph View
+  - [x] Design the Graph View
   - [ ] Design the Map View
   - [ ] Design the Championship View
   - [ ] Design onboarding, settings, and profile pages
