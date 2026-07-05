@@ -1,19 +1,28 @@
 import { Separator } from "@/components/ui/separator";
 import DriverSelect from "./DriverSelect";
 import LayoutSelect from "./LayoutSelect";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import ReferenceSelect from "./ReferenceSelect";
+import SampleRate from "./SampleRate";
+import Display from "./Display";
+import Compare from "./Compare";
+import Record from "./Record";
 
 export default function NormalLayout() {
   return (
     <>
-      <SidebarTrigger className="pl-2 size-10 text-[#138DF1]" />
-      <Separator orientation="vertical" className="mx-2 my-1" />
       <DriverSelect />
       <Separator orientation="vertical" className="mx-2 my-1" />
       <ReferenceSelect />
       <Separator orientation="vertical" className="mx-2 my-1" />
       <LayoutSelect />
+      <Separator orientation="vertical" className="mx-2 my-1" />
+      <SampleRate />
+      <Separator orientation="vertical" className="mx-2 my-1" />
+      <Display />
+      <Separator orientation="vertical" className="mx-2 my-1" />
+      <Record />
+      <Separator orientation="vertical" className="mx-2 my-1" />
+      <Compare />
     </>
   );
 }
