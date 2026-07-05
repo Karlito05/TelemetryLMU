@@ -27,7 +27,9 @@ function App() {
       <SidebarProvider open={open} onOpenChange={setOpen}>
         <AppSidebar activePage={curPage} setActivePage={setCurPage} />
 
-        <main className="bg-background flex h-dvh min-h-0 w-full min-w-0 flex-1 overflow-hidden p-2 ">
+        <main
+          className={`bg-background flex h-dvh min-h-0 w-full min-w-0 flex-1 overflow-hidden p-2 ${open ? "pl-0" : "pl-2"}`}
+        >
           {PAGES[curPage]}
         </main>
         <Toaster theme="dark" />
