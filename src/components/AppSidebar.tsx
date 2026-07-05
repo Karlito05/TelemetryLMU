@@ -5,14 +5,8 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import {
-  IconFlask,
-  IconGraph,
-  IconSettingsCog,
-  IconStopwatch,
-} from "@tabler/icons-react";
+import { IconTimeline, IconMap, IconTrophy } from "@tabler/icons-react";
 import { NavUser } from "./ui/nav-user";
 import { NavSection } from "./ui/nav-section";
 import { Page } from "@/App";
@@ -25,29 +19,24 @@ export function AppSidebar({
   setActivePage: (value: Page) => void;
 }) {
   return (
-    <Sidebar variant="floating">
+    <Sidebar variant="floating" className="pl-2 py-2 ">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
-            >
-              <a href="#">
-                <IconGraph className="size-5!" />
-                <span className="text-base font-semibold">Telemetry LMU</span>
-              </a>
-            </SidebarMenuButton>
+            <a className="flex p-2 justify-baseline items-center gap-4 text-2xl font-[Racing_Sans_One]">
+              <img src="../../public/Logo.svg" width={48} height={48} />
+              <span>Telemetry LMU</span>
+            </a>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavSection
-          name="Analyze"
+          name="Live Analysis"
           items={[
             {
-              name: "Telemetry",
-              icon: IconGraph,
+              name: "Graph View",
+              icon: IconTimeline,
               isActive: activePage == Page.Telemetry,
               onClick: () => {
                 setActivePage(Page.Telemetry);
@@ -55,28 +44,20 @@ export function AppSidebar({
             },
             {
               name: "Live Timings",
-              icon: IconStopwatch,
+              icon: IconTrophy,
               isActive: activePage == Page.LiveTimings,
               onClick: () => {
                 setActivePage(Page.LiveTimings);
               },
             },
-            {
-              name: "Analysis",
-              icon: IconFlask,
-              isActive: activePage == Page.Analysis,
-              onClick: () => {
-                setActivePage(Page.Analysis);
-              },
-            },
           ]}
         />{" "}
         <NavSection
-          name="Prepare"
+          name="Reflect"
           items={[
             {
-              name: "Setups",
-              icon: IconSettingsCog,
+              name: "Map View",
+              icon: IconMap,
               isActive: activePage == Page.Setups,
               onClick: () => {
                 setActivePage(Page.Setups);
@@ -87,9 +68,7 @@ export function AppSidebar({
       </SidebarContent>
       <SidebarFooter>
         <SidebarFooter>
-          <NavUser
-            user={{ name: "Karlito", avatar: "", gameName: "Karel Lukes" }}
-          />
+          <NavUser user={{ name: "Karel Lukeš", avatar: "../../public/pfp-white.png" }} />
         </SidebarFooter>
       </SidebarFooter>
     </Sidebar>

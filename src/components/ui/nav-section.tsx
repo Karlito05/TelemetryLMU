@@ -24,7 +24,9 @@ export function NavSection({
 }) {
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>{name}</SidebarGroupLabel>
+      <SidebarGroupLabel className="font-[Days_One] text-[12px] color-[#FFFFFF80]">
+        {name}
+      </SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
@@ -32,10 +34,11 @@ export function NavSection({
               asChild
               onClick={item.onClick}
               isActive={item.isActive}
+              className="rounded-[8px]"
             >
               <a>
-                <item.icon />
-                <span>{item.name}</span>
+                <item.icon color="#138DF1" className="size-8! stroke-[1.5]" />
+                <span className="text-base">{item.name}</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

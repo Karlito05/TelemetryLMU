@@ -39,9 +39,7 @@ const defaultTelemetryContext: TelemetryContextType = {
   setActiveRefence: () => {},
 };
 
-export const TelemetryContext = createContext<TelemetryContextType>(
-  defaultTelemetryContext,
-);
+export const TelemetryContext = createContext<TelemetryContextType>(defaultTelemetryContext);
 
 export default function Telemetry() {
   const [curDriverNum, setCurDriverNum] = useState(0);
@@ -99,7 +97,7 @@ export default function Telemetry() {
       }}
     >
       <div className="flex h-full min-h-0px w-full flex-col gap-2">
-        <div className="shrink-0 min-h-10 pb-1">
+        <div className="shrink-0 min-h-12 pb-1">
           <ControlBar />
         </div>
         <div className="min-h-0 flex-1">

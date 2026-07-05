@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  IconSettings,
-  IconDotsVertical,
-  IconUserCircle,
-} from "@tabler/icons-react";
+import { IconSettings, IconDotsVertical, IconUserCircle } from "@tabler/icons-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -28,7 +24,6 @@ export function NavUser({
 }: {
   user: {
     name: string;
-    gameName: string;
     avatar: string;
   };
 }) {
@@ -41,19 +36,16 @@ export function NavUser({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground gap-4 p-0"
             >
-              <Avatar className="h-8 w-8 rounded-lg grayscale">
+              <Avatar className="h-12 w-12 rounded-[8px]">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-[8px]">CN</AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {user.gameName}
-                </span>
+              <div className="grid flex-1 text-left text-[20px] leading-tight">
+                <span className="truncate">{user.name}</span>
               </div>
-              <IconDotsVertical className="ml-auto size-4" />
+              <IconDotsVertical className="ml-auto size-6!" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -70,9 +62,6 @@ export function NavUser({
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {user.gameName}
-                  </span>
                 </div>
               </div>
             </DropdownMenuLabel>

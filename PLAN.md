@@ -49,7 +49,7 @@ This file exists to keep the project scoped and organized — and to stop scope 
   - [x] Design the layout (sidebar, navigation, etc.)
   - [x] Design the Graph View
   - [ ] Design the Map View
-  - [ ] Design the Championship View
+  - [x] Design the Championship View
   - [ ] Design onboarding, settings, and profile pages
 - [ ] Come up with a name and logo (plus names for each view)
 - [ ] Implement layout and settings

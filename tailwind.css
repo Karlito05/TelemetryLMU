@@ -21,6 +21,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Racing Sans One";
+  src: url("./src/assets/fonts/RacingSansOne-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   /* html,
   body,
@@ -134,7 +142,8 @@
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
+  --background: rgba(15, 15, 15, 1);
+  --middleground: rgba(22, 23, 28, 1);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.21 0.006 285.885);
   --card-foreground: oklch(0.985 0 0);
@@ -157,12 +166,12 @@
   --chart-3: oklch(0.442 0.017 285.786);
   --chart-4: oklch(0.37 0.013 285.805);
   --chart-5: oklch(0.274 0.006 286.033);
-  --sidebar: oklch(0.21 0.006 285.885);
+  --sidebar: rgba(22, 23, 28, 1);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.623 0.214 259.815);
   --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
   --sidebar-accent: oklch(0.274 0.006 286.033);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: oklch(1 0 0 / 0%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
 }

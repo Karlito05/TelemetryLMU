@@ -25,21 +25,17 @@ export default function DriverSelect() {
     });
   }, []);
 
-  const selectedDriver = drivers.find(
-    (driver) => driver.index === c.curDriverNum,
-  );
+  const selectedDriver = drivers.find((driver) => driver.index === c.curDriverNum);
 
   return (
-    <div className="flex gap-1 justify-center items-center p-1">
+    <div className="flex gap-2 justify-center items-center p-1">
       <span>Driver:</span>
       <Select
         value={String(c.curDriverNum)}
         onValueChange={(value: string) => c.setCurDriverNum(Number(value))}
       >
         <SelectTrigger className="w-fit">
-          <SelectValue
-            placeholder={selectedDriver?.name ?? "Select a Driver"}
-          />
+          <SelectValue placeholder={selectedDriver?.name ?? "Select a Driver"} />
         </SelectTrigger>
         <SelectContent position="popper">
           <SelectGroup>
