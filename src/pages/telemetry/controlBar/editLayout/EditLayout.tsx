@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { GraphViewType } from "../../store";
 import { setLayouts } from "../../store";
 import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
+import LayoutSelect from "../normalLayout/LayoutSelect";
 
 // Todo: Refactor this :)
 export default function EditLayout() {
@@ -27,9 +29,7 @@ export default function EditLayout() {
     }
 
     c.setGraphData(nGD);
-    const newSizes: string[] = Array(nGD.length).fill(
-      (100 / nGD.length).toString() + "%",
-    );
+    const newSizes: string[] = Array(nGD.length).fill((100 / nGD.length).toString() + "%");
     c.setSizes(newSizes);
   }
   function handleCancel() {
@@ -70,8 +70,7 @@ export default function EditLayout() {
       c.setEditMode(false);
     } else {
       toast("Can't remove layout.", {
-        description:
-          "You must have at least one more layout to remove this one.",
+        description: "You must have at least one more layout to remove this one.",
         action: {
           label: "Ok",
           onClick: () => {},
@@ -81,21 +80,26 @@ export default function EditLayout() {
   }
   return (
     <>
-      <Button variant={"outline"} onClick={handleCancel}>
-        Cancel
-      </Button>
-      <Button variant={"outline"} onClick={handleSave}>
+      <Button className="bg-[#138DF1]" onClick={handleSave}>
         Save
       </Button>
-      <Button variant={"outline"} onClick={handleSaveAs}>
+      <Separator orientation="vertical" className="mx-2 my-1" />
+      <Button className="bg-[#138DF1]" onClick={handleSaveAs}>
         Save As
       </Button>
-      <Button variant={"outline"} onClick={() => handleAddGraph()}>
+      <Separator orientation="vertical" className="mx-2 my-1" />
+      <Button className="bg-[rgba(255,255,255,0.075)]" onClick={handleCancel}>
+        Discard
+      </Button>
+      <Separator orientation="vertical" className="mx-2 my-1" />
+      <Button className="bg-[#FF0000]" onClick={handleRemove}>
+        Delete Layout
+      </Button>
+      <Separator orientation="vertical" className="mx-2 my-1" />
+      <Button className="bg-green-600" onClick={() => handleAddGraph()}>
         Add Graph
       </Button>
-      <Button variant={"outline"} onClick={handleRemove}>
-        Remove
-      </Button>
+      <Separator orientation="vertical" className="mx-2 my-1" />
     </>
   );
 }
