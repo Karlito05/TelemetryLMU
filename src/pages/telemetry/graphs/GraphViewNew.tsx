@@ -45,13 +45,18 @@ export default function GraphViewNew({
     );
 
     // Render
-    render(
-      canvas,
-      currentLap ? currentLap : [],
-      referenceLap ? referenceLap : [],
-      telemetryInfo ? telemetryInfo : { unit: "N/A", type: "N/A", maxVal: 0 },
-      style ? style : { color: "#138DF1", gridlines: 3 },
-    );
+    const renderInterval = setInterval(() => {
+      render(
+        canvas,
+        currentLap ? currentLap : [],
+        referenceLap ? referenceLap : [],
+        telemetryInfo ? telemetryInfo : { unit: "N/A", type: "N/A", maxVal: 0 },
+        style ? style : { color: "#138DF1", gridlines: 3 },
+      );
+    }, 16); //TODO: make this delay into a setting (the hz setting)
+    return () => {
+      clearInterval(renderInterval);
+    };
   }, [style, currentLap, referenceLap]);
 
   return (
@@ -185,6 +190,7 @@ function renderLap(canvas: HTMLCanvasElement, lap: DataPoint[], color: string) {
   if (!firstValid) return;
 
   ctx.strokeStyle = color;
+  ctx.setLineDash([]);
   ctx.lineWidth = 1.5;
 
   for (let i = 0; i < firstValid.values.length; i++) {

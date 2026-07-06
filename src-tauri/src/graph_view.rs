@@ -37,11 +37,76 @@ pub enum LapEvent {
         was_best: bool,
     },
 }
-
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct Driver {
     pub index: usize,
     pub name: String,
+}
+
+#[derive(Clone, Serialize)]
+pub struct DataPoint {
+    values: Vec<f64>,
+    distance: f64,
+    lap_num: i32,
+    graph_type: String,
+}
+
+#[tauri::command]
+pub async fn get_lap_data(
+    mmap: State<'_, MmapState>,
+    telemetry_state: State<'_, Mutex<TelemetryState>>,
+    car_num: usize,
+    tele_types: Vec<String>,
+) -> Result<Vec<DataPoint>, String> {
+    if !telemetry_state.lock().unwrap().full_mode {
+        return Err("Full mode not active. Turn on your game and then refresh.".to_owned());
+    }
+
+    let telemetry = update_telemetry(&mmap.mmap).unwrap();
+
+    let mut return_val: Vec<DataPoint> = vec![];
+    for tele_type_string in tele_types {
+        let tele_type = GraphViewDataType::from_string(&tele_type_string, car_num);
+        return_val.push(DataPoint {
+            values: tele_type.get_normalized_values(&telemetry),
+            distance: tele_type.get_normalized_distance(&telemetry),
+            lap_num: tele_type.get_lap(&telemetry),
+            graph_type: tele_type.to_string(),
+        });
+    }
+
+    Ok(return_val)
+}
+
+#[derive(Clone, Serialize)]
+pub struct TelemetryInfo {
+    max_value: f64,
+    unit: String,
+}
+
+#[tauri::command]
+pub async fn get_telemetry_info(
+    mmap: State<'_, MmapState>,
+    telemetry_state: State<'_, Mutex<TelemetryState>>,
+    car_num: usize,
+    tele_types: Vec<String>,
+) -> Result<Vec<TelemetryInfo>, String> {
+    if !telemetry_state.lock().unwrap().full_mode {
+        return Err("Full mode not active. Turn on your game and then refresh.".to_owned());
+    }
+
+    let telemetry = update_telemetry(&mmap.mmap).unwrap();
+
+    let mut return_val: Vec<TelemetryInfo> = vec![];
+    for tele_type_string in tele_types {
+        let tele_type = GraphViewDataType::from_string(&tele_type_string, car_num);
+        return_val.push(TelemetryInfo {
+            max_value: tele_type.get_max_value(&telemetry),
+            unit: tele_type.get_unit(),
+        });
+    }
+
+    Ok(return_val)
 }
 
 #[tauri::command]

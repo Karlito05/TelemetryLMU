@@ -7,7 +7,6 @@ import { GraphViewType } from "../../store";
 import { setLayouts } from "../../store";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
-import LayoutSelect from "../normalLayout/LayoutSelect";
 
 // Todo: Refactor this :)
 export default function EditLayout() {

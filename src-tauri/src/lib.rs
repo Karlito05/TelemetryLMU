@@ -53,6 +53,8 @@ pub fn run() {
             get_drivers,
             spawn_logger,
             despawn_logger,
+            get_lap_data,
+            get_telemetry_info
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

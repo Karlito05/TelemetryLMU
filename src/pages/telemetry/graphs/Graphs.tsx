@@ -1,13 +1,17 @@
 import GraphViewDummy from "./GraphViewDummy";
-import { useContext } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { TelemetryContext } from "../Telemetry";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { PanelSize } from "react-resizable-panels";
 import GraphViewNew from "./GraphViewNew";
+import { DataPoint } from "./GraphView";
+import { invoke } from "@tauri-apps/api/core";
 
 export default function Graphs() {
   const c = useContext(TelemetryContext);
   const activeLayout = c.layouts[c.activeLayout];
+  const currentLaps = useRef<{ type: string; data: DataPoint[] }[]>([]);
+  const [, setLapTick] = useState(0);
 
   function handleResize(
     panelSize: PanelSize,
@@ -18,6 +22,40 @@ export default function Graphs() {
     newSizes[Number(id)] = panelSize.asPercentage.toString() + "%";
     c.setSizes(newSizes);
   }
+
+  useEffect(() => {
+    let curTypes: string[] = [];
+    let newCurrentLaps: { type: string; data: DataPoint[] }[] = [];
+    activeLayout.graphData.map((data) => {
+      curTypes.push(data.type.toString());
+      newCurrentLaps.push({ type: data.type.toString(), data: [] });
+    });
+    currentLaps.current = newCurrentLaps;
+    setLapTick((tick) => tick + 1);
+    const getData = setInterval(() => {
+      invoke<{ values: number[]; distance: number; lap_num: number; graph_type: string }[]>(
+        "get_lap_data",
+        {
+          carNum: c.curDriverNum,
+          teleTypes: curTypes,
+        },
+      ).then((vals) => {
+        vals.map((val) => {
+          let i = currentLaps.current.findIndex((cl) => {
+            return cl.type == val.graph_type;
+          });
+
+          currentLaps.current[i].data.push({ distance: val.distance, values: val.values });
+        });
+        setLapTick((tick) => tick + 1);
+        console.log(currentLaps.current);
+      });
+    }, 16); //TODO: make this into a setting
+
+    return () => {
+      clearInterval(getData);
+    };
+  }, [activeLayout]);
 
   return c.editMode ? (
     <ResizablePanelGroup orientation="vertical">
@@ -71,6 +109,7 @@ export default function Graphs() {
           >
             <GraphViewNew
               style={{ color: data.baseColor, gridlines: data.nLines }}
+              currentLap={currentLaps.current.find((v) => v.type === data.type.toString())?.data}
               componentStyle={
                 i == 0
                   ? {
