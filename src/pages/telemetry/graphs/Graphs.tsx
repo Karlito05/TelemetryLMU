@@ -1,9 +1,9 @@
-import GraphView from "./GraphView";
 import GraphViewDummy from "./GraphViewDummy";
 import { useContext } from "react";
 import { TelemetryContext } from "../Telemetry";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { PanelSize } from "react-resizable-panels";
+import GraphViewNew from "./GraphViewNew";
 
 export default function Graphs() {
   const c = useContext(TelemetryContext);
@@ -69,11 +69,8 @@ export default function Graphs() {
                   : { paddingTop: "0.125rem", paddingBottom: "0.125rem" }),
             }}
           >
-            <GraphView
-              {...data}
-              graphName={data.type.charAt(0).toUpperCase() + data.type.slice(1)}
-              carNum={c.curDriverNum}
-              refLap={refData ? refData[0].data : undefined}
+            <GraphViewNew
+              style={{ color: data.baseColor, gridlines: data.nLines }}
               componentStyle={
                 i == 0
                   ? {
