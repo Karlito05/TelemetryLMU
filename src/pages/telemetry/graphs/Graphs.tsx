@@ -13,6 +13,11 @@ export default function Graphs() {
   const c = useContext(TelemetryContext);
   const activeLayout = c.layouts[c.activeLayout];
   const currentLaps = useRef<{ type: string; data: DataPoint[] }[]>([]);
+  const referenceLaps = useRef<{ type: string; data: DataPoint[] }[]>([]);
+  const [curLap, setCurLap] = useState(0);
+  const [telemetryInfos, setTelemetryInfos] = useState<
+    { max_value: number; unit: string; graph_type: string }[]
+  >([]);
   const [, setLapTick] = useState(0);
 
   function handleResize(
@@ -38,6 +43,11 @@ export default function Graphs() {
     });
     currentLaps.current = newCurrentLaps;
 
+    invoke<{ max_value: number; unit: string; graph_type: string }[]>("get_telemetry_info", {
+      carNum: c.curDriverNum,
+      teleTypes: curTypes,
+    }).then((val) => setTelemetryInfos(val));
+
     // utpdate tele
     setLapTick((tick) => tick + 1);
 
@@ -50,6 +60,19 @@ export default function Graphs() {
           teleTypes: curTypes,
         },
       ).then((vals) => {
+        if (vals[0].lap_num != curLap) {
+          setCurLap(vals[0].lap_num);
+          let wasLastBest;
+          invoke<boolean>("was_last_best", { carNum: c.curDriverNum }).then((v) => {
+            wasLastBest = v;
+          });
+          if (wasLastBest) {
+            referenceLaps.current = currentLaps.current;
+          }
+          currentLaps.current.map((val) => {
+            val.data = new Array(DATAPOINTS_PER_GRAPH);
+          });
+        }
         // Add data to the right spot
         vals.map((val) => {
           // Find the right spot
@@ -130,6 +153,7 @@ export default function Graphs() {
           });
           console.log(refData);
         }
+        let info = telemetryInfos.find((v) => v.graph_type === data.type.toString());
         return (
           <div
             style={{
@@ -144,6 +168,11 @@ export default function Graphs() {
             <GraphViewNew
               style={{ color: data.baseColor, gridlines: data.nLines }}
               currentLap={currentLaps.current.find((v) => v.type === data.type.toString())?.data}
+              telemetryInfo={
+                info
+                  ? { maxVal: info.max_value, type: info.graph_type, unit: info.unit }
+                  : undefined
+              }
               componentStyle={
                 i == 0
                   ? {

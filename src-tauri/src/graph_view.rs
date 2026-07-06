@@ -6,6 +6,7 @@ use serde::Serialize;
 use std::sync::Mutex;
 use std::{sync::Arc, time::Duration};
 use tauri::{ipc::Channel, State};
+use tokio::task::coop::RestoreOnPending;
 use tokio::time::sleep;
 
 pub struct GraphViewState {
@@ -82,6 +83,7 @@ pub async fn get_lap_data(
 pub struct TelemetryInfo {
     max_value: f64,
     unit: String,
+    graph_type: String,
 }
 
 #[tauri::command]
@@ -103,10 +105,24 @@ pub async fn get_telemetry_info(
         return_val.push(TelemetryInfo {
             max_value: tele_type.get_max_value(&telemetry),
             unit: tele_type.get_unit(),
+            graph_type: tele_type.to_string(),
         });
     }
 
     Ok(return_val)
+}
+
+#[tauri::command]
+pub async fn was_last_best(
+    mmap: State<'_, MmapState>,
+    telemetry_state: State<'_, Mutex<TelemetryState>>,
+    car_num: usize,
+) -> Result<bool, String> {
+    if !telemetry_state.lock().unwrap().full_mode {
+        return Err("Full mode not active. Turn on your game and then refresh.".to_owned());
+    }
+    let telemetry = update_telemetry(&mmap.mmap).unwrap();
+    Ok(GraphViewDataType::Rpm(car_num).is_last_best(&telemetry))
 }
 
 #[tauri::command]

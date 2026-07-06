@@ -54,7 +54,8 @@ pub fn run() {
             spawn_logger,
             despawn_logger,
             get_lap_data,
-            get_telemetry_info
+            get_telemetry_info,
+            was_last_best,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
