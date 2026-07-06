@@ -3,7 +3,7 @@ default:
 
 [linux]
 dev: 
-  WEBKIT_DISABLE_DMABUF_RENDERER=1 bun run tauri dev
+   WEBKIT_DISABLE_DMABUF_RENDERER=1 bun run tauri dev
 
 [windows]
 dev:

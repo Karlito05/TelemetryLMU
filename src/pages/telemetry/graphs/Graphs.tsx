@@ -7,6 +7,8 @@ import GraphViewNew from "./GraphViewNew";
 import { DataPoint } from "./GraphView";
 import { invoke } from "@tauri-apps/api/core";
 
+const DATAPOINTS_PER_GRAPH = 1000;
+
 export default function Graphs() {
   const c = useContext(TelemetryContext);
   const activeLayout = c.layouts[c.activeLayout];
@@ -24,15 +26,23 @@ export default function Graphs() {
   }
 
   useEffect(() => {
+    // Init curLaps and curTypes
     let curTypes: string[] = [];
     let newCurrentLaps: { type: string; data: DataPoint[] }[] = [];
     activeLayout.graphData.map((data) => {
       curTypes.push(data.type.toString());
-      newCurrentLaps.push({ type: data.type.toString(), data: [] });
+      newCurrentLaps.push({
+        type: data.type.toString(),
+        data: new Array(DATAPOINTS_PER_GRAPH),
+      });
     });
     currentLaps.current = newCurrentLaps;
+
+    // utpdate tele
     setLapTick((tick) => tick + 1);
+
     const getData = setInterval(() => {
+      // fetch data from backend
       invoke<{ values: number[]; distance: number; lap_num: number; graph_type: string }[]>(
         "get_lap_data",
         {
@@ -40,15 +50,39 @@ export default function Graphs() {
           teleTypes: curTypes,
         },
       ).then((vals) => {
+        // Add data to the right spot
         vals.map((val) => {
+          // Find the right spot
           let i = currentLaps.current.findIndex((cl) => {
             return cl.type == val.graph_type;
           });
 
-          currentLaps.current[i].data.push({ distance: val.distance, values: val.values });
+          // If no matching graph type was found, skip this value
+          if (i === -1) return;
+
+          // Insert the data
+          const nearestPart = getNearestPart(val.distance);
+          if (currentLaps.current[i].data[nearestPart]) {
+            const newDistFromNearest = getDistFromNearestPart(val.distance);
+            const curDistFromNearest = getDistFromNearestPart(
+              currentLaps.current[i].data[nearestPart].distance,
+            );
+            if (newDistFromNearest < curDistFromNearest) {
+              currentLaps.current[i].data[nearestPart] = {
+                distance: val.distance,
+                values: val.values,
+              };
+              setLapTick((tick) => tick + 1);
+            }
+          } else {
+            currentLaps.current[i].data[nearestPart] = {
+              distance: val.distance,
+              values: val.values,
+            };
+            setLapTick((tick) => tick + 1);
+          }
         });
-        setLapTick((tick) => tick + 1);
-        console.log(currentLaps.current);
+        // console.log(currentLaps.current);
       });
     }, 16); //TODO: make this into a setting
 
@@ -129,4 +163,18 @@ export default function Graphs() {
       })}
     </div>
   );
+}
+
+function getDistFromNearestPart(x: number) {
+  const part = 1 / DATAPOINTS_PER_GRAPH;
+  const idx = Math.round(x / part);
+  const clamped = Math.min(Math.max(idx, 0), DATAPOINTS_PER_GRAPH - 1);
+  const nearestPartDistance = clamped * part;
+  return Math.abs(x - nearestPartDistance);
+}
+
+function getNearestPart(x: number) {
+  const part = 1 / DATAPOINTS_PER_GRAPH;
+  const idx = Math.round(x / part);
+  return Math.min(Math.max(idx, 0), DATAPOINTS_PER_GRAPH - 1);
 }

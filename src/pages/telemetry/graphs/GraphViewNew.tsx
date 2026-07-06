@@ -44,19 +44,19 @@ export default function GraphViewNew({
       style ? style : { color: "#138DF1", gridlines: 3 },
     );
 
-    // Render
-    const renderInterval = setInterval(() => {
-      render(
-        canvas,
-        currentLap ? currentLap : [],
-        referenceLap ? referenceLap : [],
-        telemetryInfo ? telemetryInfo : { unit: "N/A", type: "N/A", maxVal: 0 },
-        style ? style : { color: "#138DF1", gridlines: 3 },
-      );
-    }, 16); //TODO: make this delay into a setting (the hz setting)
-    return () => {
-      clearInterval(renderInterval);
-    };
+    // // Render
+    // const renderInterval = setInterval(() => {
+    //   render(
+    //     canvas,
+    //     currentLap ? currentLap : [],
+    //     referenceLap ? referenceLap : [],
+    //     telemetryInfo ? telemetryInfo : { unit: "N/A", type: "N/A", maxVal: 0 },
+    //     style ? style : { color: "#138DF1", gridlines: 3 },
+    //   );
+    // }, 16); //TODO: make this delay into a setting (the hz setting)
+    // return () => {
+    //   clearInterval(renderInterval);
+    // };
   }, [style, currentLap, referenceLap]);
 
   return (
