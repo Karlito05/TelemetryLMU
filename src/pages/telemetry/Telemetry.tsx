@@ -20,6 +20,8 @@ type TelemetryContextType = {
   setActiveLayout: (value: number) => void;
   activeReference: SaveData | null;
   setActiveRefence: (value: SaveData | null) => void;
+  sampleRate: number;
+  setSampleRate: (value: number) => void;
 };
 
 const defaultTelemetryContext: TelemetryContextType = {
@@ -37,6 +39,8 @@ const defaultTelemetryContext: TelemetryContextType = {
   setActiveLayout: () => {},
   activeReference: null,
   setActiveRefence: () => {},
+  sampleRate: 30,
+  setSampleRate: () => {},
 };
 
 export const TelemetryContext = createContext<TelemetryContextType>(defaultTelemetryContext);
@@ -61,6 +65,7 @@ export default function Telemetry() {
   const [layouts, setLayouts] = useState<Layouts[]>([
     { name: "Default", scales: sizes, graphData: graphData },
   ]);
+  const [sampleRate, setSampleRate] = useState(30);
 
   useEffect(() => {
     getLayouts().then((v) => {
@@ -94,10 +99,12 @@ export default function Telemetry() {
         setActiveLayout,
         activeReference,
         setActiveRefence,
+        sampleRate,
+        setSampleRate,
       }}
     >
       <div className="flex h-full min-h-0px w-full flex-col gap-2">
-        <div className="shrink-0 min-h-12 pb-1">
+        <div className="shrink-0 min-h-12">
           <ControlBar />
         </div>
         <div className="min-h-0 flex-1">

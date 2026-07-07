@@ -1,5 +1,9 @@
 import { DataPoint } from "./GraphView";
-import { useEffect, useRef } from "react";
+import { Application, extend, useApplication } from "@pixi/react";
+import { Graphics, Text } from "pixi.js";
+import { useRef } from "react";
+
+extend({ Graphics, Text });
 
 export default function GraphViewNew({
   style,
@@ -14,230 +18,213 @@ export default function GraphViewNew({
   componentStyle?: React.CSSProperties;
   telemetryInfo?: { unit: string; type: string; maxVal: number };
 }) {
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    // Set up refs
-    const canvas = canvasRef.current;
-    const wrapper = wrapperRef.current;
-    if (!canvas || !wrapper) return;
-
-    // Set up ResizeObserver
-    const resizeObserver = new ResizeObserver(() =>
-      resizeCanvas(
-        wrapper,
-        canvas,
-        currentLap ? currentLap : [],
-        referenceLap ? referenceLap : [],
-        telemetryInfo ? telemetryInfo : { unit: "N/A", type: "N/A", maxVal: 0 },
-        style ? style : { color: "#138DF1", gridlines: 3 },
-      ),
-    );
-    resizeObserver.observe(wrapper);
-    resizeCanvas(
-      wrapper,
-      canvas,
-      currentLap ? currentLap : [],
-      referenceLap ? referenceLap : [],
-      telemetryInfo ? telemetryInfo : { unit: "N/A", type: "N/A", maxVal: 0 },
-      style ? style : { color: "#138DF1", gridlines: 3 },
-    );
-
-    // // Render
-    // const renderInterval = setInterval(() => {
-    //   render(
-    //     canvas,
-    //     currentLap ? currentLap : [],
-    //     referenceLap ? referenceLap : [],
-    //     telemetryInfo ? telemetryInfo : { unit: "N/A", type: "N/A", maxVal: 0 },
-    //     style ? style : { color: "#138DF1", gridlines: 3 },
-    //   );
-    // }, 16); //TODO: make this delay into a setting (the hz setting)
-    // return () => {
-    //   clearInterval(renderInterval);
-    // };
-  }, [style, currentLap, referenceLap]);
-
+  const parentRef = useRef<HTMLDivElement>(null);
   return (
-    <div ref={wrapperRef} className="w-full h-full">
-      <canvas ref={canvasRef} className="block w-full h-full" style={{ ...componentStyle }} />
+    <div ref={parentRef} style={componentStyle} className="w-full h-full overflow-hidden">
+      <Application resizeTo={parentRef}>
+        <Background
+          telemetryInfo={telemetryInfo ?? { maxVal: 0, type: "N/A", unit: "N/A" }}
+          style={style ?? { color: "#FFFFFF", gridlines: 3 }}
+        />
+        <DrawLap lap={currentLap ?? []} color={style ? style.color : "#FFFFFF"} alpha={1} />
+        <DrawLap lap={referenceLap ?? []} color={style ? style.color : "#FFFFFF"} alpha={0.5} />
+      </Application>
     </div>
   );
 }
 
-function render(
-  canvas: HTMLCanvasElement,
-  currentLap: DataPoint[],
-  referenceLap: DataPoint[],
-  telemetryInfo: { unit: string; type: string; maxVal: number },
-  style: { color: string; gridlines: number },
-) {
-  renderBackground(
-    canvas,
-    style.color,
-    style.gridlines,
-    telemetryInfo.maxVal,
-    telemetryInfo.unit,
-    telemetryInfo.type,
-  );
+function DrawLap({ lap, color, alpha }: { lap: DataPoint[]; color: string; alpha: number }) {
+  const app = useApplication();
+  const width = app.app.renderer.screen.width;
+  const height = app.app.renderer.screen.height;
+  const margin = height * 0.15;
+  const drawableTop = margin;
+  const drawableBottom = height - margin;
+  const drawableHeight = drawableBottom - drawableTop;
+  return (
+    <pixiGraphics
+      draw={(g) => {
+        g.clear();
+        // TODO: Fix this outer loop
+        //
+        // for (let i = 0; i < lap.values.length; i++) {
+        g.beginPath();
+        let lastDist = -1; // Keep track of the previous point's distance
 
-  renderLap(canvas, referenceLap, `${style.color}80`);
-  renderLap(canvas, currentLap, style.color);
+        for (let j = 0; j < lap.length; j++) {
+          const dp = lap[j];
+          if (!dp) continue;
+
+          const x = dp.distance * width;
+          const y = drawableBottom - (dp.values[0] ?? 0) * drawableHeight;
+
+          if (lastDist === -1 || Math.abs(dp.distance - lastDist) > 0.05) {
+            g.moveTo(x, y);
+          } else {
+            g.lineTo(x, y);
+          }
+
+          lastDist = dp.distance;
+        }
+        g.stroke({ color: color, alpha: alpha, width: 2 });
+        // }
+      }}
+    />
+  );
 }
 
-function renderBackground(
-  canvas: HTMLCanvasElement,
-  baseColor: string,
-  nLines: number,
-  maxVal: number,
-  unit: string,
-  type: string,
-) {
-  const width = canvas.clientWidth ?? canvas.width ?? 0;
-  const height = canvas.clientHeight ?? canvas.height ?? 0;
+function Background({
+  style,
+  telemetryInfo,
+}: {
+  style: { color: string; gridlines: number };
+  telemetryInfo: { unit: string; type: string; maxVal: number };
+}) {
+  const app = useApplication();
+  const width = app.app.renderer.screen.width;
+  const height = app.app.renderer.screen.height;
   const margin = height * 0.15;
   const drawableTop = margin;
   const drawableBottom = height - margin;
   const drawableHeight = drawableBottom - drawableTop;
 
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
+  return (
+    <pixiGraphics
+      draw={(g) => {
+        g.clear();
 
-  ctx.clearRect(0, 0, width, height);
+        g.rect(0, 0, width, height);
+        g.fill({ color: 0x16171c });
 
-  ctx.fillStyle = `#16171C`;
-  ctx.fillRect(0, 0, width, height);
+        const segments = Math.max(1, style.gridlines) - 1;
 
-  const segments = Math.max(1, nLines) - 1;
+        if (telemetryInfo.type == "delta")
+          for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+            const y = drawableBottom - t * drawableHeight;
 
-  if (type == "delta")
-    for (let i = 0; i <= segments; i++) {
-      const t = i / segments;
-      const y = drawableBottom - t * drawableHeight;
+            dashedLine(g, 0, y, width, y);
+            g.stroke({ color: 0xffffff, alpha: 0.5 });
 
-      ctx.setLineDash([8, 8]);
+            // g.font = "14px 'inter', sans-serif";
+            // g.fillStyle = "#FFFFFF70";
+            // g.fillText(`${-(maxVal / 2 - maxVal * t)} ${unit}`, 0, y - 2);
+          }
+        else if (telemetryInfo.maxVal == 1)
+          for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+            const y = drawableBottom - t * drawableHeight;
 
-      ctx.strokeStyle = "#FFFFFF40";
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-      ctx.stroke();
+            dashedLine(g, 0, y, width, y);
+            g.stroke({ color: 0xffffff, alpha: 0.5 });
 
-      ctx.font = "14px 'inter', sans-serif";
-      ctx.fillStyle = "#FFFFFF70";
-      ctx.fillText(`${-(maxVal / 2 - maxVal * t)} ${unit}`, 0, y - 8);
-    }
-  else if (maxVal == 1)
-    for (let i = 0; i <= segments; i++) {
-      const t = i / segments;
-      const y = drawableBottom - t * drawableHeight;
+            // g.font = "14px 'inter', sans-serif";
+            // g.fillStyle = "#FFFFFF70";
+            // g.fillText(`${Math.trunc(maxVal * t * 100)} ${unit}`, 0, y - 2);
+          }
+        else
+          for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+            const y = drawableBottom - t * drawableHeight;
 
-      ctx.setLineDash([8, 8]);
+            dashedLine(g, 0, y, width, y);
+            g.stroke();
+            g.stroke({ color: 0xffffff, alpha: 0.5 });
 
-      ctx.strokeStyle = "#FFFFFF40";
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-      ctx.stroke();
+            // g.font = "14px 'inter', sans-serif";
+            // g.fillStyle = "#FFFFFF70";
+            // g.fillText(`${Math.trunc(maxVal * t)} ${unit}`, 0, y - 2);
+          }
 
-      ctx.font = "14px 'inter', sans-serif";
-      ctx.fillStyle = "#FFFFFF70";
-      ctx.fillText(`${Math.trunc(maxVal * t * 100)} ${unit}`, 0, y - 8);
-    }
-  else
-    for (let i = 0; i <= segments; i++) {
-      const t = i / segments;
-      const y = drawableBottom - t * drawableHeight;
+        // g.save();
+        // g.font = "16px 'Days One', sans-serif";
+        // g.fillStyle = baseColor.toString();
+        // g.textBaseline = "middle";
+        // g.fillText(graphName, 10, canvas.height - drawableTop / 2);
+        // g.restore();
+      }}
+    >
+      {Array.from({ length: Math.max(1, style.gridlines) }).map((_, i) => {
+        const t = i / (Math.max(1, style.gridlines) - 1);
+        const y = drawableBottom - t * drawableHeight;
 
-      ctx.setLineDash([8, 8]);
-
-      ctx.strokeStyle = "#FFFFFF40";
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-      ctx.stroke();
-
-      ctx.font = "14px 'inter', sans-serif";
-      ctx.fillStyle = "#FFFFFF70";
-      ctx.fillText(`${Math.trunc(maxVal * t)} ${unit}`, 0, y - 8);
-    }
-
-  ctx.save();
-  ctx.font = "16px 'Racing Sans One', sans-serif";
-  ctx.fillStyle = baseColor;
-  ctx.textBaseline = "middle";
-  ctx.fillText(
-    String(type).charAt(0).toUpperCase() + String(type).slice(1),
-    drawableTop / 2,
-    canvas.height - drawableTop / 2,
+        if (telemetryInfo.type == "delta")
+          return (
+            <pixiText
+              key={i}
+              x={0}
+              y={y - 2}
+              text={`${-(telemetryInfo.maxVal / 2 - telemetryInfo.maxVal * t)} ${telemetryInfo.unit}`}
+              style={{ fill: 0x8a8b8d, fontSize: 14, fontFamily: "inter" }}
+              anchor={{ x: 0, y: 1 }}
+            />
+          );
+        else if (telemetryInfo.maxVal == 1)
+          return (
+            <pixiText
+              key={i}
+              x={0}
+              y={y - 2}
+              text={`${Math.trunc(telemetryInfo.maxVal * t * 100)} ${telemetryInfo.unit}`}
+              style={{ fill: 0x8a8b8d, fontSize: 14, fontFamily: "inter" }}
+              anchor={{ x: 0, y: 1 }}
+            />
+          );
+        else
+          return (
+            <pixiText
+              key={i}
+              x={0}
+              y={y - 2}
+              text={`${Math.trunc(telemetryInfo.maxVal * t)} ${telemetryInfo.unit}`}
+              style={{ fill: 0x8a8b8d, fontSize: 14, fontFamily: "inter" }}
+              anchor={{ x: 0, y: 1 }}
+            />
+          );
+      })}
+      <pixiText
+        x={10}
+        y={height - drawableTop / 2}
+        text={telemetryInfo.type.charAt(0).toUpperCase() + telemetryInfo.type.slice(1)}
+        style={{ fill: style.color, fontSize: 18, fontFamily: "Racing Sans One" }}
+        anchor={{ x: 0, y: 0.5 }}
+      />
+    </pixiGraphics>
   );
-  ctx.restore();
 }
 
-function renderLap(canvas: HTMLCanvasElement, lap: DataPoint[], color: string) {
-  const width = canvas.clientWidth ?? canvas.width ?? 0;
-  const height = canvas.clientHeight ?? canvas.height ?? 0;
-  const margin = height * 0.15;
-  const drawableTop = margin;
-  const drawableBottom = height - margin;
-  const drawableHeight = drawableBottom - drawableTop;
+function dashedLine(
+  g: Graphics,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  dash = 8,
+  gap = 8,
+) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = Math.sqrt(dx * dx + dy * dy);
+  const angle = Math.atan2(dy, dx);
 
-  const ctx = canvas.getContext("2d");
-  if (!ctx || lap.length === 0) return;
+  let drawn = 0;
 
-  const firstValid = lap.find((dp) => dp !== undefined);
-  if (!firstValid) return;
+  g.moveTo(x1, y1);
 
-  ctx.strokeStyle = color;
-  ctx.setLineDash([]);
-  ctx.lineWidth = 1.5;
+  while (drawn < length) {
+    const xStart = x1 + Math.cos(angle) * drawn;
+    const yStart = y1 + Math.sin(angle) * drawn;
 
-  for (let i = 0; i < firstValid.values.length; i++) {
-    ctx.beginPath();
-    let lastDist = -1; // Keep track of the previous point's distance
+    drawn += dash;
 
-    for (let j = 0; j < lap.length; j++) {
-      const dp = lap[j];
-      if (!dp) continue;
+    if (drawn > length) drawn = length;
 
-      const x = dp.distance * width;
-      const y = drawableBottom - (dp.values[i] ?? 0) * drawableHeight;
+    const xEnd = x1 + Math.cos(angle) * drawn;
+    const yEnd = y1 + Math.sin(angle) * drawn;
 
-      if (lastDist === -1 || Math.abs(dp.distance - lastDist) > 0.05) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
+    g.moveTo(xStart, yStart);
+    g.lineTo(xEnd, yEnd);
 
-      lastDist = dp.distance;
-    }
-    ctx.stroke();
+    drawn += gap;
   }
-}
-
-function resizeCanvas(
-  wrapper: HTMLDivElement,
-  canvas: HTMLCanvasElement,
-  currentLap: DataPoint[],
-  referenceLap: DataPoint[],
-  telemetryInfo: { unit: string; type: string; maxVal: number },
-  style: { color: string; gridlines: number },
-) {
-  const dpr = window.devicePixelRatio || 1;
-  const cssWidth = wrapper.clientWidth;
-  const cssHeight = wrapper.clientHeight;
-
-  canvas.style.width = `${cssWidth}px`;
-  canvas.style.height = `${cssHeight}px`;
-
-  canvas.width = Math.floor(cssWidth * dpr);
-  canvas.height = Math.floor(cssHeight * dpr);
-
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
-
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-  render(canvas, currentLap, referenceLap, telemetryInfo, style);
 }

@@ -7,8 +7,6 @@ import GraphViewNew from "./GraphViewNew";
 import { DataPoint } from "./GraphView";
 import { invoke } from "@tauri-apps/api/core";
 
-const DATAPOINTS_PER_GRAPH = 1000;
-
 export default function Graphs() {
   const c = useContext(TelemetryContext);
   const activeLayout = c.layouts[c.activeLayout];
@@ -38,7 +36,7 @@ export default function Graphs() {
       curTypes.push(data.type.toString());
       newCurrentLaps.push({
         type: data.type.toString(),
-        data: new Array(DATAPOINTS_PER_GRAPH),
+        data: [],
       });
     });
     currentLaps.current = newCurrentLaps;
@@ -70,7 +68,7 @@ export default function Graphs() {
             referenceLaps.current = currentLaps.current;
           }
           currentLaps.current.map((val) => {
-            val.data = new Array(DATAPOINTS_PER_GRAPH);
+            val.data = [];
           });
         }
         // Add data to the right spot
@@ -80,39 +78,22 @@ export default function Graphs() {
             return cl.type == val.graph_type;
           });
 
-          // If no matching graph type was found, skip this value
-          if (i === -1) return;
-
           // Insert the data
-          const nearestPart = getNearestPart(val.distance);
-          if (currentLaps.current[i].data[nearestPart]) {
-            const newDistFromNearest = getDistFromNearestPart(val.distance);
-            const curDistFromNearest = getDistFromNearestPart(
-              currentLaps.current[i].data[nearestPart].distance,
-            );
-            if (newDistFromNearest < curDistFromNearest) {
-              currentLaps.current[i].data[nearestPart] = {
-                distance: val.distance,
-                values: val.values,
-              };
-              setLapTick((tick) => tick + 1);
-            }
-          } else {
-            currentLaps.current[i].data[nearestPart] = {
-              distance: val.distance,
-              values: val.values,
-            };
-            setLapTick((tick) => tick + 1);
-          }
+
+          currentLaps.current[i].data.push({
+            distance: val.distance,
+            values: val.values,
+          });
+          setLapTick((tick) => tick + 1);
         });
         // console.log(currentLaps.current);
       });
-    }, 16); //TODO: make this into a setting
+    }, 1000 / c.sampleRate);
 
     return () => {
       clearInterval(getData);
     };
-  }, [activeLayout]);
+  }, [activeLayout, c.sampleRate]);
 
   return c.editMode ? (
     <ResizablePanelGroup orientation="vertical">
@@ -128,13 +109,13 @@ export default function Graphs() {
             style={
               i == 0
                 ? {
-                    borderTopLeftRadius: "1rem",
-                    borderTopRightRadius: "1rem",
+                    borderTopLeftRadius: "24px",
+                    borderTopRightRadius: "24px",
                   }
                 : i == c.graphData.length - 1
                   ? {
-                      borderBottomLeftRadius: "1rem",
-                      borderBottomRightRadius: "1rem",
+                      borderBottomLeftRadius: "24px",
+                      borderBottomRightRadius: "24px",
                     }
                   : {}
             }
@@ -176,13 +157,13 @@ export default function Graphs() {
               componentStyle={
                 i == 0
                   ? {
-                      borderTopLeftRadius: "1rem",
-                      borderTopRightRadius: "1rem",
+                      borderTopLeftRadius: "24px",
+                      borderTopRightRadius: "24px",
                     }
                   : i == activeLayout.graphData.length - 1
                     ? {
-                        borderBottomLeftRadius: "1rem",
-                        borderBottomRightRadius: "1rem",
+                        borderBottomLeftRadius: "24px",
+                        borderBottomRightRadius: "24px",
                       }
                     : {}
               }
@@ -192,18 +173,4 @@ export default function Graphs() {
       })}
     </div>
   );
-}
-
-function getDistFromNearestPart(x: number) {
-  const part = 1 / DATAPOINTS_PER_GRAPH;
-  const idx = Math.round(x / part);
-  const clamped = Math.min(Math.max(idx, 0), DATAPOINTS_PER_GRAPH - 1);
-  const nearestPartDistance = clamped * part;
-  return Math.abs(x - nearestPartDistance);
-}
-
-function getNearestPart(x: number) {
-  const part = 1 / DATAPOINTS_PER_GRAPH;
-  const idx = Math.round(x / part);
-  return Math.min(Math.max(idx, 0), DATAPOINTS_PER_GRAPH - 1);
 }

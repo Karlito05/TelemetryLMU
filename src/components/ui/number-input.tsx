@@ -19,7 +19,7 @@ export function NumberInput({
   step?: number;
 }) {
   const [value, setValue] = useState(defaultValue ?? 0);
-  const [dispVal, setDispVal] = useState(value.toString());
+  const [dispVal, setDispVal] = useState(value.toString() + (unit ?? ""));
   step = step ? step : 1;
 
   function handleButtonClick(val: number) {
