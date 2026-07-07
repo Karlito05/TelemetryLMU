@@ -1,6 +1,6 @@
 import { useContext } from "react";
-import { TelemetryContext } from "../Telemetry";
-import { GraphViewType } from "../store";
+import { TelemetryContext } from "../../Telemetry";
+import { GraphViewType } from "../../store";
 import { Button } from "@/components/ui/button";
 import { NumberInput } from "@/components/ui/number-input";
 import {
@@ -42,22 +42,15 @@ export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
   }
 
   function handleDelete(index: number) {
-    const nGD = [
-      ...c.graphData.slice(0, index),
-      ...c.graphData.slice(index + 1),
-    ];
+    const nGD = [...c.graphData.slice(0, index), ...c.graphData.slice(index + 1)];
     c.setGraphData(nGD);
-    const newSizes: string[] = Array(nGD.length).fill(
-      (1 / nGD.length).toString() + "%",
-    );
+    const newSizes: string[] = Array(nGD.length).fill((1 / nGD.length).toString() + "%");
     c.setSizes(newSizes);
   }
 
   return (
     <div
-      className={
-        "w-full h-full flex gap-6 text-white text-xl font-[Electrolize] p-3"
-      }
+      className={"w-full h-full flex gap-6 text-white text-xl font-[Electrolize] p-3"}
       style={{ backgroundColor: `${c.graphData[index].baseColor}40`, ...style }}
     >
       <div className="flex gap-3 h-fit justify-center items-center">
@@ -97,9 +90,7 @@ export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
         {"Graph Type:"}
         <Select
           value={c.graphData[index].type}
-          onValueChange={(value) =>
-            handleTypeChange(index, value as GraphViewType)
-          }
+          onValueChange={(value) => handleTypeChange(index, value as GraphViewType)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select graph type" />

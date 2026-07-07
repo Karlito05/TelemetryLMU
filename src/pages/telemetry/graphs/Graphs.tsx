@@ -1,11 +1,9 @@
-import GraphViewDummy from "./GraphViewDummy";
 import { useContext, useEffect, useRef, useState } from "react";
 import { TelemetryContext } from "../Telemetry";
-import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { PanelSize } from "react-resizable-panels";
-import GraphViewNew from "./GraphViewNew";
-import { DataPoint } from "./GraphView";
+import { DataPoint } from "./normalMode/GraphView";
 import { invoke } from "@tauri-apps/api/core";
+import NormalMode from "./normalMode/NormalMode";
+import EditMode from "./editMode/EditMode";
 
 export default function Graphs() {
   const c = useContext(TelemetryContext);
@@ -17,17 +15,6 @@ export default function Graphs() {
     { max_value: number; unit: string; graph_type: string }[]
   >([]);
   const [, setLapTick] = useState(0);
-
-  function handleResize(
-    panelSize: PanelSize,
-    id: string | number | undefined,
-    _prevPanelSize: PanelSize | undefined,
-  ) {
-    let newSizes = c.sizes;
-    newSizes[Number(id)] = panelSize.asPercentage.toString() + "%";
-    c.setSizes(newSizes);
-  }
-
   useEffect(() => {
     // Init curLaps and curTypes
     let curTypes: string[] = [];
@@ -88,89 +75,20 @@ export default function Graphs() {
         });
         // console.log(currentLaps.current);
       });
-    }, 1000 / c.sampleRate);
+    }, 1000 / c.sampleRate); //TODO: make this into a setting
 
     return () => {
       clearInterval(getData);
     };
-  }, [activeLayout, c.sampleRate]);
+  }, [activeLayout]);
 
   return c.editMode ? (
-    <ResizablePanelGroup orientation="vertical">
-      {c.graphData.map((_, i) => (
-        <ResizablePanel
-          id={i.toString()}
-          defaultSize={c.sizes[i]}
-          minSize={"10%"}
-          onResize={handleResize}
-        >
-          <GraphViewDummy
-            index={i}
-            style={
-              i == 0
-                ? {
-                    borderTopLeftRadius: "24px",
-                    borderTopRightRadius: "24px",
-                  }
-                : i == c.graphData.length - 1
-                  ? {
-                      borderBottomLeftRadius: "24px",
-                      borderBottomRightRadius: "24px",
-                    }
-                  : {}
-            }
-          />
-        </ResizablePanel>
-      ))}
-    </ResizablePanelGroup>
+    <EditMode />
   ) : (
-    <div className="h-full">
-      {activeLayout.graphData.map((data, i) => {
-        let refData = undefined;
-        if (c.activeReference) {
-          refData = c.activeReference.data;
-          refData = refData.filter((val) => {
-            return val.data_type == data.type.toString();
-          });
-          console.log(refData);
-        }
-        let info = telemetryInfos.find((v) => v.graph_type === data.type.toString());
-        return (
-          <div
-            style={{
-              height: activeLayout.scales[i],
-              ...(i == 0
-                ? { paddingBottom: "0.125rem" }
-                : i == activeLayout.graphData.length - 1
-                  ? { paddingTop: "0.125rem" }
-                  : { paddingTop: "0.125rem", paddingBottom: "0.125rem" }),
-            }}
-          >
-            <GraphViewNew
-              style={{ color: data.baseColor, gridlines: data.nLines }}
-              currentLap={currentLaps.current.find((v) => v.type === data.type.toString())?.data}
-              telemetryInfo={
-                info
-                  ? { maxVal: info.max_value, type: info.graph_type, unit: info.unit }
-                  : undefined
-              }
-              componentStyle={
-                i == 0
-                  ? {
-                      borderTopLeftRadius: "24px",
-                      borderTopRightRadius: "24px",
-                    }
-                  : i == activeLayout.graphData.length - 1
-                    ? {
-                        borderBottomLeftRadius: "24px",
-                        borderBottomRightRadius: "24px",
-                      }
-                    : {}
-              }
-            />
-          </div>
-        );
-      })}
-    </div>
+    <NormalMode
+      currentLaps={currentLaps.current}
+      referenceLaps={referenceLaps.current}
+      telemetryInfos={telemetryInfos}
+    />
   );
 }

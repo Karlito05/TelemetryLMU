@@ -1,9 +1,13 @@
-import { DataPoint } from "./GraphView";
 import { Application, extend, useApplication } from "@pixi/react";
 import { Graphics, Text } from "pixi.js";
 import { useRef } from "react";
 
 extend({ Graphics, Text });
+
+export type DataPoint = {
+  values: number[];
+  distance: number;
+};
 
 export default function GraphViewNew({
   style,
