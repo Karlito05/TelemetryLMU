@@ -32,25 +32,28 @@ export default function EditLayout() {
     c.setSizes(newSizes);
   }
   function handleCancel() {
-    c.setSizes(c.layouts[c.activeLayout].scales);
-    c.setGraphData(c.layouts[c.activeLayout].graphData);
+    c.setSizes([...c.layouts[c.activeLayout].scales]);
+    c.setGraphData([...c.layouts[c.activeLayout].graphData]);
     c.setEditMode(false);
   }
   function handleSave() {
-    let newLayouts = c.layouts;
-    newLayouts[c.activeLayout].graphData = c.graphData;
-    newLayouts[c.activeLayout].scales = c.sizes;
+    const newLayouts = [...c.layouts];
+    newLayouts[c.activeLayout] = {
+      ...newLayouts[c.activeLayout],
+      graphData: [...c.graphData],
+      scales: [...c.sizes],
+    };
     setLayouts(newLayouts);
     c.setLayouts(newLayouts);
     c.setEditMode(false);
   }
   function handleSaveAs() {
-    let newLayouts = c.layouts;
+    const newLayouts = [...c.layouts];
     const name = prompt("How would you like this layout to be named: ");
     newLayouts.push({
-      graphData: c.graphData,
+      graphData: [...c.graphData],
       name: name ? name : "Layout " + c.layouts.length + 1,
-      scales: c.sizes,
+      scales: [...c.sizes],
     });
     setLayouts(newLayouts);
     c.setLayouts(newLayouts);

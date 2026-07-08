@@ -10,7 +10,7 @@ export default function Graphs() {
   const activeLayout = c.layouts[c.activeLayout];
   const currentLaps = useRef<{ type: string; data: DataPoint[] }[]>([]);
   const referenceLaps = useRef<{ type: string; data: DataPoint[] }[]>([]);
-  const [curLap, setCurLap] = useState(0);
+  const curLap = useRef(0);
   const [telemetryInfos, setTelemetryInfos] = useState<
     { max_value: number; unit: string; graph_type: string }[]
   >([]);
@@ -45,16 +45,22 @@ export default function Graphs() {
           teleTypes: curTypes,
         },
       ).then((vals) => {
-        if (vals[0].lap_num != curLap) {
-          setCurLap(vals[0].lap_num);
-          let wasLastBest;
-          invoke<boolean>("was_last_best", { carNum: c.curDriverNum }).then((v) => {
-            wasLastBest = v;
+        if (vals.length === 0) {
+          return;
+        }
+
+        if (vals[0].lap_num != curLap.current) {
+          curLap.current = vals[0].lap_num;
+          const finishedLap = currentLaps.current.map((lap) => ({
+            type: lap.type,
+            data: [...lap.data],
+          }));
+          invoke<boolean>("was_last_best", { carNum: c.curDriverNum }).then((wasLastBest) => {
+            if (wasLastBest) {
+              referenceLaps.current = finishedLap;
+            }
           });
-          if (wasLastBest) {
-            referenceLaps.current = currentLaps.current;
-          }
-          currentLaps.current.map((val) => {
+          currentLaps.current.forEach((val) => {
             val.data = [];
           });
         }
@@ -64,6 +70,10 @@ export default function Graphs() {
           let i = currentLaps.current.findIndex((cl) => {
             return cl.type == val.graph_type;
           });
+
+          if (i === -1) {
+            return;
+          }
 
           // Insert the data
 
@@ -80,10 +90,14 @@ export default function Graphs() {
     return () => {
       clearInterval(getData);
     };
-  }, [activeLayout]);
+  }, [activeLayout, c.curDriverNum, c.sampleRate]);
 
   return c.editMode ? (
-    <EditMode />
+    <EditMode
+      currentLaps={currentLaps.current}
+      referenceLaps={referenceLaps.current}
+      telemetryInfos={telemetryInfos}
+    />
   ) : (
     <NormalMode
       currentLaps={currentLaps.current}

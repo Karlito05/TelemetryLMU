@@ -3,7 +3,7 @@ import DriverSelect from "./DriverSelect";
 import LayoutSelect from "./LayoutSelect";
 import ReferenceSelect from "./ReferenceSelect";
 import SampleRate from "./SampleRate";
-import Compare from "./Compare";
+// import Compare from "./Compare";
 import Record from "./Record";
 
 export default function NormalLayout() {
@@ -18,8 +18,8 @@ export default function NormalLayout() {
       <SampleRate />
       <Separator orientation="vertical" className="mx-2 my-1" />
       <Record />
-      <Separator orientation="vertical" className="mx-2 my-1" />
-      <Compare />
+      {/* <Separator orientation="vertical" className="mx-2 my-1" /> */}
+      {/* <Compare /> */}
     </>
   );
 }

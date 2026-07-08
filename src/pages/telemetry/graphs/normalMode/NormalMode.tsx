@@ -15,7 +15,7 @@ export default function NormalMode({
   const activeLayout = c.layouts[c.activeLayout];
 
   return (
-    <div className="h-full">
+    <div className="h-full w-full">
       {activeLayout.graphData.map((data, i) => {
         let refData = undefined;
         if (c.activeReference) {

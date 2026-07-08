@@ -2,7 +2,6 @@ import Graphs from "./graphs/Graphs.tsx";
 import ControlBar from "./controlBar/ControlBar.tsx";
 import { useState, createContext, useEffect } from "react";
 import { getLayouts, GraphViewData, GraphViewType, Layouts } from "./store.ts";
-import { invoke } from "@tauri-apps/api/core";
 import { SaveData } from "./controlBar/normalLayout/ReferenceSelect.tsx";
 
 type TelemetryContextType = {
@@ -63,9 +62,10 @@ export default function Telemetry() {
     },
   ]);
   const [layouts, setLayouts] = useState<Layouts[]>([
-    { name: "Default", scales: sizes, graphData: graphData },
+    { name: "Default", scales: [...sizes], graphData: [...graphData] },
   ]);
   const [sampleRate, setSampleRate] = useState(30);
+  const [activeLayout, setActiveLayout] = useState<number>(0);
 
   useEffect(() => {
     getLayouts().then((v) => {
@@ -73,14 +73,13 @@ export default function Telemetry() {
     });
   }, []);
 
-  const [activeLayout, setActiveLayout] = useState<number>(0);
-
   useEffect(() => {
-    invoke("spawn_logger", { carNum: curDriverNum });
-    return () => {
-      invoke("despawn_logger");
-    };
-  }, [curDriverNum]);
+    const activeLayoutValue = layouts[activeLayout];
+    if (!activeLayoutValue || editMode) return;
+
+    setGraphData([...activeLayoutValue.graphData]);
+    setSizes([...activeLayoutValue.scales]);
+  }, [layouts, activeLayout, editMode]);
 
   return (
     <TelemetryContext.Provider

@@ -35,20 +35,54 @@ fn mmap_fallback() -> Mmap {
 
 #[cfg(not(target_os = "windows"))]
 pub fn get_mmap(path: &str, state: &Mutex<TelemetryState>) -> Mmap {
-    let file = match File::open(path) {
-        Ok(v) => {
-            state.lock().unwrap().full_mode = true;
-            v
-        }
-        Err(e) => {
-            warn!("Could not open telemetry file: {e}");
-            info!("Switching into no telemetry mode");
-            return mmap_fallback();
-        }
-    };
-    unsafe { Mmap::map(&file).unwrap() }
-}
+    const EXPECTED_LEN: u64 = std::mem::size_of::<SharedMemoryObjectOut>() as u64;
+    const MAX_RETRIES: u32 = 20;
+    const RETRY_DELAY: std::time::Duration = std::time::Duration::from_millis(100);
 
+    for attempt in 0..MAX_RETRIES {
+        let file = match File::open(path) {
+            Ok(v) => v,
+            Err(e) => {
+                if attempt == 0 {
+                    warn!("Could not open telemetry file: {e}");
+                }
+                std::thread::sleep(RETRY_DELAY);
+                continue;
+            }
+        };
+
+        let len = match file.metadata() {
+            Ok(m) => m.len(),
+            Err(e) => {
+                warn!("Could not stat telemetry file: {e}");
+                std::thread::sleep(RETRY_DELAY);
+                continue;
+            }
+        };
+
+        if len < EXPECTED_LEN {
+            // writer hasn't pre-sized/written the file yet — don't mmap a short file
+            std::thread::sleep(RETRY_DELAY);
+            continue;
+        }
+
+        match unsafe { Mmap::map(&file) } {
+            Ok(mmap) => {
+                state.lock().unwrap().full_mode = true;
+                return mmap;
+            }
+            Err(e) => {
+                warn!("Could not mmap telemetry file: {e}");
+                std::thread::sleep(RETRY_DELAY);
+                continue;
+            }
+        }
+    }
+
+    warn!("Telemetry file never became ready after {MAX_RETRIES} attempts");
+    info!("Switching into no telemetry mode");
+    mmap_fallback()
+}
 #[cfg(target_os = "windows")]
 pub fn get_mmap(_path: &str, state: &Mutex<TelemetryState>) -> Mmap {
     // Windows telemetry is read from the named mapping object directly in update_telemetry.

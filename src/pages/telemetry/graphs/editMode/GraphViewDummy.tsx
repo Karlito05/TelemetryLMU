@@ -63,17 +63,6 @@ export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
           }}
         />
       </div>
-      {/* <div className="flex gap-3 h-fit">
-        {"Color:"}
-        <ColorPicker
-          showText
-          value={c.graphData[index].baseColor}
-          onChangeComplete={(color) =>
-            handleColorChange(index, color.toHexString())
-          }
-          disabledAlpha={true}
-        />
-      </div> */}
       <div className="flex gap-3 h-fit justify-center items-center">
         {"Gridlines:"}
         <div className="flex">
@@ -85,7 +74,6 @@ export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
           />
         </div>
       </div>
-
       <div className="flex gap-3 h-fit justify-center items-center">
         {"Graph Type:"}
         <Select
@@ -106,7 +94,6 @@ export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
           </SelectContent>
         </Select>
       </div>
-
       <div className="flex gap-3 h-fit">
         <Button onClick={() => handleDelete(index)} className="bg-destructive">
           Delete

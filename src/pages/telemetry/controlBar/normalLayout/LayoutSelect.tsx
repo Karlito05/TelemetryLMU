@@ -18,8 +18,8 @@ export default function LayoutSelect() {
       c.setEditMode(true);
     } else {
       c.setActiveLayout(Number(key));
-      c.setGraphData(c.layouts[Number(key)].graphData);
-      c.setSizes(c.layouts[Number(key)].scales);
+      c.setGraphData([...c.layouts[Number(key)].graphData]);
+      c.setSizes([...c.layouts[Number(key)].scales]);
     }
   }
 

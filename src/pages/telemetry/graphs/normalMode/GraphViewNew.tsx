@@ -31,7 +31,7 @@ export default function GraphViewNew({
           style={style ?? { color: "#FFFFFF", gridlines: 3 }}
         />
         <DrawLap lap={currentLap ?? []} color={style ? style.color : "#FFFFFF"} alpha={1} />
-        <DrawLap lap={referenceLap ?? []} color={style ? style.color : "#FFFFFF"} alpha={0.5} />
+        <DrawLap lap={referenceLap ?? []} color={style ? style.color : "#FFFFFF"} alpha={0.25} />
       </Application>
     </div>
   );
