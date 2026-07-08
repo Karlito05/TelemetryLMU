@@ -26,6 +26,7 @@ export default function EditMode({
     >
       {c.graphData.map((_, i) => (
         <ResizablePanel
+          key={i}
           id={i.toString()}
           defaultSize={Number(c.sizes[i].replace("%", ""))}
           minSize={"10%"}

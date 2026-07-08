@@ -28,6 +28,7 @@ export default function NormalMode({
         let info = telemetryInfos.find((v) => v.graph_type === data.type.toString());
         return (
           <div
+            key={i}
             style={{
               height: activeLayout.scales[i],
               ...(i == 0

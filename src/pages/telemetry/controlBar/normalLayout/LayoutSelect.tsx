@@ -33,7 +33,9 @@ export default function LayoutSelect() {
         <SelectContent position="popper">
           <SelectGroup>
             {c.layouts.map((layout, i) => (
-              <SelectItem value={String(i)}>{layout.name}</SelectItem>
+              <SelectItem value={String(i)} key={i}>
+                {layout.name}
+              </SelectItem>
             ))}
           </SelectGroup>
           <SelectSeparator />

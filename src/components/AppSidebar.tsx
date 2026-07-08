@@ -23,10 +23,10 @@ export function AppSidebar({
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <a className="flex p-2 justify-baseline items-center gap-4 text-2xl font-[Racing_Sans_One]">
-              <img src="../../public/Logo.svg" width={48} height={48} />
+            <div className="flex p-2 justify-baseline items-center gap-4 text-2xl font-[Racing_Sans_One]">
+              <img src="../../Logo.svg" alt="Logo" width={48} height={48} />
               <span>Telemetry LMU</span>
-            </a>
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
