@@ -27,6 +27,8 @@ export default function Graphs() {
       });
     });
     currentLaps.current = newCurrentLaps;
+    // Ensure reference laps is initialized with the same structure
+    referenceLaps.current = newCurrentLaps.map((l) => ({ type: l.type, data: [] }));
 
     invoke<{ max_value: number; unit: string; graph_type: string }[]>("get_telemetry_info", {
       carNum: c.curDriverNum,
@@ -57,7 +59,7 @@ export default function Graphs() {
           }));
           invoke<boolean>("was_last_best", { carNum: c.curDriverNum }).then((wasLastBest) => {
             if (wasLastBest) {
-              referenceLaps.current = finishedLap;
+              if (!c.activeReference) referenceLaps.current = finishedLap;
             }
           });
           currentLaps.current.forEach((val) => {
@@ -84,13 +86,23 @@ export default function Graphs() {
           setLapTick((tick) => tick + 1);
         });
         // console.log(currentLaps.current);
+
+        if (c.activeReference) {
+          c.activeReference.data.forEach((v, i) => {
+            if (!referenceLaps.current[i]) {
+              referenceLaps.current[i] = { type: v.data_type, data: [] };
+            }
+            referenceLaps.current[i].data = [...v.data];
+            referenceLaps.current[i].type = v.data_type;
+          });
+        }
       });
     }, 1000 / c.sampleRate); //TODO: make this into a setting
 
     return () => {
       clearInterval(getData);
     };
-  }, [activeLayout, c.curDriverNum, c.sampleRate]);
+  }, [activeLayout, c.curDriverNum, c.sampleRate, c.activeReference]);
 
   return c.editMode ? (
     <EditMode

@@ -1,6 +1,6 @@
 import { Application, extend, useApplication } from "@pixi/react";
 import { Graphics, Text } from "pixi.js";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 extend({ Graphics, Text });
 
@@ -23,24 +23,64 @@ export default function GraphViewNew({
   telemetryInfo?: { unit: string; type: string; maxVal: number };
 }) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const el = parentRef.current;
+    if (!el) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+      setSize({ width, height });
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div ref={parentRef} style={componentStyle} className="w-full h-full overflow-hidden">
       <Application resizeTo={parentRef}>
         <Background
           telemetryInfo={telemetryInfo ?? { maxVal: 0, type: "N/A", unit: "N/A" }}
           style={style ?? { color: "#FFFFFF", gridlines: 3 }}
+          width={size.width}
+          height={size.height}
         />
-        <DrawLap lap={currentLap ?? []} color={style ? style.color : "#FFFFFF"} alpha={1} />
-        <DrawLap lap={referenceLap ?? []} color={style ? style.color : "#FFFFFF"} alpha={0.25} />
+        <DrawLap
+          lap={currentLap ?? []}
+          color={style ? style.color : "#FFFFFF"}
+          alpha={1}
+          width={size.width}
+          height={size.height}
+        />
+        <DrawLap
+          lap={referenceLap ?? []}
+          color={style ? style.color : "#FFFFFF"}
+          alpha={0.25}
+          width={size.width}
+          height={size.height}
+        />
       </Application>
     </div>
   );
 }
 
-function DrawLap({ lap, color, alpha }: { lap: DataPoint[]; color: string; alpha: number }) {
-  const app = useApplication();
-  const width = app.app.renderer.screen.width;
-  const height = app.app.renderer.screen.height;
+function DrawLap({
+  lap,
+  color,
+  alpha,
+  width,
+  height,
+}: {
+  lap: DataPoint[];
+  color: string;
+  alpha: number;
+  width: number;
+  height: number;
+}) {
   const margin = height * 0.15;
   const drawableTop = margin;
   const drawableBottom = height - margin;
@@ -80,13 +120,14 @@ function DrawLap({ lap, color, alpha }: { lap: DataPoint[]; color: string; alpha
 function Background({
   style,
   telemetryInfo,
+  width,
+  height,
 }: {
+  width: number;
+  height: number;
   style: { color: string; gridlines: number };
   telemetryInfo: { unit: string; type: string; maxVal: number };
 }) {
-  const app = useApplication();
-  const width = app.app.renderer.screen.width;
-  const height = app.app.renderer.screen.height;
   const margin = height * 0.15;
   const drawableTop = margin;
   const drawableBottom = height - margin;

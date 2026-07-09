@@ -11,7 +11,7 @@ import {
 import { TelemetryContext } from "../../Telemetry";
 import { BaseDirectory, readTextFile } from "@tauri-apps/plugin-fs";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { DataPoint } from "../../graphs/GraphView";
+import { DataPoint } from "../../graphs/normalMode/GraphViewNew";
 
 export type SaveData = {
   lap_info: { lap_time: number; date: string };

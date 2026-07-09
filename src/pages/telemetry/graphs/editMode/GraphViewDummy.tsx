@@ -50,8 +50,10 @@ export default function GraphViewDummy({ index, style }: GraphViewDummyProps) {
 
   return (
     <div
-      className={"w-full h-full flex gap-6 text-white text-xl font-[Electrolize] p-3"}
-      style={{ backgroundColor: `${c.graphData[index].baseColor}40`, ...style }}
+      className={
+        "w-full h-full flex gap-6 text-white text-xl font-[Electrolize] p-3 bg-transparent z-50 "
+      }
+      style={{ ...style }}
     >
       <div className="flex gap-3 h-fit justify-center items-center">
         {"Color: "}

@@ -51,12 +51,14 @@ export default function EditMode({
                   : {}),
             }}
           />
-          <EditModeGraphViewNew
-            currentLaps={currentLaps}
-            referenceLaps={referenceLaps}
-            i={i}
-            telemetryInfos={telemetryInfos}
-          />
+          <div className="h-full w-full blur-sm">
+            <EditModeGraphViewNew
+              currentLaps={currentLaps}
+              referenceLaps={referenceLaps}
+              i={i}
+              telemetryInfos={telemetryInfos}
+            />
+          </div>
         </ResizablePanel>
       ))}
     </ResizablePanelGroup>
@@ -97,7 +99,7 @@ function EditModeGraphViewNew({
                 borderBottomLeftRadius: "24px",
                 borderBottomRightRadius: "24px",
               }
-            : {}
+            : { width: "100%", height: "100%" }
       }
     />
   );
