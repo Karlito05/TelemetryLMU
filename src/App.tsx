@@ -5,13 +5,8 @@ import { AppSidebar } from "./components/AppSidebar";
 import { ThemeProvider } from "./components/theme-provider";
 import WorkInProgress from "./components/WorkInProgress";
 import { Toaster } from "sonner";
+import { Page } from "./utils/Page.ts";
 
-export enum Page {
-  Telemetry,
-  LiveTimings,
-  Analysis,
-  Setups,
-}
 const PAGES = {
   [Page.Telemetry]: <Telemetry />,
   [Page.Analysis]: <WorkInProgress />,

@@ -1,6 +1,6 @@
 use crate::{
     graph_view::{GraphViewDataType, MmapState, GRAPH_VIEW_DATA_TYPE_COUNT},
-    telemetry::update_telemetry,
+    telemetry::{update_telemetry, TelemetryState},
 };
 use chrono::Local;
 use log::info;
@@ -38,10 +38,15 @@ struct DataPoint {
 }
 #[tauri::command]
 pub async fn spawn_logger(
+    telemetry_state: State<'_, Mutex<TelemetryState>>,
     mmap: State<'_, MmapState>,
     logger_state: State<'_, Mutex<LoggerSate>>,
     car_num: usize,
 ) -> Result<(), String> {
+    if !telemetry_state.lock().unwrap().full_mode {
+        return Err("Failed to init logger. Telemetry is not in full mode!".into());
+    }
+
     // Init the thread
     let mmap_clone = Arc::clone(&mmap.mmap);
     let handle = spawn(async move {

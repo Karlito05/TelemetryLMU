@@ -9,7 +9,7 @@ import {
 import { IconTimeline, IconMap, IconTrophy } from "@tabler/icons-react";
 import { NavUser } from "./ui/nav-user";
 import { NavSection } from "./ui/nav-section";
-import { Page } from "@/App";
+import { Page } from "../utils/Page.ts";
 
 export function AppSidebar({
   activePage,
