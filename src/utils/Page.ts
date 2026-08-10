@@ -1,6 +1,6 @@
 export enum Page {
   Telemetry,
   LiveTimings,
-  Analysis,
+  Championships,
   Setups,
 }

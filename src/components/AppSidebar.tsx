@@ -43,11 +43,11 @@ export function AppSidebar({
               },
             },
             {
-              name: "Live Timings",
+              name: "Championships",
               icon: IconTrophy,
-              isActive: activePage == Page.LiveTimings,
+              isActive: activePage == Page.Championships,
               onClick: () => {
-                setActivePage(Page.LiveTimings);
+                setActivePage(Page.Championships);
               },
             },
           ]}

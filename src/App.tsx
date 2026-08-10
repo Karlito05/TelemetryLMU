@@ -6,10 +6,11 @@ import { ThemeProvider } from "./components/theme-provider";
 import WorkInProgress from "./components/WorkInProgress";
 import { Toaster } from "sonner";
 import { Page } from "./utils/Page.ts";
+import Championships from "./pages/championships/Championships.tsx";
 
 const PAGES = {
   [Page.Telemetry]: <Telemetry />,
-  [Page.Analysis]: <WorkInProgress />,
+  [Page.Championships]: <Championships />,
   [Page.LiveTimings]: <WorkInProgress />,
   [Page.Setups]: <WorkInProgress />,
 };
