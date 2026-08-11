@@ -170,7 +170,16 @@ pub fn update_telemetry(_mmap: &Mmap) -> Option<Box<SharedMemoryObjectOut>> {
     }
 }
 
-pub fn i8_array_to_string(buf: &[i8; 32]) -> String {
+pub fn i8_array32_to_string(buf: &[i8; 32]) -> String {
+    let bytes: Vec<u8> = buf
+        .iter()
+        .take_while(|&&b| b != 0)
+        .map(|b| *b as u8)
+        .collect();
+
+    String::from_utf8_lossy(&bytes).to_string()
+}
+pub fn i8_array64_to_string(buf: &[i8; 64]) -> String {
     let bytes: Vec<u8> = buf
         .iter()
         .take_while(|&&b| b != 0)

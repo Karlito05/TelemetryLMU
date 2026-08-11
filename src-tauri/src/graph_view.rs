@@ -1,4 +1,4 @@
-use crate::telemetry::{i8_array_to_string, JoinHandleIdent, TelemetryState};
+use crate::telemetry::{i8_array32_to_string, JoinHandleIdent, TelemetryState};
 use crate::telemetry::{update_telemetry, SharedMemoryObjectOut};
 use log::{error, info, warn};
 use memmap2::Mmap;
@@ -6,7 +6,6 @@ use serde::Serialize;
 use std::sync::Mutex;
 use std::{sync::Arc, time::Duration};
 use tauri::{ipc::Channel, State};
-use tokio::task::coop::RestoreOnPending;
 use tokio::time::sleep;
 
 pub struct GraphViewState {
@@ -232,7 +231,7 @@ pub async fn get_drivers(mmap: State<'_, MmapState>) -> Result<Vec<Driver>, Stri
 
     let mut drivers: Vec<Driver> = Vec::new();
     for i in 0..103 {
-        let name = i8_array_to_string(&telemetry.scoring.veh_scoring_info[i].m_driver_name);
+        let name = i8_array32_to_string(&telemetry.scoring.veh_scoring_info[i].m_driver_name);
         if name != "" {
             drivers.push(Driver {
                 index: i,

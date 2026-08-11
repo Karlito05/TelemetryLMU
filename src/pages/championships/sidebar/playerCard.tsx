@@ -4,13 +4,24 @@ export default function PlayerCard({
   name,
   car,
   carClass,
+  driverId,
+  setCurDriverId,
+  curDriverId,
 }: {
   name: string;
   car: string;
   carClass: CarClass;
+  driverId: number;
+  setCurDriverId: (v: number) => void;
+  curDriverId: number;
 }) {
   return (
-    <button className="relative w-full p-3 flex flex-col items-start bg-[#16171C]">
+    <button
+      className={`relative w-full p-3 flex flex-col items-start ${
+        driverId === curDriverId ? "bg-[#2D2E32]" : "bg-[#16171C]"
+      }`}
+      onClick={() => setCurDriverId(driverId)}
+    >
       <div className="flex flex-col items-start">
         <div className="text-[32px] text-white font-[Racing_Sans_One]">{name}</div>
         <div className="text-[16px] text-white font-[Inter]">{car}</div>

@@ -29,6 +29,21 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Jet Brains Mono";
+  src: url("./src/assets/fonts/JetBrainsMono-VariableFont_wght.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Barlow Condesed";
+  src: url("./src/assets/fonts/BarlowCondensed-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
 @layer base {
   /* html,
   body,
