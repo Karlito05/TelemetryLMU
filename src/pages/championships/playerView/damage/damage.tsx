@@ -1,7 +1,7 @@
 import { IconAlertTriangle } from "@tabler/icons-react";
 
 export type DamageData = {
-  damageMsg: string;
+  damage_msg: string;
   severity: Severity;
 };
 
@@ -39,7 +39,7 @@ function Damage({ damage }: { damage: DamageData }) {
               : "#FF0000"
         }
       />
-      {damage.damageMsg}
+      {damage.damage_msg}
     </div>
   );
 }

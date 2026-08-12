@@ -395,8 +395,41 @@ pub struct TelemInfoV01 {
     pub m_electric_boost_water_temperature: f64,
     pub m_electric_boost_motor_state: u8,
 
-    // Future use (111 - 8 = 103)
-    pub m_expansion: [u8; 103],
+    pub m_lap_invalidated: bool,
+    pub m_abs_active: bool,
+    pub m_tc_active: bool,
+    pub m_speed_limiter_active: bool,
+    pub m_wiper_state: u8,
+    pub m_tc: u8,
+    pub m_tc_max: u8,
+    pub m_tc_slip: u8,
+    pub m_tc_slip_max: u8,
+    pub m_tc_cut: u8,
+    pub m_tc_cut_max: u8,
+    pub m_abs: u8,
+    pub m_abs_max: u8,
+    pub m_motor_map: u8,
+    pub m_motor_map_max: u8,
+    pub m_migration: u8,
+    pub m_migration_max: u8,
+    pub m_front_anti_sway: u8,
+    pub m_front_anti_sway_max: u8,
+    pub m_rear_anti_sway: u8,
+    pub m_rear_anti_sway_max: u8,
+    pub m_lift_and_coast_progress: u8,
+    pub m_track_limits_steps: u8, // Normalized track limits points (TrackLimitPoints * TrackLimitStepsPerPoint)
+    pub m_regen: f32,             // kW
+    pub m_so_cl: f32,
+    pub m_virtual_energy: f32,
+    pub m_time_gap_car_ahead: f32,
+    pub m_time_gap_car_behind: f32,
+    pub m_time_gap_place_ahead: f32,
+    pub m_time_gap_place_behind: f32,
+    pub m_vehicle_model: [u8; 30],
+    pub m_vehicle_class: IPVehicleClass,
+    pub m_vehicle_championship: IPVehicleChampionship,
+
+    pub m_expansion: [u8; 20],
 
     // Wheel info
     pub m_wheel: [TelemWheelV01; 4],
@@ -590,4 +623,31 @@ mod tests {
         assert_eq!(size_of::<SharedMemoryObjectOut>(), 324_820);
         assert_eq!(size_of::<SharedMemoryLayout>(), 324_820);
     }
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IPVehicleClass {
+    Hypercar = 0x00,
+    Lmp2Elms = 0x02,
+    Lmp2 = 0x03,
+    Lmp3 = 0x04,
+    Gte = 0x05,
+    Gt3 = 0x06,
+    PaceCar = 0x08,
+    Unknown = 0xFF,
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IPVehicleChampionship {
+    Wec2023 = 0x00,
+    Wec2024 = 0x01,
+    Wec2025 = 0x02,
+    Wec2026 = 0x03,
+
+    Elms2025 = 0x10,
+    Elms2026 = 0x11,
+
+    Unknown = 0xFF,
 }

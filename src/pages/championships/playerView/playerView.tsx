@@ -1,7 +1,9 @@
+import { useCallback, useEffect, useState } from "react";
 import { CarClass } from "../sidebar/playerCard";
 import DamageCard, { DamageData, Severity } from "./damage/damage";
-import FuelCard from "./fuel/fuel";
+import FuelCard, { FuelData } from "./fuel/fuel";
 import TiresCard, { Tires } from "./tires/tires";
+import { invoke } from "@tauri-apps/api/core";
 
 type StaleDriverInfo = {
   name: string;
@@ -12,37 +14,64 @@ type StaleDriverInfo = {
 type DynDriverInfo = {
   damages: DamageData[];
   tires: Tires;
+  fuel: FuelData;
 };
 
 export default function PlayerView({ curDriverId }: { curDriverId: number }) {
+  const [staleDriverInfo, setStaleDriverInfo] = useState<StaleDriverInfo>({
+    car: "",
+    name: "",
+    car_class: "",
+  });
+  const [dynDriverInfo, setDynDriverInfo] = useState<DynDriverInfo>({
+    damages: [],
+    tires: {
+      fl: { brake_temp: 0, health: 0, inside_temp: 0, outside_temp: 0 },
+      fr: { brake_temp: 0, health: 0, inside_temp: 0, outside_temp: 0 },
+      rl: { brake_temp: 0, health: 0, inside_temp: 0, outside_temp: 0 },
+      rr: { brake_temp: 0, health: 0, inside_temp: 0, outside_temp: 0 },
+    },
+    fuel: { fuel: 0, max_fuel: 0, ve: 0 },
+  });
+
+  useEffect(() => {
+    invoke<StaleDriverInfo>("get_stale_driver_info", {
+      curDriverId,
+    }).then((v) => {
+      setStaleDriverInfo(v);
+    });
+
+    const interval = setInterval(() => {
+      console.log("ran interval");
+
+      invoke<DynDriverInfo>("get_dyn_driver_info", {
+        curDriverId,
+      }).then((v) => {
+        setDynDriverInfo(v);
+        console.log(v);
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [curDriverId]);
+
   return (
     <div className="w-full h-full rounded-[24px] p-4 bg-[#16171C] flex flex-col gap-2">
       <div className="font-[Racing_Sans_One] text-[32px]">
-        name
+        {staleDriverInfo.name}
         <div className="font-[Inter] text-[16px] flex items-center gap-4">
-          car
-          <ClassBadge carClass={CarClass.GT3} />
+          {staleDriverInfo.car}
+          <ClassBadge carClass={getCarClass(staleDriverInfo.car_class)} />
         </div>
       </div>
       <div className="flex w-full gap-2 min-h-[200px]">
-        <TiresCard
-          tires={{
-            fl: { outside_temp: 71, inside_temp: 67, brake_temp: 56, health: 0.91 },
-            fr: { outside_temp: 74, inside_temp: 65, brake_temp: 45, health: 0.92 },
-            rl: { outside_temp: 84, inside_temp: 59, health: 0.87, brake_temp: 30 },
-            rr: { inside_temp: 66, outside_temp: 90, health: 0.85, brake_temp: 44 },
-          }}
-        />
-        <DamageCard
-          damages={[
-            { severity: Severity.Minor, damageMsg: "Damaged Front Left Suspension" },
-            { severity: Severity.Moderate, damageMsg: "Difuser Heavily Damaged" },
-            { severity: Severity.Major, damageMsg: "No Rear Wing" },
-          ]}
-        />
+        <TiresCard tires={dynDriverInfo.tires} />
+        <DamageCard damages={dynDriverInfo.damages} />
       </div>
       <div>
-        <FuelCard />
+        <FuelCard fuel={dynDriverInfo.fuel} />
       </div>
     </div>
   );
@@ -70,4 +99,26 @@ function ClassBadge({ carClass }: { carClass: CarClass }) {
       {name}
     </div>
   );
+}
+
+function getCarClass(className: string): CarClass {
+  switch (className) {
+    case "Hyper":
+      return CarClass.HY;
+    case "LMP2_ELMS":
+    case "LMP2":
+      return CarClass.P2;
+
+    case "LMP3":
+      return CarClass.P3;
+
+    case "GTE":
+      return CarClass.GTE;
+
+    case "GT3":
+      return CarClass.GT3;
+
+    default:
+      return CarClass.GTE;
+  }
 }

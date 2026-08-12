@@ -47,6 +47,7 @@ function getCarClass(className: string): CarClass {
     case "Hyper":
       return CarClass.HY;
 
+    case "LMP2_ELMS":
     case "LMP2":
       return CarClass.P2;
 

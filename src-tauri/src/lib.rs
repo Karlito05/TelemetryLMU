@@ -4,7 +4,7 @@ mod graph_view;
 mod lap_stores;
 mod telemetry;
 
-use championships::get_champ_drivers;
+use championships::{get_champ_drivers, get_dyn_driver_info, get_stale_driver_info};
 use graph_view::GraphViewState;
 use graph_view::*;
 use lap_stores::{despawn_logger, spawn_logger};
@@ -58,7 +58,9 @@ pub fn run() {
             get_lap_data,
             get_telemetry_info,
             was_last_best,
-            get_champ_drivers
+            get_champ_drivers,
+            get_stale_driver_info,
+            get_dyn_driver_info
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
