@@ -10,6 +10,8 @@ import { IconTimeline, IconMap, IconTrophy } from "@tabler/icons-react";
 import { NavUser } from "./ui/nav-user";
 import { NavSection } from "./ui/nav-section";
 import { Page } from "../utils/Page.ts";
+import { useContext } from "react";
+import { SettingsContext } from "@/App.tsx";
 
 export function AppSidebar({
   activePage,
@@ -18,6 +20,8 @@ export function AppSidebar({
   activePage: Page;
   setActivePage: (value: Page) => void;
 }) {
+  const s = useContext(SettingsContext);
+
   return (
     <Sidebar variant="floating" className="pl-2 py-2 ">
       <SidebarHeader>
@@ -35,40 +39,40 @@ export function AppSidebar({
           name="Live Analysis"
           items={[
             {
-              name: "Graph View",
-              icon: IconTimeline,
-              isActive: activePage == Page.Telemetry,
-              onClick: () => {
-                setActivePage(Page.Telemetry);
-              },
-            },
-            {
-              name: "Championships",
+              name: "Overview",
               icon: IconTrophy,
               isActive: activePage == Page.Championships,
               onClick: () => {
                 setActivePage(Page.Championships);
               },
             },
-          ]}
-        />{" "}
-        <NavSection
-          name="Reflect"
-          items={[
             {
-              name: "Map View",
-              icon: IconMap,
-              isActive: activePage == Page.Setups,
+              name: "Live Graphs",
+              icon: IconTimeline,
+              isActive: activePage == Page.Telemetry,
               onClick: () => {
-                setActivePage(Page.Setups);
+                setActivePage(Page.Telemetry);
               },
             },
           ]}
-        />
+        />{" "}
+        {/* <NavSection */}
+        {/*   name="Reflect" */}
+        {/*   items={[ */}
+        {/*     { */}
+        {/*       name: "Map View", */}
+        {/*       icon: IconMap, */}
+        {/*       isActive: activePage == Page.Setups, */}
+        {/*       onClick: () => { */}
+        {/*         setActivePage(Page.Setups); */}
+        {/*       }, */}
+        {/*     }, */}
+        {/*   ]} */}
+        {/* /> */}
       </SidebarContent>
       <SidebarFooter>
         <SidebarFooter>
-          <NavUser user={{ name: "Karel Lukeš", avatar: "../../public/pfp-white.png" }} />
+          <NavUser user={{ name: s.name, avatar: "../../pfp-white.png" }} />
         </SidebarFooter>
       </SidebarFooter>
     </Sidebar>

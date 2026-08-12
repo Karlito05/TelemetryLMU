@@ -3,19 +3,19 @@ import { TelemetryContext } from "../Telemetry";
 import NormalLayout from "./normalLayout/NormalLayout";
 import EditLayout from "./editLayout/EditLayout";
 import { useEffect, useRef, type ReactNode } from "react";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { IconRefresh } from "@tabler/icons-react";
+// import { SidebarTrigger } from "@/components/ui/sidebar";
+// import { Button } from "@/components/ui/button";
+// import { IconRefresh } from "@tabler/icons-react";
 
 export default function ControlBar() {
   const c = useContext(TelemetryContext);
   return (
     <div className=" bg-(--middleground) h-full w-full rounded-[24px] items-center flex justify-baseline overflow-x-auto no-scrollbar overflow-y-hidden">
-      <SidebarTrigger className="pl-2 size-10 text-[#138DF1] hover:text-[#138DF1] hover:bg-[#00000000]!" />
+      {/* <SidebarTrigger className="pl-2 size-10 text-[#138DF1] hover:text-[#138DF1] hover:bg-[#00000000]!" /> */}
       <ScrollX>{c.editMode ? <EditLayout /> : <NormalLayout />}</ScrollX>
-      <Button size={"icon"} className="size-8! hover:bg-[#00000000]!" variant={"ghost"}>
-        <IconRefresh className="size-8 stroke-[1.5]" color="#138DF1" />
-      </Button>
+      {/* <Button size={"icon"} className="size-8! hover:bg-[#00000000]!" variant={"ghost"}> */}
+      {/*   <IconRefresh className="size-8 stroke-[1.5]" color="#138DF1" /> */}
+      {/* </Button> */}
     </div>
   );
 }

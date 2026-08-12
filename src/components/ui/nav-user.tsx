@@ -67,10 +67,10 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <IconUserCircle />
-                Profile
-              </DropdownMenuItem>
+              {/* <DropdownMenuItem> */}
+              {/*   <IconUserCircle /> */}
+              {/*   Profile */}
+              {/* </DropdownMenuItem> */}
               <DropdownMenuItem>
                 <IconSettings />
                 Settings

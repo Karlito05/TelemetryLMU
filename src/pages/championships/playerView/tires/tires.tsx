@@ -71,7 +71,7 @@ function Tire({ tire }: { tire: { tire: Tire; name: string } }) {
         </div>
       </div>
       <div className="flex gap-1">
-        <div className="bg-[#FFFFFF18] w-3/100  rounded-full items-end flex">
+        <div className="bg-[#FFFFFF18] w-3/100 max-w-4  rounded-full items-end flex">
           <div
             className="w-full rounded-full"
             style={{

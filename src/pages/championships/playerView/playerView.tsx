@@ -68,7 +68,7 @@ export default function PlayerView({ curDriverId }: { curDriverId: number }) {
       </div>
       <div className="flex w-full gap-2 min-h-[200px]">
         <TiresCard tires={dynDriverInfo.tires} />
-        <DamageCard damages={dynDriverInfo.damages} />
+        {/* <DamageCard damages={dynDriverInfo.damages} /> */}
       </div>
       <div>
         <FuelCard fuel={dynDriverInfo.fuel} />
