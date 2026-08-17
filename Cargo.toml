@@ -5,7 +5,8 @@ edition = "2024"
 
 [dependencies]
 eframe = "0.36.1"
-egui_extras = "0.36.1"
+egui_extras = {version="0.36.1", features=["svg", "image"]}
+egui_material_icons = { version = "0.8.0", features = ["outline"], default-features = false }
 egui_plot = "0.37.0"
 env_logger = "0.11.11"
 memmap2 = "0.9.11"

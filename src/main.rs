@@ -1,10 +1,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+mod frontend;
 mod graph_view;
-mod telemetry;
 mod telemetry_back;
 
-use eframe::egui::{self, Button, Color32, Id, RichText};
+use eframe::egui::{self, Color32, FontData, FontDefinitions};
+
+use crate::frontend::frontend_main;
 
 fn main() -> eframe::Result {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -22,81 +24,42 @@ fn main() -> eframe::Result {
         Box::new(|cc| {
             // This gives us image support:
             egui_extras::install_image_loaders(&cc.egui_ctx);
+            egui_material_icons::initialize(&cc.egui_ctx);
 
-            Ok(Box::<App>::default())
+            cc.egui_ctx
+                .all_styles_mut(|style| style.visuals.panel_fill = Color32::from_rgb(15, 15, 15));
+
+            let mut fonts = FontDefinitions::default();
+
+            fonts.font_data.insert(
+                "RacingSansOne".to_owned(),
+                std::sync::Arc::new(FontData::from_static(include_bytes!(
+                    "../public/RacingSansOne-Regular.ttf"
+                ))),
+            );
+
+            fonts
+                .families
+                .entry(egui::FontFamily::Name("RacingSansOne".into()))
+                .or_default()
+                .insert(0, "RacingSansOne".to_owned());
+
+            fonts.font_data.insert(
+                "DaysOne".to_owned(),
+                std::sync::Arc::new(FontData::from_static(include_bytes!(
+                    "../public/DaysOne-Regular.ttf"
+                ))),
+            );
+
+            fonts
+                .families
+                .entry(egui::FontFamily::Name("DaysOne".into()))
+                .or_default()
+                .insert(0, "DaysOne".to_owned());
+
+            cc.egui_ctx.set_fonts(fonts);
+
+            Ok(Box::<frontend_main::App>::default())
         }),
     )
-}
-
-struct App {
-    active_page: Page,
-    telemetry: telemetry::TelemetryPage,
-}
-
-enum Page {
-    Telemetry,
-    Info,
-    Map,
-    Profile,
-    Settings,
-}
-
-// Default init
-impl Default for App {
-    fn default() -> Self {
-        Self {
-            active_page: Page::Telemetry,
-            telemetry: telemetry::TelemetryPage::default(),
-        }
-    }
-}
-
-// Main GUI entrypoint
-impl eframe::App for App {
-    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        ui.all_styles_mut(|style| style.visuals.panel_fill = Color32::from_rgb(15, 15, 15));
-
-        self.e_sidebar(ui);
-
-        egui::CentralPanel::default().show(ui, |ui| match self.active_page {
-            Page::Telemetry => self.telemetry.main(ui),
-            _ => todo!(),
-        });
-    }
-}
-
-impl App {
-    fn e_sidebar(&mut self, ui: &mut egui::Ui) {
-        let screen_width = ui.ctx().viewport_rect().width();
-        let sidebar_width = screen_width * 0.15;
-
-        egui::Panel::left(Id::new("e_sidebar"))
-            .resizable(false)
-            .exact_size(if sidebar_width > 200.0 {
-                sidebar_width
-            } else {
-                200.0
-            })
-            .show(ui, |ui| {
-                if ui.add(Button::new(RichText::new("Telemetry"))).clicked() {
-                    self.active_page = Page::Telemetry
-                }
-
-                if ui.add(Button::new(RichText::new("Info"))).clicked() {
-                    self.active_page = Page::Info
-                }
-
-                if ui.add(Button::new(RichText::new("Map"))).clicked() {
-                    self.active_page = Page::Map
-                }
-
-                if ui.add(Button::new(RichText::new("Profile"))).clicked() {
-                    self.active_page = Page::Profile
-                }
-
-                if ui.add(Button::new(RichText::new("Settings"))).clicked() {
-                    self.active_page = Page::Settings
-                }
-            });
-    }
 }
