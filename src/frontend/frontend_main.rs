@@ -31,7 +31,7 @@ impl eframe::App for App {
         self.sidebar.draw_sidebar(ui);
 
         egui::CentralPanel::default().show(ui, |ui| match self.sidebar.active_page {
-            Page::Telemetry => self.telemetry.draw_telemetry_page(ui),
+            Page::Telemetry => self.telemetry.draw_telemetry_page(ui, &mut self.sidebar),
             _ => todo!(),
         });
     }

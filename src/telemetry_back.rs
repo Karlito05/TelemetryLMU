@@ -17,8 +17,8 @@ use windows_sys::Win32::System::Memory::{
 const MAX_PATH: usize = 260;
 
 pub struct Telemetry {
-    full_mode: bool,
-    mmap: Mmap,
+    pub full_mode: bool,
+    pub mmap: Mmap,
 }
 
 impl Telemetry {
@@ -36,7 +36,7 @@ impl Telemetry {
     }
 
     #[cfg(not(target_os = "windows"))]
-    pub fn get_mmap(path: &str) -> Mmap {
+    fn get_mmap(path: &str) -> Mmap {
         const EXPECTED_LEN: u64 = std::mem::size_of::<SharedMemoryObjectOut>() as u64;
         const MAX_RETRIES: u32 = 20;
         const RETRY_DELAY: std::time::Duration = std::time::Duration::from_millis(100);
@@ -86,17 +86,17 @@ impl Telemetry {
     }
 
     #[cfg(target_os = "windows")]
-    pub fn get_mmap(_path: &str, state: &Mutex<TelemetryState>) -> Mmap {
+    fn get_mmap(_path: &str, state: &Mutex<TelemetryState>) -> Mmap {
         // Windows telemetry is read from the named mapping object directly in update_telemetry.
         state.lock().unwrap().full_mode = true;
         mmap_fallback()
     }
 
     #[cfg(not(target_os = "windows"))]
-    pub fn update_telemetry(&self, mmap: &Mmap) -> Option<Box<SharedMemoryObjectOut>> {
+    pub fn update_telemetry(&self) -> Option<Box<SharedMemoryObjectOut>> {
         let layout_size = std::mem::size_of::<SharedMemoryLayout>();
 
-        if mmap.len() < layout_size {
+        if self.mmap.len() < layout_size {
             return None;
         }
 
@@ -107,7 +107,7 @@ impl Telemetry {
 
             // 2. Copy directly from memory map to our heap pointer
             std::ptr::copy_nonoverlapping(
-                mmap.as_ptr(),
+                self.mmap.as_ptr(),
                 layout_ptr.as_mut_ptr() as *mut u8,
                 layout_size,
             );
@@ -120,7 +120,7 @@ impl Telemetry {
     }
 
     #[cfg(target_os = "windows")]
-    pub fn update_telemetry(&self, _mmap: &Mmap) -> Option<Box<SharedMemoryObjectOut>> {
+    pub fn update_telemetry(&self) -> Option<Box<SharedMemoryObjectOut>> {
         const LMU_SHARED_MEMORY_FILE: &str = "LMU_Data";
 
         let layout_size = std::mem::size_of::<SharedMemoryLayout>();
@@ -154,6 +154,18 @@ impl Telemetry {
             let full_layout = layout_ptr.assume_init();
             Some(Box::new(full_layout.data))
         }
+    }
+
+    pub fn get_drivers(&self) -> Vec<(String, i32)> {
+        let tel = self.update_telemetry().unwrap();
+
+        let mut result: Vec<(String, i32)> = vec![];
+        for (i, driver) in tel.scoring.veh_scoring_info.iter().enumerate() {
+            if !i8_array32_to_string(&driver.m_driver_name).is_empty() {
+                result.push((i8_array32_to_string(&driver.m_driver_name), i as i32));
+            }
+        }
+        result
     }
 }
 

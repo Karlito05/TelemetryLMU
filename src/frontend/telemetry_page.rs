@@ -1,11 +1,19 @@
-use crate::graph_view::GraphViewDataType;
+use crate::frontend::components::DropdownItem;
+use crate::frontend::sidebar::Sidebar;
 use crate::telemetry_back::Telemetry;
-use eframe::egui::{
-    self, Align2, Color32, CornerRadius, FontFamily, FontId, Pos2, Rect, Stroke, Vec2, pos2, vec2,
-};
+use crate::{frontend::components::dropdown, graph_view::GraphViewDataType};
+use eframe::egui::{self, *};
+use egui_material_icons::icons::{ICON_MENU, ICON_VIEW_SIDEBAR};
 
 pub struct TelemetryPage {
     telemetry: Telemetry,
+    cur_driver: (String, i32),
+    cur_layout_index: usize,
+    layouts: Vec<LayoutInfo>,
+}
+
+struct LayoutInfo {
+    name: String,
     graphs: Vec<GraphInfo>,
 }
 
@@ -23,27 +31,59 @@ struct GraphInfo {
 impl Default for TelemetryPage {
     fn default() -> Self {
         Self {
-            telemetry: Telemetry::new("LMU_Data"),
-            graphs: vec![
-                GraphInfo {
-                    cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
-                    ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
-                    max_val: 1.0,
-                    color: Color32::from_rgb(20, 10, 200),
-                    n_gridlines: 3,
-                    unit: "%".to_owned(),
-                    size_percent: 0.5,
-                    graph_type: GraphViewDataType::from_string("rpm", 0),
+            telemetry: Telemetry::new("/dev/shm/LMU_Data"),
+            cur_driver: ("".to_owned(), 0),
+            cur_layout_index: 0,
+            layouts: vec![
+                LayoutInfo {
+                    name: "Main test".to_owned(),
+                    graphs: vec![
+                        GraphInfo {
+                            cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
+                            ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
+                            max_val: 1.0,
+                            color: Color32::from_rgb(20, 10, 200),
+                            n_gridlines: 3,
+                            unit: "%".to_owned(),
+                            size_percent: 0.5,
+                            graph_type: GraphViewDataType::from_string("rpm", 0),
+                        },
+                        GraphInfo {
+                            cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
+                            ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
+                            max_val: 1.0,
+                            color: Color32::from_rgb(20, 200, 20),
+                            n_gridlines: 3,
+                            unit: "%".to_owned(),
+                            size_percent: 0.5,
+                            graph_type: GraphViewDataType::from_string("speed", 0),
+                        },
+                    ],
                 },
-                GraphInfo {
-                    cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
-                    ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
-                    max_val: 1.0,
-                    color: Color32::from_rgb(20, 200, 20),
-                    n_gridlines: 3,
-                    unit: "%".to_owned(),
-                    size_percent: 0.5,
-                    graph_type: GraphViewDataType::from_string("speed", 0),
+                LayoutInfo {
+                    name: "Main test 2".to_owned(),
+                    graphs: vec![
+                        GraphInfo {
+                            cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
+                            ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
+                            max_val: 1.0,
+                            color: Color32::from_rgb(20, 150, 200),
+                            n_gridlines: 3,
+                            unit: "%".to_owned(),
+                            size_percent: 0.5,
+                            graph_type: GraphViewDataType::from_string("rpm", 0),
+                        },
+                        GraphInfo {
+                            cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
+                            ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
+                            max_val: 1.0,
+                            color: Color32::from_rgb(200, 0, 20),
+                            n_gridlines: 3,
+                            unit: "%".to_owned(),
+                            size_percent: 0.5,
+                            graph_type: GraphViewDataType::from_string("speed", 0),
+                        },
+                    ],
                 },
             ],
         }
@@ -51,9 +91,14 @@ impl Default for TelemetryPage {
 }
 
 impl TelemetryPage {
-    pub fn draw_telemetry_page(&mut self, ui: &mut egui::Ui) {
-        let top_bar_rect =
-            egui::Rect::from_min_size(pos2(308.0, 16.0), vec2(ui.available_width() - 8.0, 48.0));
+    pub fn draw_telemetry_page(&mut self, ui: &mut egui::Ui, sidebar: &mut Sidebar) {
+        let top_bar_rect = egui::Rect::from_min_size(
+            pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
+            vec2(
+                ui.available_width() - if sidebar.open { 0.0 } else { 16.0 },
+                48.0,
+            ),
+        );
 
         ui.painter().rect_filled(
             top_bar_rect,
@@ -61,15 +106,115 @@ impl TelemetryPage {
             Color32::from_rgb(22, 23, 28),
         );
 
+        ui.put(top_bar_rect, |ui: &mut egui::Ui| {
+            ui.horizontal(|ui| {
+                let (sidebar_icon_rect, response) = ui.allocate_exact_size(
+                    vec2(ui.available_height() - 8.0, ui.available_height() - 8.0),
+                    Sense::click(),
+                );
+                if response.hovered() {
+                    ui.painter().rect_filled(
+                        sidebar_icon_rect,
+                        CornerRadius::same(8),
+                        Color32::from_white_alpha(25),
+                    );
+                }
+                if response.clicked() {
+                    ui.painter().rect_filled(
+                        sidebar_icon_rect,
+                        CornerRadius::same(8),
+                        Color32::from_white_alpha(25),
+                    );
+                    sidebar.open = !sidebar.open;
+                }
+                // TODO: Add an icon to this mess right here (sidebar)
+                // TODO: Refactor this into functions ig
+
+                ui.add(
+                    egui::Label::new(
+                        egui::RichText::new("Driver:")
+                            .size(16.0)
+                            .color(Color32::WHITE),
+                    )
+                    .selectable(false),
+                );
+
+                ui.add_space(2.0);
+
+                dropdown(
+                    ui,
+                    vec2(140.0, 32.0),
+                    CornerRadius::same(8),
+                    Color32::from_white_alpha(25),
+                    &mut self.cur_driver,
+                    "Select a driver",
+                    FontId {
+                        size: 14.0,
+                        family: FontFamily::Proportional,
+                    },
+                    self.telemetry
+                        .get_drivers()
+                        .iter()
+                        .map(|driver| DropdownItem {
+                            value: driver.clone(),
+                            display_value: driver.0.clone(),
+                        })
+                        .collect(),
+                );
+
+                ui.separator();
+
+                ui.add(
+                    egui::Label::new(
+                        egui::RichText::new("Layout:")
+                            .size(16.0)
+                            .color(Color32::WHITE),
+                    )
+                    .selectable(false),
+                );
+
+                ui.add_space(2.0);
+
+                dropdown(
+                    ui,
+                    vec2(140.0, 32.0),
+                    CornerRadius::same(8),
+                    Color32::from_white_alpha(25),
+                    &mut self.cur_layout_index,
+                    "",
+                    FontId {
+                        size: 14.0,
+                        family: FontFamily::Proportional,
+                    },
+                    self.layouts
+                        .iter()
+                        .enumerate()
+                        .map(|(i, l)| DropdownItem {
+                            value: i,
+                            display_value: l.name.clone(),
+                        })
+                        .collect(),
+                );
+            })
+            .response
+        });
+
         let graphs_rect = egui::Rect::from_min_size(
-            pos2(308.0, 80.0),
-            vec2(ui.available_width() - 8.0, ui.available_height() - 80.0),
+            pos2(if sidebar.open { 300.0 } else { 16.0 }, 80.0),
+            vec2(
+                ui.available_width() - if sidebar.open { 8.0 } else { 16.0 },
+                ui.available_height() - 24.0,
+            ),
         );
 
         ui.put(graphs_rect, |ui: &mut egui::Ui| {
             ui.vertical(|ui| {
                 let margins = 64.0;
-                for (i, graph_info) in self.graphs.iter().enumerate() {
+                for (i, graph_info) in self.layouts[self.cur_layout_index]
+                    .graphs
+                    .iter()
+                    .enumerate()
+                {
                     if i == 0 {
                         self.graph(
                             ui,
@@ -89,7 +234,7 @@ impl TelemetryPage {
                         continue;
                     }
 
-                    if i == self.graphs.len() - 1 {
+                    if i == self.layouts[self.cur_layout_index].graphs.len() - 1 {
                         self.graph(
                             ui,
                             graph_info,
@@ -108,7 +253,7 @@ impl TelemetryPage {
                         continue;
                     }
 
-                    if self.graphs.len() == 1 {
+                    if self.layouts[self.cur_layout_index].graphs.len() == 1 {
                         self.graph(
                             ui,
                             graph_info,
