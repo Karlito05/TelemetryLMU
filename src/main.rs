@@ -5,6 +5,7 @@ mod graph_view;
 mod telemetry_back;
 
 use eframe::egui::{self, Color32, FontData, FontDefinitions};
+use egui_phosphor_icons::add_fonts;
 
 use crate::frontend::frontend_main;
 
@@ -56,6 +57,8 @@ fn main() -> eframe::Result {
                 .entry(egui::FontFamily::Name("DaysOne".into()))
                 .or_default()
                 .insert(0, "DaysOne".to_owned());
+
+            add_fonts(&mut fonts);
 
             cc.egui_ctx.set_fonts(fonts);
 

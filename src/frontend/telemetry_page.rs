@@ -1,9 +1,9 @@
-use crate::frontend::components::DropdownItem;
+use crate::frontend::components::{DropdownItem, GraphInfo, graph};
 use crate::frontend::sidebar::Sidebar;
 use crate::telemetry_back::Telemetry;
 use crate::{frontend::components::dropdown, graph_view::GraphViewDataType};
 use eframe::egui::{self, *};
-use egui_material_icons::icons::{ICON_MENU, ICON_VIEW_SIDEBAR};
+use egui_phosphor_icons::icons;
 
 pub struct TelemetryPage {
     telemetry: Telemetry,
@@ -15,17 +15,6 @@ pub struct TelemetryPage {
 struct LayoutInfo {
     name: String,
     graphs: Vec<GraphInfo>,
-}
-
-struct GraphInfo {
-    cur_lap: Vec<Vec2>,
-    ref_lap: Vec<Vec2>,
-    max_val: f64,
-    color: Color32,
-    n_gridlines: i32,
-    unit: String,
-    size_percent: f32,
-    graph_type: GraphViewDataType,
 }
 
 impl Default for TelemetryPage {
@@ -108,6 +97,8 @@ impl TelemetryPage {
 
         ui.put(top_bar_rect, |ui: &mut egui::Ui| {
             ui.horizontal(|ui| {
+                ui.add_space(4.0);
+
                 let (sidebar_icon_rect, response) = ui.allocate_exact_size(
                     vec2(ui.available_height() - 8.0, ui.available_height() - 8.0),
                     Sense::click(),
@@ -115,20 +106,33 @@ impl TelemetryPage {
                 if response.hovered() {
                     ui.painter().rect_filled(
                         sidebar_icon_rect,
-                        CornerRadius::same(8),
+                        CornerRadius::same(40),
                         Color32::from_white_alpha(25),
                     );
                 }
                 if response.clicked() {
                     ui.painter().rect_filled(
                         sidebar_icon_rect,
-                        CornerRadius::same(8),
+                        CornerRadius::same(40),
                         Color32::from_white_alpha(25),
                     );
                     sidebar.open = !sidebar.open;
                 }
-                // TODO: Add an icon to this mess right here (sidebar)
+
+                ui.put(
+                    sidebar_icon_rect,
+                    Label::new(
+                        icons::SIDEBAR_SIMPLE
+                            .regular()
+                            .size(32.0)
+                            .color(Color32::from_rgb(19, 141, 241)),
+                    )
+                    .selectable(false),
+                );
+
                 // TODO: Refactor this into functions ig
+
+                ui.separator();
 
                 ui.add(
                     egui::Label::new(
@@ -216,7 +220,7 @@ impl TelemetryPage {
                     .enumerate()
                 {
                     if i == 0 {
-                        self.graph(
+                        graph(
                             ui,
                             graph_info,
                             vec2(
@@ -235,7 +239,7 @@ impl TelemetryPage {
                     }
 
                     if i == self.layouts[self.cur_layout_index].graphs.len() - 1 {
-                        self.graph(
+                        graph(
                             ui,
                             graph_info,
                             vec2(
@@ -254,7 +258,7 @@ impl TelemetryPage {
                     }
 
                     if self.layouts[self.cur_layout_index].graphs.len() == 1 {
-                        self.graph(
+                        graph(
                             ui,
                             graph_info,
                             vec2(
@@ -267,7 +271,7 @@ impl TelemetryPage {
                         continue;
                     }
 
-                    self.graph(
+                    graph(
                         ui,
                         graph_info,
                         vec2(
@@ -281,194 +285,5 @@ impl TelemetryPage {
             })
             .response
         });
-    }
-
-    fn graph(
-        &self,
-        ui: &mut egui::Ui,
-        graph_info: &GraphInfo,
-        size: Vec2,
-        corner_radius: CornerRadius,
-        margins: f32, // Total so val/2 on each side
-    ) {
-        // Allocate the rect
-        let rect = ui.allocate_space(size).1;
-
-        // Background
-        ui.painter()
-            .rect_filled(rect, corner_radius, Color32::from_rgb(22, 23, 28));
-
-        self.draw_gridlines(
-            ui.painter(),
-            rect,
-            graph_info.n_gridlines,
-            margins,
-            graph_info.max_val,
-            &graph_info.unit,
-        );
-        self.draw_lap(
-            ui.painter(),
-            rect,
-            &graph_info.cur_lap,
-            margins,
-            Stroke::new(1.5, graph_info.color),
-        );
-        self.draw_lap(
-            ui.painter(),
-            rect,
-            &graph_info.ref_lap,
-            margins,
-            Stroke::new(
-                1.0,
-                Color32::from_rgba_unmultiplied(
-                    graph_info.color.r(),
-                    graph_info.color.g(),
-                    graph_info.color.b(),
-                    127,
-                ),
-            ),
-        );
-        self.draw_title(
-            ui.painter(),
-            rect,
-            &capitalize_first(&graph_info.graph_type.to_string()),
-            margins,
-            graph_info.color,
-        );
-    }
-
-    fn draw_title(
-        &self,
-        painter: &egui::Painter,
-        rect: Rect,
-        text: &str,
-        margins: f32,
-        color: Color32,
-    ) {
-        painter.text(
-            pos2(
-                margins / 4.0 + rect.min.x,
-                rect.height() - margins / 4.0 + rect.min.y,
-            ),
-            Align2::LEFT_CENTER,
-            text,
-            FontId {
-                size: 16.0,
-                family: FontFamily::Name("RacingSansOne".into()),
-            },
-            color,
-        );
-    }
-
-    fn draw_lap(
-        &self,
-        painter: &egui::Painter,
-        rect: Rect,
-        lap: &Vec<Vec2>,
-        margins: f32,
-        stroke: Stroke,
-    ) {
-        let mut size = rect.size();
-        size.y -= margins;
-        let pos = rect.min;
-        let mut points: Vec<Pos2> = vec![];
-
-        for point in lap {
-            points.push(pos2(
-                point.x * size.x + pos.x,
-                (1.0 - point.y) * size.y + pos.y + margins / 2.0,
-            ));
-        }
-
-        painter.add(egui::Shape::line(points, stroke));
-    }
-
-    fn draw_gridlines(
-        &self,
-        painter: &egui::Painter,
-        rect: Rect,
-        n_gridlines: i32,
-        margins: f32,
-        max_val: f64,
-        unit: &String,
-    ) {
-        let mut size = rect.size();
-        size.y -= margins;
-        let pos = rect.min;
-        let spacing = size.y / (n_gridlines as f32 - 1.0);
-        let width = size.x;
-
-        for i in 0..n_gridlines {
-            let y = (i) as f32 * spacing;
-            self.dashed_line(
-                painter,
-                pos2(pos.x, y + pos.y + margins / 2.0),
-                pos2(width + pos.x, y + pos.y + margins / 2.0),
-                8.0,
-                8.0,
-                Stroke::new(1.0, Color32::from_rgba_unmultiplied(255, 255, 255, 127)),
-            );
-
-            // Overrides for special cases
-            if max_val == 1.0 {
-                painter.text(
-                    pos2(pos.x + 2.0, y + pos.y + margins / 2.0 - 5.0),
-                    Align2::LEFT_BOTTOM,
-                    format!(
-                        "{} {}",
-                        max_val * 100.0 * (n_gridlines - 1 - i) as f64 / (n_gridlines - 1) as f64,
-                        unit
-                    )
-                    .to_string(),
-                    FontId::new(12.0, FontFamily::default()),
-                    Color32::from_white_alpha(127),
-                );
-            } else {
-                painter.text(
-                    pos2(pos.x + 2.0, y + pos.y + margins / 2.0 - 5.0),
-                    Align2::LEFT_BOTTOM,
-                    format!(
-                        "{} {}",
-                        max_val * (n_gridlines - 1 - i) as f64 / (n_gridlines - 1) as f64,
-                        unit
-                    )
-                    .to_string(),
-                    FontId::new(12.0, FontFamily::default()),
-                    Color32::from_white_alpha(127),
-                );
-            }
-        }
-    }
-
-    fn dashed_line(
-        &self,
-        painter: &egui::Painter,
-        start: egui::Pos2,
-        end: egui::Pos2,
-        dash: f32,
-        gap: f32,
-        stroke: egui::Stroke,
-    ) {
-        let dir = (end - start).normalized();
-        let len = start.distance(end);
-
-        let mut dist = 0.0;
-
-        while dist < len {
-            let a = start + dir * dist;
-            let b = start + dir * (dist + dash).min(len);
-
-            painter.line_segment([a, b], stroke);
-
-            dist += dash + gap;
-        }
-    }
-}
-
-fn capitalize_first(s: &str) -> String {
-    let mut c = s.chars();
-    match c.next() {
-        None => String::new(),
-        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
     }
 }
