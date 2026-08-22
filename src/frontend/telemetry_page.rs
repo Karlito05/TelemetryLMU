@@ -1,14 +1,14 @@
 use crate::frontend::components::{DropdownItem, GraphInfo, button, graph};
-use crate::frontend::sidebar::Sidebar;
+use crate::frontend::sidebar::{self, Sidebar};
 use crate::telemetry_back::Telemetry;
 use crate::{frontend::components::dropdown, graph_view::GraphViewDataType};
-use eframe::egui::Direction::RightToLeft;
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
 
 pub struct TelemetryPage {
     telemetry: Telemetry,
     cur_driver: (String, i32),
+    in_layout_edit_mode: bool,
     cur_layout_index: usize,
     layouts: Vec<LayoutInfo>,
 }
@@ -23,6 +23,7 @@ impl Default for TelemetryPage {
         Self {
             telemetry: Telemetry::new("/dev/shm/LMU_Data"),
             cur_driver: ("".to_owned(), 0),
+            in_layout_edit_mode: false,
             cur_layout_index: 0,
             layouts: vec![
                 LayoutInfo {
@@ -82,6 +83,34 @@ impl Default for TelemetryPage {
 
 impl TelemetryPage {
     pub fn draw_telemetry_page(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
+        if !self.in_layout_edit_mode {
+            self.draw_normal_mode(ui, sidebar);
+        } else {
+            self.draw_edit_mode(ui, sidebar);
+        }
+    }
+
+    fn draw_edit_mode(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
+        let top_bar_rect = Rect::from_min_size(
+            pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
+            vec2(
+                ui.available_width() - if sidebar.open { 0.0 } else { 16.0 },
+                48.0,
+            ),
+        );
+        self.draw_top_bar_edit(ui, top_bar_rect, sidebar);
+
+        let graphs_rect = Rect::from_min_size(
+            pos2(if sidebar.open { 300.0 } else { 16.0 }, 80.0),
+            vec2(
+                ui.available_width() - if sidebar.open { 8.0 } else { 16.0 },
+                ui.available_height() - 24.0,
+            ),
+        );
+        self.draw_graphs_normal(ui, graphs_rect);
+    }
+
+    fn draw_normal_mode(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
         let top_bar_rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
             vec2(
@@ -90,7 +119,7 @@ impl TelemetryPage {
             ),
         );
 
-        self.draw_top_bar(ui, top_bar_rect, sidebar);
+        self.draw_top_bar_normal(ui, top_bar_rect, sidebar);
 
         let graphs_rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 80.0),
@@ -100,10 +129,141 @@ impl TelemetryPage {
             ),
         );
 
-        self.draw_graphs(ui, graphs_rect);
+        self.draw_graphs_normal(ui, graphs_rect);
     }
 
-    fn draw_top_bar(&mut self, ui: &mut Ui, top_bar_rect: Rect, sidebar: &mut Sidebar) {
+    fn draw_top_bar_edit(&mut self, ui: &mut Ui, top_bar_rect: Rect, sidebar: &mut Sidebar) {
+        ui.painter().rect_filled(
+            top_bar_rect,
+            CornerRadius::same(24),
+            Color32::from_rgb(22, 23, 28),
+        );
+
+        ui.put(top_bar_rect, |ui: &mut Ui| {
+            ui.horizontal(|ui| {
+                ui.add_space(4.0);
+
+                self.draw_sidebar_button(ui, sidebar);
+
+                ui.separator();
+
+                self.draw_editing_layout_dropdown(ui);
+
+                ui.separator();
+
+                self.draw_save_button(ui);
+
+                ui.separator();
+
+                self.draw_save_as_button(ui);
+
+                ui.separator();
+
+                self.draw_discard_button(ui);
+
+                ui.separator();
+
+                self.draw_delete_button(ui);
+            })
+            .response
+        });
+    }
+
+    fn draw_editing_layout_dropdown(&mut self, ui: &mut Ui) {
+        ui.add(
+            Label::new(RichText::new("Editing:").size(16.0).color(Color32::WHITE))
+                .selectable(false),
+        );
+
+        ui.add_space(2.0);
+
+        dropdown(
+            ui,
+            vec2(140.0, 32.0),
+            CornerRadius::same(8),
+            Color32::from_white_alpha(25),
+            &mut self.cur_layout_index,
+            "",
+            FontId {
+                size: 14.0,
+                family: FontFamily::Proportional,
+            },
+            self.layouts
+                .iter()
+                .enumerate()
+                .map(|(i, l)| DropdownItem {
+                    value: i,
+                    display_value: l.name.clone(),
+                })
+                .collect(),
+        );
+    }
+
+    fn draw_save_button(&mut self, ui: &mut Ui) {
+        if button(
+            ui,
+            vec2(64.0, 32.0),
+            CornerRadius::same(8),
+            Color32::from_rgb(19, 141, 241),
+            "Save",
+            FontId::new(14.0, FontFamily::Proportional),
+            Color32::WHITE,
+        )
+        .clicked()
+        {
+            // TODO: logic
+        }
+    }
+
+    fn draw_save_as_button(&mut self, ui: &mut Ui) {
+        if button(
+            ui,
+            vec2(64.0, 32.0),
+            CornerRadius::same(8),
+            Color32::from_rgb(19, 141, 241),
+            "Save as",
+            FontId::new(14.0, FontFamily::Proportional),
+            Color32::WHITE,
+        )
+        .clicked()
+        {
+            // TODO: logic
+        }
+    }
+
+    fn draw_discard_button(&mut self, ui: &mut Ui) {
+        if button(
+            ui,
+            vec2(64.0, 32.0),
+            CornerRadius::same(8),
+            Color32::from_white_alpha(25),
+            "Discard",
+            FontId::new(14.0, FontFamily::Proportional),
+            Color32::WHITE,
+        )
+        .clicked()
+        {
+            // TODO: logic
+        }
+    }
+
+    fn draw_delete_button(&mut self, ui: &mut Ui) {
+        if button(
+            ui,
+            vec2(64.0, 32.0),
+            CornerRadius::same(8),
+            Color32::from_rgb(255, 0, 0),
+            "Delete",
+            FontId::new(14.0, FontFamily::Proportional),
+            Color32::WHITE,
+        )
+        .clicked()
+        {
+            // TODO: logic
+        }
+    }
+
+    fn draw_top_bar_normal(&mut self, ui: &mut Ui, top_bar_rect: Rect, sidebar: &mut Sidebar) {
         ui.painter().rect_filled(
             top_bar_rect,
             CornerRadius::same(24),
@@ -263,7 +423,7 @@ impl TelemetryPage {
         }
     }
 
-    fn draw_edit_layout_button(&self, ui: &mut Ui) {
+    fn draw_edit_layout_button(&mut self, ui: &mut Ui) {
         let (sidebar_icon_rect, response) = ui.allocate_exact_size(
             vec2(ui.available_height() - 8.0, ui.available_height() - 8.0),
             Sense::click(),
@@ -281,7 +441,7 @@ impl TelemetryPage {
                 CornerRadius::same(40),
                 Color32::from_white_alpha(25),
             );
-            // TODO: Logic
+            self.in_layout_edit_mode = true;
         }
 
         ui.put(
@@ -296,7 +456,7 @@ impl TelemetryPage {
         );
     }
 
-    fn draw_graphs(&self, ui: &mut Ui, graphs_rect: Rect) {
+    fn draw_graphs_normal(&self, ui: &mut Ui, graphs_rect: Rect) {
         ui.put(graphs_rect, |ui: &mut Ui| {
             ui.vertical(|ui| {
                 let margins = 64.0;
