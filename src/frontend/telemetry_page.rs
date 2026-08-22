@@ -117,77 +117,17 @@ impl TelemetryPage {
 
                 ui.separator();
 
-                ui.add(
-                    egui::Label::new(
-                        egui::RichText::new("Driver:")
-                            .size(16.0)
-                            .color(Color32::WHITE),
-                    )
-                    .selectable(false),
-                );
-
-                ui.add_space(2.0);
-
-                dropdown(
-                    ui,
-                    vec2(140.0, 32.0),
-                    CornerRadius::same(8),
-                    Color32::from_white_alpha(25),
-                    &mut self.cur_driver,
-                    "Select a driver",
-                    FontId {
-                        size: 14.0,
-                        family: FontFamily::Proportional,
-                    },
-                    self.telemetry
-                        .get_drivers()
-                        .iter()
-                        .map(|driver| DropdownItem {
-                            value: driver.clone(),
-                            display_value: driver.0.clone(),
-                        })
-                        .collect(),
-                );
+                self.draw_driver_select(ui);
 
                 ui.separator();
 
-                ui.add(
-                    egui::Label::new(
-                        egui::RichText::new("Layout:")
-                            .size(16.0)
-                            .color(Color32::WHITE),
-                    )
-                    .selectable(false),
-                );
-
-                ui.add_space(2.0);
-
-                dropdown(
-                    ui,
-                    vec2(140.0, 32.0),
-                    CornerRadius::same(8),
-                    Color32::from_white_alpha(25),
-                    &mut self.cur_layout_index,
-                    "",
-                    FontId {
-                        size: 14.0,
-                        family: FontFamily::Proportional,
-                    },
-                    self.layouts
-                        .iter()
-                        .enumerate()
-                        .map(|(i, l)| DropdownItem {
-                            value: i,
-                            display_value: l.name.clone(),
-                        })
-                        .collect(),
-                );
+                self.draw_layout_select(ui);
             })
             .response
         });
     }
 
-    fn draw_sidebar_button(&self, ui: &mut egui::Ui, sidebar: &mut Sidebar) {
+    fn draw_sidebar_button(&self, ui: &mut Ui, sidebar: &mut Sidebar) {
         let (sidebar_icon_rect, response) = ui.allocate_exact_size(
             vec2(ui.available_height() - 8.0, ui.available_height() - 8.0),
             Sense::click(),
@@ -220,7 +160,75 @@ impl TelemetryPage {
         );
     }
 
-    fn draw_graphs(&self, ui: &mut egui::Ui, graphs_rect: Rect) {
+    fn draw_driver_select(&mut self, ui: &mut Ui) {
+        ui.add(
+            egui::Label::new(
+                egui::RichText::new("Driver:")
+                    .size(16.0)
+                    .color(Color32::WHITE),
+            )
+            .selectable(false),
+        );
+
+        ui.add_space(2.0);
+
+        dropdown(
+            ui,
+            vec2(140.0, 32.0),
+            CornerRadius::same(8),
+            Color32::from_white_alpha(25),
+            &mut self.cur_driver,
+            "Select a driver",
+            FontId {
+                size: 14.0,
+                family: FontFamily::Proportional,
+            },
+            self.telemetry
+                .get_drivers()
+                .iter()
+                .map(|driver| DropdownItem {
+                    value: driver.clone(),
+                    display_value: driver.0.clone(),
+                })
+                .collect(),
+        );
+    }
+
+    fn draw_layout_select(&mut self, ui: &mut Ui) {
+        ui.add(
+            egui::Label::new(
+                egui::RichText::new("Layout:")
+                    .size(16.0)
+                    .color(Color32::WHITE),
+            )
+            .selectable(false),
+        );
+
+        ui.add_space(2.0);
+
+        dropdown(
+            ui,
+            vec2(140.0, 32.0),
+            CornerRadius::same(8),
+            Color32::from_white_alpha(25),
+            &mut self.cur_layout_index,
+            "",
+            FontId {
+                size: 14.0,
+                family: FontFamily::Proportional,
+            },
+            self.layouts
+                .iter()
+                .enumerate()
+                .map(|(i, l)| DropdownItem {
+                    value: i,
+                    display_value: l.name.clone(),
+                })
+                .collect(),
+        );
+    }
+
+    fn draw_graphs(&self, ui: &mut Ui, graphs_rect: Rect) {
         ui.put(graphs_rect, |ui: &mut egui::Ui| {
             ui.vertical(|ui| {
                 let margins = 64.0;
