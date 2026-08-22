@@ -1,8 +1,8 @@
 use crate::frontend::components::{DropdownItem, GraphInfo, graph};
-use crate::frontend::sidebar::{self, Sidebar};
+use crate::frontend::sidebar::Sidebar;
 use crate::telemetry_back::Telemetry;
 use crate::{frontend::components::dropdown, graph_view::GraphViewDataType};
-use eframe::egui::{self, *};
+use eframe::egui::*;
 use egui_phosphor_icons::icons;
 
 pub struct TelemetryPage {
@@ -80,8 +80,8 @@ impl Default for TelemetryPage {
 }
 
 impl TelemetryPage {
-    pub fn draw_telemetry_page(&mut self, ui: &mut egui::Ui, sidebar: &mut Sidebar) {
-        let top_bar_rect = egui::Rect::from_min_size(
+    pub fn draw_telemetry_page(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
+        let top_bar_rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
             vec2(
                 ui.available_width() - if sidebar.open { 0.0 } else { 16.0 },
@@ -91,7 +91,7 @@ impl TelemetryPage {
 
         self.draw_top_bar(ui, top_bar_rect, sidebar);
 
-        let graphs_rect = egui::Rect::from_min_size(
+        let graphs_rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 80.0),
             vec2(
                 ui.available_width() - if sidebar.open { 8.0 } else { 16.0 },
@@ -102,14 +102,14 @@ impl TelemetryPage {
         self.draw_graphs(ui, graphs_rect);
     }
 
-    fn draw_top_bar(&mut self, ui: &mut egui::Ui, top_bar_rect: Rect, sidebar: &mut Sidebar) {
+    fn draw_top_bar(&mut self, ui: &mut Ui, top_bar_rect: Rect, sidebar: &mut Sidebar) {
         ui.painter().rect_filled(
             top_bar_rect,
             CornerRadius::same(24),
             Color32::from_rgb(22, 23, 28),
         );
 
-        ui.put(top_bar_rect, |ui: &mut egui::Ui| {
+        ui.put(top_bar_rect, |ui: &mut Ui| {
             ui.horizontal(|ui| {
                 ui.add_space(4.0);
 
@@ -162,12 +162,7 @@ impl TelemetryPage {
 
     fn draw_driver_select(&mut self, ui: &mut Ui) {
         ui.add(
-            egui::Label::new(
-                egui::RichText::new("Driver:")
-                    .size(16.0)
-                    .color(Color32::WHITE),
-            )
-            .selectable(false),
+            Label::new(RichText::new("Driver:").size(16.0).color(Color32::WHITE)).selectable(false),
         );
 
         ui.add_space(2.0);
@@ -196,12 +191,7 @@ impl TelemetryPage {
 
     fn draw_layout_select(&mut self, ui: &mut Ui) {
         ui.add(
-            egui::Label::new(
-                egui::RichText::new("Layout:")
-                    .size(16.0)
-                    .color(Color32::WHITE),
-            )
-            .selectable(false),
+            Label::new(RichText::new("Layout:").size(16.0).color(Color32::WHITE)).selectable(false),
         );
 
         ui.add_space(2.0);
@@ -229,7 +219,7 @@ impl TelemetryPage {
     }
 
     fn draw_graphs(&self, ui: &mut Ui, graphs_rect: Rect) {
-        ui.put(graphs_rect, |ui: &mut egui::Ui| {
+        ui.put(graphs_rect, |ui: &mut Ui| {
             ui.vertical(|ui| {
                 let margins = 64.0;
                 for (i, graph_info) in self.layouts[self.cur_layout_index]
