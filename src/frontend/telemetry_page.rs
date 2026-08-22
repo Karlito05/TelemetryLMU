@@ -1,5 +1,5 @@
 use crate::frontend::components::{DropdownItem, GraphInfo, graph};
-use crate::frontend::sidebar::Sidebar;
+use crate::frontend::sidebar::{self, Sidebar};
 use crate::telemetry_back::Telemetry;
 use crate::{frontend::components::dropdown, graph_view::GraphViewDataType};
 use eframe::egui::{self, *};
@@ -89,6 +89,20 @@ impl TelemetryPage {
             ),
         );
 
+        self.draw_top_bar(ui, top_bar_rect, sidebar);
+
+        let graphs_rect = egui::Rect::from_min_size(
+            pos2(if sidebar.open { 300.0 } else { 16.0 }, 80.0),
+            vec2(
+                ui.available_width() - if sidebar.open { 8.0 } else { 16.0 },
+                ui.available_height() - 24.0,
+            ),
+        );
+
+        self.draw_graphs(ui, graphs_rect);
+    }
+
+    fn draw_top_bar(&mut self, ui: &mut egui::Ui, top_bar_rect: Rect, sidebar: &mut Sidebar) {
         ui.painter().rect_filled(
             top_bar_rect,
             CornerRadius::same(24),
@@ -99,38 +113,7 @@ impl TelemetryPage {
             ui.horizontal(|ui| {
                 ui.add_space(4.0);
 
-                let (sidebar_icon_rect, response) = ui.allocate_exact_size(
-                    vec2(ui.available_height() - 8.0, ui.available_height() - 8.0),
-                    Sense::click(),
-                );
-                if response.hovered() {
-                    ui.painter().rect_filled(
-                        sidebar_icon_rect,
-                        CornerRadius::same(40),
-                        Color32::from_white_alpha(25),
-                    );
-                }
-                if response.clicked() {
-                    ui.painter().rect_filled(
-                        sidebar_icon_rect,
-                        CornerRadius::same(40),
-                        Color32::from_white_alpha(25),
-                    );
-                    sidebar.open = !sidebar.open;
-                }
-
-                ui.put(
-                    sidebar_icon_rect,
-                    Label::new(
-                        icons::SIDEBAR_SIMPLE
-                            .regular()
-                            .size(32.0)
-                            .color(Color32::from_rgb(19, 141, 241)),
-                    )
-                    .selectable(false),
-                );
-
-                // TODO: Refactor this into functions ig
+                self.draw_sidebar_button(ui, sidebar);
 
                 ui.separator();
 
@@ -202,15 +185,42 @@ impl TelemetryPage {
             })
             .response
         });
+    }
 
-        let graphs_rect = egui::Rect::from_min_size(
-            pos2(if sidebar.open { 300.0 } else { 16.0 }, 80.0),
-            vec2(
-                ui.available_width() - if sidebar.open { 8.0 } else { 16.0 },
-                ui.available_height() - 24.0,
-            ),
+    fn draw_sidebar_button(&self, ui: &mut egui::Ui, sidebar: &mut Sidebar) {
+        let (sidebar_icon_rect, response) = ui.allocate_exact_size(
+            vec2(ui.available_height() - 8.0, ui.available_height() - 8.0),
+            Sense::click(),
         );
+        if response.hovered() {
+            ui.painter().rect_filled(
+                sidebar_icon_rect,
+                CornerRadius::same(40),
+                Color32::from_white_alpha(25),
+            );
+        }
+        if response.clicked() {
+            ui.painter().rect_filled(
+                sidebar_icon_rect,
+                CornerRadius::same(40),
+                Color32::from_white_alpha(25),
+            );
+            sidebar.open = !sidebar.open;
+        }
 
+        ui.put(
+            sidebar_icon_rect,
+            Label::new(
+                icons::SIDEBAR_SIMPLE
+                    .regular()
+                    .size(32.0)
+                    .color(Color32::from_rgb(19, 141, 241)),
+            )
+            .selectable(false),
+        );
+    }
+
+    fn draw_graphs(&self, ui: &mut egui::Ui, graphs_rect: Rect) {
         ui.put(graphs_rect, |ui: &mut egui::Ui| {
             ui.vertical(|ui| {
                 let margins = 64.0;
