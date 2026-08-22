@@ -1,4 +1,4 @@
-use crate::frontend::components::{DropdownItem, GraphInfo, graph};
+use crate::frontend::components::{DropdownItem, GraphInfo, button, graph};
 use crate::frontend::sidebar::Sidebar;
 use crate::telemetry_back::Telemetry;
 use crate::{frontend::components::dropdown, graph_view::GraphViewDataType};
@@ -122,6 +122,9 @@ impl TelemetryPage {
                 ui.separator();
 
                 self.draw_layout_select(ui);
+
+                ui.separator();
+                self.draw_reference_controls(ui);
             })
             .response
         });
@@ -216,6 +219,40 @@ impl TelemetryPage {
                 })
                 .collect(),
         );
+    }
+
+    fn draw_reference_controls(&mut self, ui: &mut Ui) {
+        ui.add(
+            Label::new(RichText::new("Reference:").size(16.0).color(Color32::WHITE))
+                .selectable(false),
+        );
+
+        if button(
+            ui,
+            vec2(140.0, 32.0),
+            CornerRadius::same(8),
+            Color32::from_white_alpha(25),
+            "Select ref from file",
+            FontId::new(14.0, FontFamily::Proportional),
+            Color32::WHITE,
+        )
+        .clicked()
+        {
+            // TODO: Logic
+        }
+        if button(
+            ui,
+            vec2(140.0, 32.0),
+            CornerRadius::same(8),
+            Color32::from_rgba_unmultiplied(255, 0, 0, 127),
+            "Clear",
+            FontId::new(14.0, FontFamily::Proportional),
+            Color32::WHITE,
+        )
+        .clicked()
+        {
+            // TODO: Logic
+        }
     }
 
     fn draw_graphs(&self, ui: &mut Ui, graphs_rect: Rect) {
