@@ -2,6 +2,7 @@ use crate::frontend::components::{DropdownItem, GraphInfo, button, graph};
 use crate::frontend::sidebar::Sidebar;
 use crate::telemetry_back::Telemetry;
 use crate::{frontend::components::dropdown, graph_view::GraphViewDataType};
+use eframe::egui::Direction::RightToLeft;
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
 
@@ -124,7 +125,14 @@ impl TelemetryPage {
                 self.draw_layout_select(ui);
 
                 ui.separator();
+
                 self.draw_reference_controls(ui);
+
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    ui.add_space(4.0);
+
+                    self.draw_edit_layout_button(ui);
+                })
             })
             .response
         });
@@ -253,6 +261,39 @@ impl TelemetryPage {
         {
             // TODO: Logic
         }
+    }
+
+    fn draw_edit_layout_button(&self, ui: &mut Ui) {
+        let (sidebar_icon_rect, response) = ui.allocate_exact_size(
+            vec2(ui.available_height() - 8.0, ui.available_height() - 8.0),
+            Sense::click(),
+        );
+        if response.hovered() {
+            ui.painter().rect_filled(
+                sidebar_icon_rect,
+                CornerRadius::same(40),
+                Color32::from_white_alpha(25),
+            );
+        }
+        if response.clicked() {
+            ui.painter().rect_filled(
+                sidebar_icon_rect,
+                CornerRadius::same(40),
+                Color32::from_white_alpha(25),
+            );
+            // TODO: Logic
+        }
+
+        ui.put(
+            sidebar_icon_rect,
+            Label::new(
+                icons::PENCIL
+                    .regular()
+                    .size(32.0)
+                    .color(Color32::from_rgb(19, 141, 241)),
+            )
+            .selectable(false),
+        );
     }
 
     fn draw_graphs(&self, ui: &mut Ui, graphs_rect: Rect) {
