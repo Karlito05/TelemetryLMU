@@ -69,10 +69,8 @@ impl Default for TelemetryPage {
                             show_ref: false,
                             cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
                             ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
-                            max_val: 1.0,
                             color: Color32::from_rgb(20, 10, 200),
                             n_gridlines: 3,
-                            unit: "%".to_owned(),
                             size_percent: 0.5,
                             graph_type: GraphViewDataType::from_string("rpm", 0),
                         },
@@ -80,10 +78,8 @@ impl Default for TelemetryPage {
                             show_ref: true,
                             cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
                             ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
-                            max_val: 1.0,
                             color: Color32::from_rgb(20, 200, 20),
                             n_gridlines: 3,
-                            unit: "%".to_owned(),
                             size_percent: 0.5,
                             graph_type: GraphViewDataType::from_string("speed", 0),
                         },
@@ -96,10 +92,8 @@ impl Default for TelemetryPage {
                             show_ref: false,
                             cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
                             ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
-                            max_val: 1.0,
                             color: Color32::from_rgb(20, 150, 200),
                             n_gridlines: 3,
-                            unit: "%".to_owned(),
                             size_percent: 0.5,
                             graph_type: GraphViewDataType::from_string("rpm", 0),
                         },
@@ -107,10 +101,8 @@ impl Default for TelemetryPage {
                             show_ref: true,
                             cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
                             ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
-                            max_val: 1.0,
                             color: Color32::from_rgb(200, 0, 20),
                             n_gridlines: 3,
-                            unit: "%".to_owned(),
                             size_percent: 0.5,
                             graph_type: GraphViewDataType::from_string("speed", 0),
                         },
@@ -353,6 +345,30 @@ impl TelemetryPage {
                 started_edtiting: false,
             };
             self.in_layout_edit_mode = false;
+        }
+    }
+
+    fn draw_add_graph_button(&mut self, ui: &mut Ui) {
+        if button(
+            ui,
+            vec2(64.0, 32.0),
+            CornerRadius::same(8),
+            Color32::from_white_alpha(25),
+            "Add Graph",
+            FontId::new(14.0, FontFamily::Proportional),
+            Color32::WHITE,
+        )
+        .clicked()
+        {
+            self.edit_mode_context.layout.graphs.push(GraphInfo {
+                color: Color32::WHITE,
+                show_ref: true,
+                n_gridlines: 3,
+                size_percent: 0.0,
+                graph_type: GraphViewDataType::Rpm(self.cur_driver.1 as usize),
+                cur_lap: vec![],
+                ref_lap: vec![],
+            });
         }
     }
 
@@ -735,6 +751,7 @@ impl TelemetryPage {
                                 se: 0,
                             },
                             margins,
+                            &self.telemetry.update_telemetry().unwrap(),
                         );
                         continue;
                     }
@@ -754,6 +771,7 @@ impl TelemetryPage {
                                 se: 24,
                             },
                             margins,
+                            &self.telemetry.update_telemetry().unwrap(),
                         );
                         continue;
                     }
@@ -768,6 +786,7 @@ impl TelemetryPage {
                             ),
                             CornerRadius::same(24),
                             margins,
+                            &self.telemetry.update_telemetry().unwrap(),
                         );
                         continue;
                     }
@@ -781,6 +800,7 @@ impl TelemetryPage {
                         ),
                         CornerRadius::same(0),
                         margins,
+                        &self.telemetry.update_telemetry().unwrap(),
                     );
                 }
             })

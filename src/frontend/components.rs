@@ -5,7 +5,7 @@ use eframe::{
 use egui_material_icons::icons::ICON_ARROW_DROP_DOWN;
 use egui_phosphor_icons::icons;
 
-use crate::graph_view::GraphViewDataType;
+use crate::{graph_view::GraphViewDataType, telemetry_back::SharedMemoryObjectOut};
 
 pub struct DropdownItem<T: PartialEq> {
     pub value: T,
@@ -185,10 +185,10 @@ pub fn number_input(
         Label::new(icons::CARET_DOWN.light().size(size.y / 2.0)).selectable(false),
     );
 
-    if top_button_response.clicked() && current + step < max {
+    if top_button_response.clicked() && current + step <= max {
         return current + step;
     }
-    if bot_button_response.clicked() && current - step > min {
+    if bot_button_response.clicked() && current - step >= min {
         return current - step;
     }
     current
@@ -461,11 +461,9 @@ pub fn graph_edit(
 pub struct GraphInfo {
     pub cur_lap: Vec<Vec2>,
     pub ref_lap: Vec<Vec2>,
-    pub max_val: f64,
     pub color: Color32,
     pub show_ref: bool,
     pub n_gridlines: i32,
-    pub unit: String,
     pub size_percent: f32,
     pub graph_type: GraphViewDataType,
 }
@@ -476,6 +474,7 @@ pub fn graph(
     size: Vec2,
     corner_radius: CornerRadius,
     margins: f32, // Total so val/2 on each side
+    telemetry: &SharedMemoryObjectOut,
 ) {
     // Allocate the rect
     let rect = ui.allocate_space(size).1;
@@ -484,14 +483,11 @@ pub fn graph(
     ui.painter()
         .rect_filled(rect, corner_radius, Color32::from_rgb(22, 23, 28));
 
-    draw_gridlines(
-        ui.painter(),
-        rect,
-        graph_info.n_gridlines,
-        margins,
-        graph_info.max_val,
-        &graph_info.unit,
-    );
+    let labels = graph_info
+        .graph_type
+        .get_unit_labels(telemetry, graph_info.n_gridlines);
+
+    draw_gridlines(ui.painter(), rect, graph_info.n_gridlines, margins, &labels);
     draw_lap(
         ui.painter(),
         rect,
@@ -562,8 +558,7 @@ fn draw_gridlines(
     rect: Rect,
     n_gridlines: i32,
     margins: f32,
-    max_val: f64,
-    unit: &String,
+    labels: &Vec<String>,
 ) {
     let mut size = rect.size();
     size.y -= margins;
@@ -582,34 +577,13 @@ fn draw_gridlines(
             Stroke::new(1.0, Color32::from_rgba_unmultiplied(255, 255, 255, 127)),
         );
 
-        // Overrides for special cases
-        if max_val == 1.0 {
-            painter.text(
-                pos2(pos.x + 2.0, y + pos.y + margins / 2.0 - 5.0),
-                Align2::LEFT_BOTTOM,
-                format!(
-                    "{} {}",
-                    max_val * 100.0 * (n_gridlines - 1 - i) as f64 / (n_gridlines - 1) as f64,
-                    unit
-                )
-                .to_string(),
-                FontId::new(12.0, FontFamily::default()),
-                Color32::from_white_alpha(127),
-            );
-        } else {
-            painter.text(
-                pos2(pos.x + 2.0, y + pos.y + margins / 2.0 - 5.0),
-                Align2::LEFT_BOTTOM,
-                format!(
-                    "{} {}",
-                    max_val * (n_gridlines - 1 - i) as f64 / (n_gridlines - 1) as f64,
-                    unit
-                )
-                .to_string(),
-                FontId::new(12.0, FontFamily::default()),
-                Color32::from_white_alpha(127),
-            );
-        }
+        painter.text(
+            pos2(pos.x + 2.0, y + pos.y + margins / 2.0 - 5.0),
+            Align2::LEFT_BOTTOM,
+            labels[i as usize].clone(),
+            FontId::new(12.0, FontFamily::default()),
+            Color32::from_white_alpha(127),
+        );
     }
 }
 

@@ -99,6 +99,24 @@ impl GraphViewDataType {
         }
     }
 
+    pub fn get_unit_labels(
+        &self,
+        telemetry: &SharedMemoryObjectOut,
+        n_gridlines: i32,
+    ) -> Vec<String> {
+        let mut ret = vec![];
+        for i in 0..n_gridlines {
+            let str = format!(
+                "{} {}",
+                self.get_max_value(telemetry) * (n_gridlines - 1 - i) as f64
+                    / (n_gridlines - 1) as f64,
+                self.get_unit()
+            );
+            ret.push(str);
+        }
+        ret
+    }
+
     pub fn get_normalized_distance(&self, telemetry: &SharedMemoryObjectOut) -> f64 {
         // this returns the distance of how far in a lap the car is
         telemetry.scoring.veh_scoring_info[self.get_car_number()].m_lap_dist
