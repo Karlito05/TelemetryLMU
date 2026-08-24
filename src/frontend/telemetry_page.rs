@@ -195,6 +195,10 @@ impl TelemetryPage {
 
                 ui.separator();
 
+                self.draw_add_graph_button(ui);
+
+                ui.separator();
+
                 self.draw_delete_button(ui);
             })
             .response
@@ -369,6 +373,16 @@ impl TelemetryPage {
                 cur_lap: vec![],
                 ref_lap: vec![],
             });
+
+            let new_num_graphs = self.edit_mode_context.layout.graphs.len();
+
+            self.edit_mode_context
+                .layout
+                .graphs
+                .iter_mut()
+                .for_each(|g| {
+                    g.size_percent = 1.0 / new_num_graphs as f32;
+                });
         }
     }
 
