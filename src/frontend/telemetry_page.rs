@@ -16,11 +16,19 @@ pub struct TelemetryPage {
     edit_mode_context: EditModeContext,
 }
 
+#[derive(Clone, Debug)]
 struct EditModeContext {
-    layout: LayoutInfo,
+    layout: EditLayoutInfo,
     started_edtiting: bool,
 }
 
+#[derive(Clone, Debug)]
+struct EditLayoutInfo {
+    index: usize,
+    graphs: Vec<GraphInfo>,
+}
+
+#[derive(Clone, Debug)]
 struct LayoutInfo {
     name: String,
     graphs: Vec<GraphInfo>,
@@ -34,8 +42,8 @@ impl Default for TelemetryPage {
             in_layout_edit_mode: false,
             cur_layout_index: 0,
             edit_mode_context: EditModeContext {
-                layout: LayoutInfo {
-                    name: "".to_owned(),
+                layout: EditLayoutInfo {
+                    index: 0,
                     graphs: vec![],
                 },
                 started_edtiting: false,
@@ -262,7 +270,14 @@ impl TelemetryPage {
         )
         .clicked()
         {
-            // TODO: logic
+            self.edit_mode_context = EditModeContext {
+                layout: EditLayoutInfo {
+                    graphs: vec![],
+                    index: 0,
+                },
+                started_edtiting: false,
+            };
+            self.in_layout_edit_mode = false;
         }
     }
 
@@ -461,6 +476,13 @@ impl TelemetryPage {
                 Color32::from_white_alpha(25),
             );
             self.in_layout_edit_mode = true;
+            self.edit_mode_context = EditModeContext {
+                layout: EditLayoutInfo {
+                    graphs: self.layouts[self.cur_layout_index].graphs.clone(),
+                    index: self.cur_layout_index,
+                },
+                started_edtiting: false,
+            };
         }
 
         ui.put(
@@ -479,11 +501,7 @@ impl TelemetryPage {
         ui.put(graphs_rect, |ui: &mut Ui| {
             ui.vertical(|ui| {
                 let mut changes: Vec<GraphChange> = vec![];
-                for (i, graph_info) in self.layouts[self.cur_layout_index]
-                    .graphs
-                    .iter()
-                    .enumerate()
-                {
+                for (i, graph_info) in self.edit_mode_context.layout.graphs.iter().enumerate() {
                     if let Some(gc) = graph_edit(
                         ui,
                         i,
@@ -502,14 +520,12 @@ impl TelemetryPage {
                 for change in changes {
                     match change {
                         GraphChange::Height(i, new_height) => {
-                            assert!(
-                                i + 1 < self.layouts[self.cur_layout_index].graphs.len(),
-                                "Last panel should not be resizable!"
-                            );
-                            self.layouts[self.cur_layout_index].graphs[i].size_percent +=
-                                new_height;
-                            self.layouts[self.cur_layout_index].graphs[i + 1].size_percent -=
-                                new_height;
+                            // assert!(
+                            //     i + 1 < self.layouts[self.cur_layout_index].graphs.len(),
+                            //     "Last panel should not be resizable!"
+                            // );
+                            self.edit_mode_context.layout.graphs[i].size_percent += new_height;
+                            self.edit_mode_context.layout.graphs[i + 1].size_percent -= new_height;
                         }
                         _ => {}
                     }

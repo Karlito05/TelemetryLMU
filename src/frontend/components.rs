@@ -457,6 +457,7 @@ pub fn graph_edit(
     change
 }
 
+#[derive(Clone, Debug)]
 pub struct GraphInfo {
     pub cur_lap: Vec<Vec2>,
     pub ref_lap: Vec<Vec2>,
