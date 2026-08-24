@@ -1,5 +1,9 @@
-use eframe::egui::*;
+use eframe::{
+    egui::{accesskit::Color, color_picker::color_edit_button_rgb, *},
+    epaint::Hsva,
+};
 use egui_material_icons::icons::ICON_ARROW_DROP_DOWN;
+use egui_phosphor_icons::icons;
 
 use crate::graph_view::GraphViewDataType;
 
@@ -77,11 +81,388 @@ pub fn dropdown<T: PartialEq>(
     });
 }
 
+pub fn number_input(
+    ui: &mut Ui,
+    size: Vec2,
+    corner_radius: CornerRadius,
+    min: i32,
+    max: i32,
+    step: i32,
+    current: i32,
+    color: Color32,
+    font: FontId,
+    text_color: Color32,
+) -> i32 {
+    let (rect, _) = ui.allocate_exact_size(size, Sense::empty());
+
+    ui.painter().rect_filled(rect, corner_radius, color);
+
+    ui.painter().text(
+        pos2(4.0, size.y / 2.0) + rect.min.to_vec2(),
+        Align2::LEFT_CENTER,
+        current,
+        font,
+        text_color,
+    );
+
+    let top_button_rect = Rect::from_min_size(
+        pos2(size.x - size.y / 2.0, 0.0) + rect.min.to_vec2(),
+        vec2(size.y / 2.0, size.y / 2.0),
+    );
+
+    let top_button_response = ui.allocate_rect(top_button_rect, Sense::click());
+
+    if top_button_response.hovered() {
+        ui.painter().rect(
+            top_button_rect,
+            CornerRadius {
+                nw: 0,
+                ne: corner_radius.ne,
+                sw: 0,
+                se: 0,
+            },
+            Color32::from_white_alpha(25),
+            Stroke::new(1.0, Color32::from_white_alpha(64)),
+            StrokeKind::Inside,
+        );
+    } else {
+        ui.painter().rect(
+            top_button_rect,
+            CornerRadius {
+                nw: 0,
+                ne: corner_radius.ne,
+                sw: 0,
+                se: 0,
+            },
+            Color32::from_white_alpha(0),
+            Stroke::new(1.0, Color32::from_white_alpha(64)),
+            StrokeKind::Inside,
+        );
+    }
+
+    ui.put(
+        top_button_rect,
+        Label::new(icons::CARET_UP.light().size(size.y / 2.0)).selectable(false),
+    );
+
+    let bot_button_rect = Rect::from_min_size(
+        pos2(size.x - size.y / 2.0, size.y / 2.0) + rect.min.to_vec2(),
+        vec2(size.y, size.y) / 2.0,
+    );
+
+    let bot_button_response = ui.allocate_rect(bot_button_rect, Sense::click());
+
+    if bot_button_response.hovered() {
+        ui.painter().rect(
+            bot_button_rect,
+            CornerRadius {
+                nw: 0,
+                ne: 0,
+                sw: 0,
+                se: corner_radius.se,
+            },
+            Color32::from_white_alpha(25),
+            Stroke::new(1.0, Color32::from_white_alpha(64)),
+            StrokeKind::Inside,
+        );
+    } else {
+        ui.painter().rect(
+            bot_button_rect,
+            CornerRadius {
+                nw: 0,
+                ne: 0,
+                sw: 0,
+                se: corner_radius.se,
+            },
+            Color32::from_white_alpha(0),
+            Stroke::new(1.0, Color32::from_white_alpha(64)),
+            StrokeKind::Inside,
+        );
+    }
+
+    ui.put(
+        bot_button_rect,
+        Label::new(icons::CARET_DOWN.light().size(size.y / 2.0)).selectable(false),
+    );
+
+    if top_button_response.clicked() && current + step < max {
+        return current + step;
+    }
+    if bot_button_response.clicked() && current - step > min {
+        return current - step;
+    }
+    current
+}
+
+pub fn switch(
+    ui: &mut Ui,
+    size: Vec2,
+    corner_radius: CornerRadius,
+    bg_color: Color32,
+    active_color: Color32,
+    current: bool,
+) -> bool {
+    let (rect, response) = ui.allocate_exact_size(size, Sense::click());
+
+    ui.painter().rect_filled(rect, corner_radius, bg_color);
+
+    if current {
+        ui.painter().rect_filled(
+            Rect::from_min_size(
+                pos2(rect.size().x / 2.0, 0.0) + rect.min.to_vec2(),
+                vec2(rect.size().x / 2.0, rect.size().y),
+            ),
+            corner_radius,
+            active_color,
+        );
+    } else {
+        ui.painter().rect_filled(
+            Rect::from_min_size(
+                pos2(0.0, 0.0) + rect.min.to_vec2(),
+                vec2(rect.size().x / 2.0, rect.size().y),
+            ),
+            corner_radius,
+            Color32::from_white_alpha(127),
+        );
+    }
+
+    if response.clicked() {
+        return !current;
+    }
+
+    current
+}
+
+pub fn color_picker(
+    ui: &mut Ui,
+    size: Vec2,
+    corner_radius: CornerRadius,
+    current: Color32,
+    bg_color: Color32,
+    font: FontId,
+    text_color: Color32,
+) -> Color32 {
+    let (rect, response) = ui.allocate_exact_size(size, Sense::click());
+
+    let mut new = Hsva::from(current);
+
+    ui.painter().rect_filled(rect, corner_radius, bg_color);
+    ui.painter().rect_filled(
+        Rect::from_min_size(rect.min, vec2(rect.size().y, rect.size().y)),
+        corner_radius,
+        new,
+    );
+
+    let popup_id = ui.auto_id_with("popup");
+    const COLOR_SLIDER_WIDTH: f32 = 275.0;
+
+    Popup::menu(&response)
+        .id(popup_id)
+        .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
+        .show(|ui| {
+            ui.spacing_mut().slider_width = COLOR_SLIDER_WIDTH;
+            color_picker::color_picker_hsva_2d(ui, &mut new, color_picker::Alpha::Opaque);
+        });
+
+    ui.painter().text(
+        pos2(
+            (rect.size().x - rect.size().y) / 2.0 + rect.size().y,
+            rect.size().y / 2.0,
+        ) + rect.min.to_vec2(),
+        Align2::CENTER_CENTER,
+        Color32::from(new)
+            .to_hex()
+            .to_string()
+            .chars()
+            .rev()
+            .skip(2)
+            .collect::<String>()
+            .chars()
+            .rev()
+            .collect::<String>(), // This whole ordeal just removes the last 2 chars from the
+        // string. AKA the FF for alpha which is not needed
+        font,
+        text_color,
+    );
+
+    Color32::from(new)
+}
+
+pub enum GraphChange {
+    Height(usize, f32), // Height delta in percent (0-1)
+    Type(usize, String),
+    Color(usize, Color32),
+    Gridlines(usize, i32),
+    Reference(usize, bool),
+    Delete(usize),
+}
+
+pub fn graph_edit(
+    ui: &mut Ui,
+    index: usize,
+    graph: &GraphInfo,
+    size: Vec2,
+    resizable: bool,
+    corner_radius: CornerRadius,
+) -> Option<GraphChange> {
+    let (rect, _) = ui.allocate_exact_size(size, Sense::hover());
+
+    if resizable {
+        let handle = Rect::from_min_max(
+            pos2(rect.left(), rect.bottom() - 4.0),
+            pos2(rect.right(), rect.bottom() + 4.0),
+        );
+
+        let response = ui.interact(handle, ui.id().with(index), Sense::drag());
+
+        //TODO: dragging bounds checks (min and max sizes)
+        if response.dragged() {
+            let new_height = graph.size_percent * (size.y + response.drag_delta().y) / size.y;
+
+            return Some(GraphChange::Height(index, new_height - graph.size_percent));
+        }
+
+        if response.hovered() {
+            ui.ctx().set_cursor_icon(CursorIcon::ResizeVertical);
+        }
+    }
+
+    ui.painter()
+        .rect_filled(rect, corner_radius, Color32::from_rgb(22, 23, 28));
+
+    let old_graph_type = graph.graph_type.to_string();
+    let mut new_graph_type = graph.graph_type.to_string();
+    let mut change = None;
+
+    // TODO: Layout change when too small
+
+    ui.place(rect, |ui: &mut Ui| {
+        ui.vertical_centered_justified(|ui: &mut Ui| {
+            Grid::new(index)
+                .num_columns(2)
+                .spacing([8.0, 8.0])
+                .show(ui, |ui| {
+                    ui.add(
+                        Label::new(
+                            RichText::new("Graph Type:")
+                                .size(16.0)
+                                .color(Color32::WHITE),
+                        )
+                        .selectable(false),
+                    );
+                    dropdown(
+                        ui,
+                        vec2(140.0, 32.0),
+                        CornerRadius::same(8),
+                        Color32::from_white_alpha(25),
+                        &mut new_graph_type,
+                        "Select a type",
+                        FontId::new(14.0, FontFamily::Proportional),
+                        GraphViewDataType::get_all_string()
+                            .iter()
+                            .map(|s| DropdownItem {
+                                value: s.clone(),
+                                display_value: s.clone(),
+                            })
+                            .collect(),
+                    );
+                    ui.end_row();
+
+                    ui.add(
+                        Label::new(RichText::new("Gridlines:").size(16.0).color(Color32::WHITE))
+                            .selectable(false),
+                    );
+                    let new = number_input(
+                        ui,
+                        vec2(140.0, 32.0),
+                        CornerRadius::same(8),
+                        3,
+                        10,
+                        1,
+                        graph.n_gridlines,
+                        Color32::from_white_alpha(25),
+                        FontId::new(14.0, FontFamily::Proportional),
+                        Color32::WHITE,
+                    );
+
+                    if new != graph.n_gridlines {
+                        change = Some(GraphChange::Gridlines(index, new));
+                    }
+                    ui.end_row();
+
+                    ui.add(
+                        Label::new(
+                            RichText::new("Show Reference:")
+                                .size(16.0)
+                                .color(Color32::WHITE),
+                        )
+                        .selectable(false),
+                    );
+                    let new = switch(
+                        ui,
+                        vec2(48.0, 24.0),
+                        CornerRadius::same(8),
+                        Color32::from_white_alpha(25),
+                        Color32::from_rgb(19, 141, 241),
+                        graph.show_ref,
+                    );
+
+                    if new != graph.show_ref {
+                        change = Some(GraphChange::Reference(index, new));
+                    }
+                    ui.end_row();
+                    ui.add(
+                        Label::new(RichText::new("Color:").size(16.0).color(Color32::WHITE))
+                            .selectable(false),
+                    );
+                    let new = color_picker(
+                        ui,
+                        vec2(110.0, 32.0),
+                        CornerRadius::same(8),
+                        graph.color,
+                        Color32::from_white_alpha(25),
+                        FontId::new(14.0, FontFamily::Proportional),
+                        Color32::WHITE,
+                    );
+                    if new != graph.color {
+                        change = Some(GraphChange::Color(index, new));
+                    }
+                    ui.end_row();
+
+                    if button(
+                        ui,
+                        vec2(96.0, 32.0),
+                        CornerRadius::same(8),
+                        Color32::RED,
+                        "Delete",
+                        FontId {
+                            size: 12.0,
+                            family: FontFamily::Proportional,
+                        },
+                        Color32::WHITE,
+                    )
+                    .clicked()
+                    {
+                        change = Some(GraphChange::Delete(index));
+                    }
+                    ui.end_row();
+                });
+        })
+        .response
+    });
+    if new_graph_type != old_graph_type {
+        change = Some(GraphChange::Type(index, new_graph_type));
+    }
+
+    change
+}
+
 pub struct GraphInfo {
     pub cur_lap: Vec<Vec2>,
     pub ref_lap: Vec<Vec2>,
     pub max_val: f64,
     pub color: Color32,
+    pub show_ref: bool,
     pub n_gridlines: i32,
     pub unit: String,
     pub size_percent: f32,
@@ -117,21 +498,23 @@ pub fn graph(
         margins,
         Stroke::new(1.5, graph_info.color),
     );
-    draw_lap(
-        ui.painter(),
-        rect,
-        &graph_info.ref_lap,
-        margins,
-        Stroke::new(
-            1.0,
-            Color32::from_rgba_unmultiplied(
-                graph_info.color.r(),
-                graph_info.color.g(),
-                graph_info.color.b(),
-                127,
+    if graph_info.show_ref {
+        draw_lap(
+            ui.painter(),
+            rect,
+            &graph_info.ref_lap,
+            margins,
+            Stroke::new(
+                1.0,
+                Color32::from_rgba_unmultiplied(
+                    graph_info.color.r(),
+                    graph_info.color.g(),
+                    graph_info.color.b(),
+                    127,
+                ),
             ),
-        ),
-    );
+        );
+    }
     draw_title(
         ui.painter(),
         rect,

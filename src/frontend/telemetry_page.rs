@@ -1,5 +1,7 @@
-use crate::frontend::components::{DropdownItem, GraphInfo, button, graph};
-use crate::frontend::sidebar::{self, Sidebar};
+use crate::frontend::components::{
+    DropdownItem, GraphChange, GraphInfo, button, graph, graph_edit,
+};
+use crate::frontend::sidebar::Sidebar;
 use crate::telemetry_back::Telemetry;
 use crate::{frontend::components::dropdown, graph_view::GraphViewDataType};
 use eframe::egui::*;
@@ -11,6 +13,12 @@ pub struct TelemetryPage {
     in_layout_edit_mode: bool,
     cur_layout_index: usize,
     layouts: Vec<LayoutInfo>,
+    edit_mode_context: EditModeContext,
+}
+
+struct EditModeContext {
+    layout: LayoutInfo,
+    started_edtiting: bool,
 }
 
 struct LayoutInfo {
@@ -25,11 +33,19 @@ impl Default for TelemetryPage {
             cur_driver: ("".to_owned(), 0),
             in_layout_edit_mode: false,
             cur_layout_index: 0,
+            edit_mode_context: EditModeContext {
+                layout: LayoutInfo {
+                    name: "".to_owned(),
+                    graphs: vec![],
+                },
+                started_edtiting: false,
+            },
             layouts: vec![
                 LayoutInfo {
                     name: "Main test".to_owned(),
                     graphs: vec![
                         GraphInfo {
+                            show_ref: false,
                             cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
                             ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
                             max_val: 1.0,
@@ -40,6 +56,7 @@ impl Default for TelemetryPage {
                             graph_type: GraphViewDataType::from_string("rpm", 0),
                         },
                         GraphInfo {
+                            show_ref: true,
                             cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
                             ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
                             max_val: 1.0,
@@ -55,6 +72,7 @@ impl Default for TelemetryPage {
                     name: "Main test 2".to_owned(),
                     graphs: vec![
                         GraphInfo {
+                            show_ref: false,
                             cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
                             ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
                             max_val: 1.0,
@@ -65,6 +83,7 @@ impl Default for TelemetryPage {
                             graph_type: GraphViewDataType::from_string("rpm", 0),
                         },
                         GraphInfo {
+                            show_ref: true,
                             cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
                             ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
                             max_val: 1.0,
@@ -107,7 +126,7 @@ impl TelemetryPage {
                 ui.available_height() - 24.0,
             ),
         );
-        self.draw_graphs_normal(ui, graphs_rect);
+        self.draw_graphs_edit(ui, graphs_rect);
     }
 
     fn draw_normal_mode(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
@@ -454,6 +473,50 @@ impl TelemetryPage {
             )
             .selectable(false),
         );
+    }
+
+    fn draw_graphs_edit(&mut self, ui: &mut Ui, graphs_rect: Rect) {
+        ui.put(graphs_rect, |ui: &mut Ui| {
+            ui.vertical(|ui| {
+                let mut changes: Vec<GraphChange> = vec![];
+                for (i, graph_info) in self.layouts[self.cur_layout_index]
+                    .graphs
+                    .iter()
+                    .enumerate()
+                {
+                    if let Some(gc) = graph_edit(
+                        ui,
+                        i,
+                        graph_info,
+                        vec2(
+                            graphs_rect.width(),
+                            graph_info.size_percent * graphs_rect.height(),
+                        ),
+                        true,
+                        CornerRadius::same(0),
+                    ) {
+                        changes.push(gc);
+                    }
+                }
+
+                for change in changes {
+                    match change {
+                        GraphChange::Height(i, new_height) => {
+                            assert!(
+                                i + 1 < self.layouts[self.cur_layout_index].graphs.len(),
+                                "Last panel should not be resizable!"
+                            );
+                            self.layouts[self.cur_layout_index].graphs[i].size_percent +=
+                                new_height;
+                            self.layouts[self.cur_layout_index].graphs[i + 1].size_percent -=
+                                new_height;
+                        }
+                        _ => {}
+                    }
+                }
+            })
+            .response
+        });
     }
 
     fn draw_graphs_normal(&self, ui: &mut Ui, graphs_rect: Rect) {

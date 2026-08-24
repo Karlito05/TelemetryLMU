@@ -1,4 +1,6 @@
-use crate::telemetry_back::SharedMemoryObjectOut;
+use eframe::egui::IntoAtoms;
+
+use crate::{graph_view, telemetry_back::SharedMemoryObjectOut};
 
 pub const GRAPH_VIEW_DATA_TYPE_COUNT: i32 = 5;
 
@@ -105,6 +107,12 @@ impl GraphViewDataType {
 
     pub fn get_lap(&self, t: &SharedMemoryObjectOut) -> i32 {
         t.telemetry.telemetry_info[self.get_car_number()].m_lap_number
+    }
+
+    pub fn get_all_string() -> Vec<String> {
+        (0..GRAPH_VIEW_DATA_TYPE_COUNT)
+            .map(|i| GraphViewDataType::from_int(i, 0).to_string())
+            .collect()
     }
 
     pub fn is_last_best(&self, t: &SharedMemoryObjectOut) -> bool {
