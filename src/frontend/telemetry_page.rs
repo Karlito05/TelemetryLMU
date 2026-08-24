@@ -700,10 +700,12 @@ impl TelemetryPage {
                 for change in changes {
                     match change {
                         GraphChange::Height(i, new_height) => {
-                            // assert!(
-                            //     i + 1 < self.layouts[self.cur_layout_index].graphs.len(),
-                            //     "Last panel should not be resizable!"
-                            // );
+                            assert!(
+                                i + 1 < self.layouts[self.cur_layout_index].graphs.len(),
+                                "Last panel should not be resizable!"
+                            );
+
+                            //TODO: dragging bounds checks (min and max sizes) 10%min
                             self.edit_mode_context.layout.graphs[i].size_percent += new_height;
                             self.edit_mode_context.layout.graphs[i + 1].size_percent -= new_height;
                         }
