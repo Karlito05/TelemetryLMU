@@ -14,12 +14,20 @@ pub struct TelemetryPage {
     cur_layout_index: usize,
     layouts: Vec<LayoutInfo>,
     edit_mode_context: EditModeContext,
+    show_delete_layout_dialog: bool,
+    save_as_dialog_info: SaveAsDialogInfo,
 }
 
 #[derive(Clone, Debug)]
 struct EditModeContext {
     layout: EditLayoutInfo,
     started_edtiting: bool,
+}
+
+#[derive(Clone, Debug)]
+struct SaveAsDialogInfo {
+    name: String,
+    show: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -40,7 +48,12 @@ impl Default for TelemetryPage {
             telemetry: Telemetry::new("/dev/shm/LMU_Data"),
             cur_driver: ("".to_owned(), 0),
             in_layout_edit_mode: false,
+            show_delete_layout_dialog: false,
             cur_layout_index: 0,
+            save_as_dialog_info: SaveAsDialogInfo {
+                name: "".to_owned(),
+                show: false,
+            },
             edit_mode_context: EditModeContext {
                 layout: EditLayoutInfo {
                     index: 0,
@@ -238,7 +251,16 @@ impl TelemetryPage {
         )
         .clicked()
         {
-            // TODO: logic
+            self.layouts[self.edit_mode_context.layout.index].graphs =
+                self.edit_mode_context.layout.graphs.clone();
+            self.edit_mode_context = EditModeContext {
+                layout: EditLayoutInfo {
+                    graphs: vec![],
+                    index: 0,
+                },
+                started_edtiting: false,
+            };
+            self.in_layout_edit_mode = false;
         }
     }
 
@@ -254,7 +276,60 @@ impl TelemetryPage {
         )
         .clicked()
         {
-            // TODO: logic
+            self.save_as_dialog_info.show = true
+        }
+        if self.save_as_dialog_info.show {
+            Window::new("Name?")
+                .collapsible(false)
+                .resizable(false)
+                .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
+                .show(ui.ctx(), |ui| {
+                    ui.label("Enter the name for your new layout: ");
+
+                    ui.text_edit_singleline(&mut self.save_as_dialog_info.name);
+
+                    ui.horizontal(|ui: &mut Ui| {
+                        if button(
+                            ui,
+                            vec2(64.0, 32.0),
+                            CornerRadius::same(8),
+                            Color32::from_rgb(19, 141, 241),
+                            "Confirm",
+                            FontId::new(16.0, FontFamily::Proportional),
+                            Color32::WHITE,
+                        )
+                        .clicked()
+                        {
+                            self.layouts.push(LayoutInfo {
+                                graphs: self.edit_mode_context.layout.graphs.clone(),
+                                name: self.save_as_dialog_info.name.clone(),
+                            });
+                            self.cur_layout_index = self.layouts.len() - 1;
+                            self.edit_mode_context = EditModeContext {
+                                layout: EditLayoutInfo {
+                                    graphs: vec![],
+                                    index: 0,
+                                },
+                                started_edtiting: false,
+                            };
+                            self.save_as_dialog_info.show = false;
+                            self.in_layout_edit_mode = false;
+                        }
+                        if button(
+                            ui,
+                            vec2(64.0, 32.0),
+                            CornerRadius::same(8),
+                            Color32::from_white_alpha(25),
+                            "Cancel",
+                            FontId::new(16.0, FontFamily::Proportional),
+                            Color32::WHITE,
+                        )
+                        .clicked()
+                        {
+                            self.save_as_dialog_info.show = false;
+                        }
+                    })
+                });
         }
     }
 
@@ -293,7 +368,82 @@ impl TelemetryPage {
         )
         .clicked()
         {
-            // TODO: logic
+            self.show_delete_layout_dialog = true;
+        }
+
+        if self.show_delete_layout_dialog {
+            if self.layouts.len() >= 2 {
+                Window::new("Delete Layout?")
+                    .collapsible(false)
+                    .resizable(false)
+                    .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
+                    .show(ui.ctx(), |ui| {
+                        ui.label("Are you sure you want to delete this layout?");
+
+                        ui.horizontal(|ui| {
+                            if button(
+                                ui,
+                                vec2(64.0, 32.0),
+                                CornerRadius::same(8),
+                                Color32::from_rgb(255, 0, 0),
+                                "Delete",
+                                FontId::new(16.0, FontFamily::Proportional),
+                                Color32::WHITE,
+                            )
+                            .clicked()
+                            {
+                                self.layouts.remove(self.edit_mode_context.layout.index);
+                                self.cur_layout_index = 0;
+                                self.show_delete_layout_dialog = false;
+                                self.edit_mode_context = EditModeContext {
+                                    layout: EditLayoutInfo {
+                                        graphs: vec![],
+                                        index: 0,
+                                    },
+                                    started_edtiting: false,
+                                };
+                                self.in_layout_edit_mode = false;
+                            }
+                            if button(
+                                ui,
+                                vec2(64.0, 32.0),
+                                CornerRadius::same(8),
+                                Color32::from_white_alpha(25),
+                                "Cancel",
+                                FontId::new(16.0, FontFamily::Proportional),
+                                Color32::WHITE,
+                            )
+                            .clicked()
+                            {
+                                self.show_delete_layout_dialog = false;
+                            }
+                        });
+                    });
+            } else {
+                Window::new("Couldn't Delete Layout")
+                    .collapsible(false)
+                    .resizable(false)
+                    .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
+                    .show(ui.ctx(), |ui| {
+                        ui.label("You must have at least 1 layout!");
+
+                        ui.horizontal(|ui| {
+                            if button(
+                                ui,
+                                vec2(64.0, 32.0),
+                                CornerRadius::same(8),
+                                Color32::from_white_alpha(25),
+                                "Ok",
+                                FontId::new(16.0, FontFamily::Proportional),
+                                Color32::WHITE,
+                            )
+                            .clicked()
+                            {
+                                self.show_delete_layout_dialog = false;
+                            }
+                        });
+                    });
+            }
         }
     }
 
@@ -527,7 +677,33 @@ impl TelemetryPage {
                             self.edit_mode_context.layout.graphs[i].size_percent += new_height;
                             self.edit_mode_context.layout.graphs[i + 1].size_percent -= new_height;
                         }
-                        _ => {}
+                        GraphChange::Type(i, new_type) => {
+                            self.edit_mode_context.layout.graphs[i].graph_type =
+                                GraphViewDataType::from_string(
+                                    &new_type,
+                                    self.cur_driver.1 as usize,
+                                );
+                        }
+                        GraphChange::Color(i, new_color) => {
+                            self.edit_mode_context.layout.graphs[i].color = new_color;
+                        }
+                        GraphChange::Gridlines(i, new_gridlines) => {
+                            self.edit_mode_context.layout.graphs[i].n_gridlines = new_gridlines;
+                        }
+                        GraphChange::Reference(i, new_reference) => {
+                            self.edit_mode_context.layout.graphs[i].show_ref = new_reference;
+                        }
+                        GraphChange::Delete(i) => {
+                            self.edit_mode_context.layout.graphs.remove(i);
+                            let new_num_graphs = self.edit_mode_context.layout.graphs.len();
+                            self.edit_mode_context
+                                .layout
+                                .graphs
+                                .iter_mut()
+                                .for_each(|g| {
+                                    g.size_percent = 1.0 / new_num_graphs as f32;
+                                });
+                        }
                     }
                 }
             })
