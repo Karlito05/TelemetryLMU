@@ -17,6 +17,7 @@ use windows_sys::Win32::System::Memory::{
 const MAX_PATH: usize = 260;
 
 pub struct Telemetry {
+    #[expect(unused)]
     pub full_mode: bool,
     pub mmap: Mmap,
 }
@@ -178,6 +179,8 @@ pub fn i8_array32_to_string(buf: &[i8; 32]) -> String {
 
     String::from_utf8_lossy(&bytes).to_string()
 }
+
+#[expect(unused)]
 pub fn i8_array64_to_string(buf: &[i8; 64]) -> String {
     let bytes: Vec<u8> = buf
         .iter()
@@ -626,6 +629,7 @@ mod tests {
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[expect(unused)]
 pub enum IPVehicleClass {
     Hypercar = 0x00,
     Lmp2Elms = 0x02,
@@ -639,6 +643,7 @@ pub enum IPVehicleClass {
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[expect(unused)]
 pub enum IPVehicleChampionship {
     Wec2023 = 0x00,
     Wec2024 = 0x01,

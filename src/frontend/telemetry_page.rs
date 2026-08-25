@@ -22,6 +22,7 @@ pub struct TelemetryPage {
 #[derive(Clone, Debug)]
 struct EditModeContext {
     layout: EditLayoutInfo,
+    #[expect(unused)]
     started_edtiting: bool,
 }
 
@@ -566,8 +567,8 @@ impl TelemetryPage {
                 })
                 .collect(),
         ) {
-            for mut layout in &mut self.layouts {
-                for mut graph in &mut layout.graphs {
+            for layout in &mut self.layouts {
+                for graph in &mut layout.graphs {
                     graph.graph_type = GraphViewDataType::from_string(
                         &graph.graph_type.to_string(),
                         self.cur_driver.1 as usize,
@@ -773,11 +774,11 @@ impl TelemetryPage {
                             if delta > 0.0 {
                                 let mut remaining = delta;
 
-                                for j in (i + 1)..graphs.len() {
-                                    let available = (graphs[j].size_percent - MIN_SIZE).max(0.0);
+                                for graph in graphs.iter_mut().skip(i + 1) {
+                                    let available = (graph.size_percent - MIN_SIZE).max(0.0);
                                     let taken = remaining.min(available);
 
-                                    graphs[j].size_percent -= taken;
+                                    graph.size_percent -= taken;
                                     remaining -= taken;
 
                                     if remaining <= 0.0 {

@@ -1,6 +1,4 @@
-use eframe::egui::IntoAtoms;
-
-use crate::{graph_view, telemetry_back::SharedMemoryObjectOut};
+use crate::telemetry_back::SharedMemoryObjectOut;
 
 pub const GRAPH_VIEW_DATA_TYPE_COUNT: i32 = 5;
 
@@ -36,7 +34,8 @@ impl GraphViewDataType {
         }
     }
 
-    pub fn to_string(&self) -> String {
+    #[expect(clippy::inherent_to_string)]
+    pub fn to_string(self) -> String {
         match self {
             GraphViewDataType::Rpm(..) => "rpm".to_owned(),
             GraphViewDataType::Speed(..) => "speed".to_owned(),

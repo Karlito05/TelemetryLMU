@@ -1,4 +1,4 @@
-use eframe::egui::{self, Button, Color32, FontData, FontDefinitions, Id, RichText};
+use eframe::egui;
 
 use crate::frontend::{sidebar::Sidebar, telemetry_page};
 
@@ -16,6 +16,7 @@ pub enum Page {
 }
 
 // Default init
+#[expect(clippy::derivable_impls)]
 impl Default for App {
     fn default() -> Self {
         Self {

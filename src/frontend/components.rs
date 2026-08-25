@@ -81,6 +81,7 @@ pub fn dropdown<T: PartialEq>(
     ret
 }
 
+#[expect(clippy::too_many_arguments)]
 pub fn number_input(
     ui: &mut Ui,
     size: Vec2,
@@ -667,7 +668,7 @@ fn draw_gridlines(
     rect: Rect,
     n_gridlines: i32,
     margins: f32,
-    labels: &Vec<String>,
+    labels: &[String],
 ) {
     let mut size = rect.size();
     size.y -= margins;

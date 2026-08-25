@@ -1,7 +1,5 @@
 use eframe::egui::{self, Color32, CornerRadius, pos2, vec2};
-use egui_material_icons::icons::{
-    ICON_INFO, ICON_MAP, ICON_MORE_DOWN, ICON_MORE_VERT, ICON_SHOW_CHART,
-};
+use egui_material_icons::icons::{ICON_INFO, ICON_MAP, ICON_MORE_VERT, ICON_SHOW_CHART};
 
 use crate::frontend::frontend_main::Page;
 
@@ -19,7 +17,6 @@ impl Default for Sidebar {
     }
 }
 
-// TODO: Rewrite this with layout put inside the background container :)
 impl Sidebar {
     pub fn draw_sidebar(&mut self, ui: &mut egui::Ui) {
         // let screen_width = ui.ctx().viewport_rect().width();
