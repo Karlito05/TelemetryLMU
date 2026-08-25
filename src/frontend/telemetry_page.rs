@@ -79,11 +79,34 @@ impl Default for TelemetryPage {
 
 impl TelemetryPage {
     pub fn draw_telemetry_page(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
+        self.process_telemetry_updates(
+            self.layouts[self.cur_layout_index]
+                .graphs
+                .iter()
+                .map(|g| g.graph_type)
+                .collect(),
+        );
         if !self.in_layout_edit_mode {
             self.draw_normal_mode(ui, sidebar);
         } else {
             self.draw_edit_mode(ui, sidebar);
         }
+    }
+
+    fn process_telemetry_updates(&mut self, graph_data_types: Vec<GraphViewDataType>) {
+        let t = self.telemetry.update_telemetry().unwrap();
+
+        graph_data_types
+            .iter()
+            .enumerate()
+            .for_each(|(i, graph_data_type)| {
+                self.layouts[self.cur_layout_index].graphs[i]
+                    .cur_lap
+                    .push(vec2(
+                        graph_data_type.get_normalized_distance(&t) as f32,
+                        graph_data_type.get_normalized_values(&t) as f32,
+                    ));
+            });
     }
 
     fn draw_edit_mode(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
@@ -499,7 +522,7 @@ impl TelemetryPage {
 
         ui.add_space(2.0);
 
-        dropdown(
+        if dropdown(
             ui,
             vec2(140.0, 32.0),
             CornerRadius::same(8),
@@ -518,7 +541,18 @@ impl TelemetryPage {
                     display_value: driver.0.clone(),
                 })
                 .collect(),
-        );
+        ) {
+            for mut layout in &mut self.layouts {
+                for mut graph in &mut layout.graphs {
+                    graph.graph_type = GraphViewDataType::from_string(
+                        &graph.graph_type.to_string(),
+                        self.cur_driver.1 as usize,
+                    );
+                    graph.cur_lap = vec![];
+                    graph.ref_lap = vec![];
+                }
+            }
+        }
     }
 
     fn draw_layout_select(&mut self, ui: &mut Ui) {

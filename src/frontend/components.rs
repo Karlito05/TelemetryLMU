@@ -1,7 +1,4 @@
-use eframe::{
-    egui::{accesskit::Color, color_picker::color_edit_button_rgb, *},
-    epaint::Hsva,
-};
+use eframe::{egui::*, epaint::Hsva};
 use egui_material_icons::icons::ICON_ARROW_DROP_DOWN;
 use egui_phosphor_icons::icons;
 
@@ -22,8 +19,9 @@ pub fn dropdown<T: PartialEq>(
     placeholder: &str,
     font_id: FontId,
     items: Vec<DropdownItem<T>>,
-) {
+) -> bool {
     let (rect, response) = ui.allocate_exact_size(size, Sense::click());
+    let mut ret = false;
 
     if response.hovered() {
         ui.painter().rect_filled(
@@ -76,9 +74,11 @@ pub fn dropdown<T: PartialEq>(
             {
                 *active = item.value;
                 ui.close();
+                ret = true;
             }
         }
     });
+    ret
 }
 
 pub fn number_input(

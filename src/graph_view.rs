@@ -56,25 +56,23 @@ impl GraphViewDataType {
         }
     }
 
-    pub fn get_normalized_values(&self, t: &SharedMemoryObjectOut) -> Vec<f64> {
+    pub fn get_normalized_values(&self, t: &SharedMemoryObjectOut) -> f64 {
         match self {
             GraphViewDataType::Rpm(v) => {
-                vec![t.telemetry.telemetry_info[*v].m_engine_rpm / self.get_max_value(t)]
+                t.telemetry.telemetry_info[*v].m_engine_rpm / self.get_max_value(t)
             }
             GraphViewDataType::Speed(v) => {
-                vec![-t.telemetry.telemetry_info[*v].m_local_vel.z * 3.6 / self.get_max_value(t)]
+                -t.telemetry.telemetry_info[*v].m_local_vel.z * 3.6 / self.get_max_value(t)
             }
             GraphViewDataType::Throttle(v) => {
-                vec![t.telemetry.telemetry_info[*v].m_unfiltered_throttle / self.get_max_value(t)]
+                t.telemetry.telemetry_info[*v].m_unfiltered_throttle / self.get_max_value(t)
             }
             GraphViewDataType::Brake(v) => {
-                vec![t.telemetry.telemetry_info[*v].m_unfiltered_brake / self.get_max_value(t)]
+                t.telemetry.telemetry_info[*v].m_unfiltered_brake / self.get_max_value(t)
             }
             GraphViewDataType::Delta(v, r) => {
-                vec![
-                    (t.telemetry.telemetry_info[*v].m_delta_best.clamp(-*r, *r) + *r)
-                        / self.get_max_value(t),
-                ]
+                (t.telemetry.telemetry_info[*v].m_delta_best.clamp(-*r, *r) + *r)
+                    / self.get_max_value(t)
             }
         }
     }
