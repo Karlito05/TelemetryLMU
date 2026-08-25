@@ -1,10 +1,12 @@
 use eframe::egui;
 
-use crate::frontend::{sidebar::Sidebar, telemetry_page};
+use crate::frontend::{car_info::CarInfo, settings::Settings, sidebar::Sidebar, telemetry_page};
 
 pub struct App {
     sidebar: Sidebar,
+    settings: Settings,
     telemetry: telemetry_page::TelemetryPage,
+    car_info: CarInfo,
 }
 
 #[derive(Debug, PartialEq)]
@@ -22,6 +24,8 @@ impl Default for App {
         Self {
             sidebar: Sidebar::default(),
             telemetry: telemetry_page::TelemetryPage::default(),
+            settings: Settings::default(),
+            car_info: CarInfo::default(),
         }
     }
 }
@@ -33,7 +37,14 @@ impl eframe::App for App {
 
         egui::CentralPanel::default().show(ui, |ui| match self.sidebar.active_page {
             Page::Telemetry => self.telemetry.draw_telemetry_page(ui, &mut self.sidebar),
-            _ => todo!(),
+            Page::Info => {
+                self.car_info
+                    .draw_car_info_page(ui, &mut self.sidebar, &mut self.settings)
+            }
+            Page::Settings => {
+                self.settings.draw_settings_page();
+            }
+            Page::Map => {}
         });
     }
 }
