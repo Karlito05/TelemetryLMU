@@ -179,7 +179,7 @@ impl TelemetryPage {
 
                 ui.separator();
 
-                self.draw_editing_layout_dropdown(ui);
+                self.draw_editing_layout_label(ui);
 
                 ui.separator();
 
@@ -205,33 +205,16 @@ impl TelemetryPage {
         });
     }
 
-    fn draw_editing_layout_dropdown(&mut self, ui: &mut Ui) {
+    fn draw_editing_layout_label(&mut self, ui: &mut Ui) {
         ui.add(
-            Label::new(RichText::new("Editing:").size(16.0).color(Color32::WHITE))
-                .selectable(false),
-        );
-
-        ui.add_space(2.0);
-
-        dropdown(
-            ui,
-            vec2(140.0, 32.0),
-            CornerRadius::same(8),
-            Color32::from_white_alpha(25),
-            &mut self.cur_layout_index,
-            "",
-            FontId {
-                size: 14.0,
-                family: FontFamily::Proportional,
-            },
-            self.layouts
-                .iter()
-                .enumerate()
-                .map(|(i, l)| DropdownItem {
-                    value: i,
-                    display_value: l.name.clone(),
-                })
-                .collect(),
+            Label::new(
+                RichText::new(
+                    format! {"Editing: {}", self.layouts[self.edit_mode_context.layout.index].name},
+                )
+                .size(16.0)
+                .color(Color32::WHITE),
+            )
+            .selectable(false),
         );
     }
 
@@ -358,7 +341,7 @@ impl TelemetryPage {
             vec2(64.0, 32.0),
             CornerRadius::same(8),
             Color32::from_white_alpha(25),
-            "Add Graph",
+            "Add",
             FontId::new(14.0, FontFamily::Proportional),
             Color32::WHITE,
         )
@@ -682,32 +665,107 @@ impl TelemetryPage {
             ui.vertical(|ui| {
                 let mut changes: Vec<GraphChange> = vec![];
                 for (i, graph_info) in self.edit_mode_context.layout.graphs.iter().enumerate() {
-                    if let Some(gc) = graph_edit(
-                        ui,
-                        i,
-                        graph_info,
-                        vec2(
-                            graphs_rect.width(),
-                            graph_info.size_percent * graphs_rect.height(),
-                        ),
-                        true,
-                        CornerRadius::same(0),
-                    ) {
-                        changes.push(gc);
+                    if i == self.edit_mode_context.layout.graphs.len() - 1 {
+                        if let Some(gc) = graph_edit(
+                            ui,
+                            i,
+                            graph_info,
+                            vec2(
+                                graphs_rect.width(),
+                                graph_info.size_percent * graphs_rect.height(),
+                            ),
+                            false,
+                            CornerRadius {
+                                ne: 0,
+                                nw: 0,
+                                sw: 24,
+                                se: 24,
+                            },
+                        ) {
+                            changes.push(gc);
+                        }
+                    } else if i == 0 {
+                        if let Some(gc) = graph_edit(
+                            ui,
+                            i,
+                            graph_info,
+                            vec2(
+                                graphs_rect.width(),
+                                graph_info.size_percent * graphs_rect.height(),
+                            ),
+                            true,
+                            CornerRadius {
+                                ne: 24,
+                                nw: 24,
+                                sw: 0,
+                                se: 0,
+                            },
+                        ) {
+                            changes.push(gc);
+                        }
+                    } else {
+                        if let Some(gc) = graph_edit(
+                            ui,
+                            i,
+                            graph_info,
+                            vec2(
+                                graphs_rect.width(),
+                                graph_info.size_percent * graphs_rect.height(),
+                            ),
+                            true,
+                            CornerRadius::same(0),
+                        ) {
+                            changes.push(gc);
+                        }
                     }
                 }
 
                 for change in changes {
                     match change {
-                        GraphChange::Height(i, new_height) => {
-                            assert!(
-                                i + 1 < self.layouts[self.cur_layout_index].graphs.len(),
-                                "Last panel should not be resizable!"
-                            );
+                        GraphChange::Height(i, delta) => {
+                            const MIN_SIZE: f32 = 0.10;
 
-                            //TODO: dragging bounds checks (min and max sizes) 10%min
-                            self.edit_mode_context.layout.graphs[i].size_percent += new_height;
-                            self.edit_mode_context.layout.graphs[i + 1].size_percent -= new_height;
+                            let graphs = &mut self.edit_mode_context.layout.graphs;
+
+                            if delta > 0.0 {
+                                let mut remaining = delta;
+
+                                for j in (i + 1)..graphs.len() {
+                                    let available = (graphs[j].size_percent - MIN_SIZE).max(0.0);
+                                    let taken = remaining.min(available);
+
+                                    graphs[j].size_percent -= taken;
+                                    remaining -= taken;
+
+                                    if remaining <= 0.0 {
+                                        break;
+                                    }
+                                }
+
+                                graphs[i].size_percent += delta - remaining;
+                            } else {
+                                let mut remaining = -delta;
+
+                                let available = (graphs[i].size_percent - MIN_SIZE).max(0.0);
+                                let taken = remaining.min(available);
+
+                                graphs[i].size_percent -= taken;
+                                remaining -= taken;
+
+                                let mut j = i;
+
+                                while remaining > 0.0 && j > 0 {
+                                    j -= 1;
+
+                                    let available = (graphs[j].size_percent - MIN_SIZE).max(0.0);
+                                    let taken = remaining.min(available);
+
+                                    graphs[j].size_percent -= taken;
+                                    remaining -= taken;
+                                }
+
+                                graphs[i + 1].size_percent += -delta - remaining;
+                            }
                         }
                         GraphChange::Type(i, new_type) => {
                             self.edit_mode_context.layout.graphs[i].graph_type =
