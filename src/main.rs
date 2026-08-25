@@ -46,6 +46,19 @@ fn main() -> eframe::Result {
                 .insert(0, "RacingSansOne".to_owned());
 
             fonts.font_data.insert(
+                "RethinkSans".to_owned(),
+                std::sync::Arc::new(FontData::from_static(include_bytes!(
+                    "../public/RethinkSans-Bold.ttf"
+                ))),
+            );
+
+            fonts
+                .families
+                .entry(egui::FontFamily::Name("RethinkSans".into()))
+                .or_default()
+                .insert(0, "RethinkSans".to_owned());
+
+            fonts.font_data.insert(
                 "DaysOne".to_owned(),
                 std::sync::Arc::new(FontData::from_static(include_bytes!(
                     "../public/DaysOne-Regular.ttf"

@@ -148,7 +148,7 @@ impl TelemetryPage {
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 80.0),
             vec2(
                 ui.available_width() - if sidebar.open { 8.0 } else { 16.0 },
-                ui.available_height() - 24.0,
+                ui.available_height() - 20.0,
             ),
         );
         self.draw_graphs_edit(ui, graphs_rect);
@@ -169,7 +169,7 @@ impl TelemetryPage {
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 80.0),
             vec2(
                 ui.available_width() - if sidebar.open { 8.0 } else { 16.0 },
-                ui.available_height() - 24.0,
+                ui.available_height() - 20.0,
             ),
         );
 
