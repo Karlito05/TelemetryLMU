@@ -39,6 +39,9 @@ impl CarInfo {
         ui.painter()
             .rect_filled(rect, CornerRadius::same(24), Color32::from_rgb(22, 23, 28));
 
+        self.draw_title(ui, rect);
+    }
+    fn draw_title(&self, ui: &mut Ui, rect: Rect) {
         let name_text_rect = ui.painter().text(
             rect.min + vec2(16.0, 16.0),
             Align2::LEFT_TOP,
@@ -58,7 +61,10 @@ impl CarInfo {
             pos2(car_text_rect.max.x + 16.0, car_text_rect.min.y),
             vec2(48.0, car_text_rect.size().y),
         );
+        self.draw_badge(ui, badge_rect);
+    }
 
+    fn draw_badge(&self, ui: &mut Ui, badge_rect: Rect) {
         let draw_badge = |badge_rect: Rect, color: Color32, name: &str| {
             ui.painter().rect(
                 badge_rect,
