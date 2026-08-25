@@ -61,54 +61,18 @@ impl Default for TelemetryPage {
                 },
                 started_edtiting: false,
             },
-            layouts: vec![
-                LayoutInfo {
-                    name: "Main test".to_owned(),
-                    graphs: vec![
-                        GraphInfo {
-                            show_ref: false,
-                            cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
-                            ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
-                            color: Color32::from_rgb(20, 10, 200),
-                            n_gridlines: 3,
-                            size_percent: 0.5,
-                            graph_type: GraphViewDataType::from_string("rpm", 0),
-                        },
-                        GraphInfo {
-                            show_ref: true,
-                            cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
-                            ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
-                            color: Color32::from_rgb(20, 200, 20),
-                            n_gridlines: 3,
-                            size_percent: 0.5,
-                            graph_type: GraphViewDataType::from_string("speed", 0),
-                        },
-                    ],
-                },
-                LayoutInfo {
-                    name: "Main test 2".to_owned(),
-                    graphs: vec![
-                        GraphInfo {
-                            show_ref: false,
-                            cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
-                            ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
-                            color: Color32::from_rgb(20, 150, 200),
-                            n_gridlines: 3,
-                            size_percent: 0.5,
-                            graph_type: GraphViewDataType::from_string("rpm", 0),
-                        },
-                        GraphInfo {
-                            show_ref: true,
-                            cur_lap: vec![vec2(0.0, 0.4), vec2(0.4, 0.2)],
-                            ref_lap: vec![vec2(0.0, 1.0), vec2(0.6, 0.3)],
-                            color: Color32::from_rgb(200, 0, 20),
-                            n_gridlines: 3,
-                            size_percent: 0.5,
-                            graph_type: GraphViewDataType::from_string("speed", 0),
-                        },
-                    ],
-                },
-            ],
+            layouts: vec![LayoutInfo {
+                name: "Main".to_owned(),
+                graphs: vec![GraphInfo {
+                    show_ref: false,
+                    cur_lap: vec![],
+                    ref_lap: vec![],
+                    color: Color32::WHITE,
+                    n_gridlines: 3,
+                    size_percent: 1.0,
+                    graph_type: GraphViewDataType::Rpm(0),
+                }],
+            }],
         }
     }
 }
@@ -703,6 +667,20 @@ impl TelemetryPage {
                         ) {
                             changes.push(gc);
                         }
+                    } else if self.edit_mode_context.layout.graphs.len() == 1 {
+                        if let Some(gc) = graph_edit(
+                            ui,
+                            i,
+                            graph_info,
+                            vec2(
+                                graphs_rect.width(),
+                                graph_info.size_percent * graphs_rect.height(),
+                            ),
+                            false,
+                            CornerRadius::same(24),
+                        ) {
+                            changes.push(gc);
+                        }
                     } else {
                         if let Some(gc) = graph_edit(
                             ui,
@@ -810,6 +788,20 @@ impl TelemetryPage {
                     .iter()
                     .enumerate()
                 {
+                    if self.layouts[self.cur_layout_index].graphs.len() == 1 {
+                        graph(
+                            ui,
+                            graph_info,
+                            vec2(
+                                graphs_rect.width(),
+                                graph_info.size_percent * graphs_rect.height(),
+                            ),
+                            CornerRadius::same(24),
+                            margins,
+                            &self.telemetry.update_telemetry().unwrap(),
+                        );
+                        continue;
+                    }
                     if i == 0 {
                         graph(
                             ui,
@@ -844,21 +836,6 @@ impl TelemetryPage {
                                 sw: 24,
                                 se: 24,
                             },
-                            margins,
-                            &self.telemetry.update_telemetry().unwrap(),
-                        );
-                        continue;
-                    }
-
-                    if self.layouts[self.cur_layout_index].graphs.len() == 1 {
-                        graph(
-                            ui,
-                            graph_info,
-                            vec2(
-                                graphs_rect.width(),
-                                graph_info.size_percent * graphs_rect.height(),
-                            ),
-                            CornerRadius::same(24),
                             margins,
                             &self.telemetry.update_telemetry().unwrap(),
                         );
