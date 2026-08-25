@@ -16,6 +16,7 @@ pub struct TelemetryPage {
     edit_mode_context: EditModeContext,
     show_delete_layout_dialog: bool,
     save_as_dialog_info: SaveAsDialogInfo,
+    cur_lap: i32,
 }
 
 #[derive(Clone, Debug)]
@@ -50,6 +51,7 @@ impl Default for TelemetryPage {
             in_layout_edit_mode: false,
             show_delete_layout_dialog: false,
             cur_layout_index: 0,
+            cur_lap: 0,
             save_as_dialog_info: SaveAsDialogInfo {
                 name: "".to_owned(),
                 show: false,
@@ -86,6 +88,7 @@ impl TelemetryPage {
                 .map(|g| g.graph_type)
                 .collect(),
         );
+        ui.request_repaint_after(std::time::Duration::from_millis(16));
         if !self.in_layout_edit_mode {
             self.draw_normal_mode(ui, sidebar);
         } else {
@@ -96,16 +99,37 @@ impl TelemetryPage {
     fn process_telemetry_updates(&mut self, graph_data_types: Vec<GraphViewDataType>) {
         let t = self.telemetry.update_telemetry().unwrap();
 
+        if self.cur_lap != graph_data_types[0].get_lap(&t) {
+            if graph_data_types[0].is_last_best(&t) {
+                graph_data_types.iter().enumerate().for_each(|(i, _)| {
+                    self.layouts[self.cur_layout_index].graphs[i].ref_lap =
+                        self.layouts[self.cur_layout_index].graphs[i]
+                            .cur_lap
+                            .clone();
+                });
+            }
+            graph_data_types.iter().enumerate().for_each(|(i, _)| {
+                self.layouts[self.cur_layout_index].graphs[i].cur_lap = vec![];
+            });
+            self.cur_lap = graph_data_types[0].get_lap(&t);
+        }
+
         graph_data_types
             .iter()
             .enumerate()
             .for_each(|(i, graph_data_type)| {
-                self.layouts[self.cur_layout_index].graphs[i]
+                if !self.layouts[self.cur_layout_index].graphs[i]
                     .cur_lap
-                    .push(vec2(
-                        graph_data_type.get_normalized_distance(&t) as f32,
-                        graph_data_type.get_normalized_values(&t) as f32,
-                    ));
+                    .is_empty()
+                    || graph_data_type.get_normalized_distance(&t) < 0.9
+                {
+                    self.layouts[self.cur_layout_index].graphs[i]
+                        .cur_lap
+                        .push(vec2(
+                            graph_data_type.get_normalized_distance(&t) as f32,
+                            graph_data_type.get_normalized_values(&t) as f32,
+                        ));
+                }
             });
     }
 
@@ -562,7 +586,7 @@ impl TelemetryPage {
 
         ui.add_space(2.0);
 
-        dropdown(
+        if dropdown(
             ui,
             vec2(140.0, 32.0),
             CornerRadius::same(8),
@@ -581,7 +605,14 @@ impl TelemetryPage {
                     display_value: l.name.clone(),
                 })
                 .collect(),
-        );
+        ) {
+            for layout in &mut self.layouts {
+                for graph in &mut layout.graphs {
+                    graph.cur_lap = vec![];
+                    graph.ref_lap = vec![];
+                }
+            }
+        }
     }
 
     fn draw_reference_controls(&mut self, ui: &mut Ui) {
