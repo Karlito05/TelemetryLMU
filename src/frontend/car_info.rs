@@ -58,6 +58,37 @@ impl CarInfo {
             vec2(rect.size().x - 32.0, 172.0),
         );
         self.draw_fuel_panel(ui, fuel_rect);
+
+        let tires_rect = Rect::from_min_size(
+            pos2(fuel_rect.min.x, fuel_rect.max.y + 16.0),
+            vec2(fuel_rect.size().x / 2.0 - 8.0, 200.0),
+        );
+        self.draw_tires_panel(ui, tires_rect);
+
+        let input_rect = Rect::from_min_size(
+            pos2(
+                fuel_rect.min.x + fuel_rect.size().x / 2.0 + 8.0,
+                fuel_rect.max.y + 16.0,
+            ),
+            vec2(fuel_rect.size().x / 2.0 - 8.0, 200.0),
+        );
+        self.draw_input_panel(ui, input_rect);
+    }
+
+    fn draw_tires_panel(&self, ui: &mut Ui, tires_rect: Rect) {
+        ui.painter().rect_filled(
+            tires_rect,
+            CornerRadius::same(16),
+            Color32::from_white_alpha(17),
+        );
+    }
+
+    fn draw_input_panel(&self, ui: &mut Ui, input_rect: Rect) {
+        ui.painter().rect_filled(
+            input_rect,
+            CornerRadius::same(16),
+            Color32::from_white_alpha(17),
+        );
     }
 
     fn draw_fuel_panel(&self, ui: &mut Ui, fuel_rect: Rect) {
