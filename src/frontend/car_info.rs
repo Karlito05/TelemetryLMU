@@ -9,6 +9,13 @@ pub struct CarInfo {
     name: String,
     car: String,
     car_class: IPVehicleClass,
+    fuel_info: FuelInfo,
+}
+
+struct FuelInfo {
+    fuel_percent: f32,
+    virt_eng_percent: f32,
+    fuel_liters: f32,
 }
 
 impl Default for CarInfo {
@@ -17,6 +24,11 @@ impl Default for CarInfo {
             name: "TestAcc".to_string(),
             car: "Test car".to_string(),
             car_class: IPVehicleClass::Gt3,
+            fuel_info: FuelInfo {
+                fuel_percent: 0.64,
+                virt_eng_percent: 0.43,
+                fuel_liters: 55.0,
+            },
         }
     }
 }
@@ -39,9 +51,158 @@ impl CarInfo {
         ui.painter()
             .rect_filled(rect, CornerRadius::same(24), Color32::from_rgb(22, 23, 28));
 
-        self.draw_title(ui, rect);
+        let title_box = self.draw_title(ui, rect);
+
+        let fuel_rect = Rect::from_min_size(
+            title_box.max + vec2(-title_box.size().x, 16.0),
+            vec2(rect.size().x - 32.0, 172.0),
+        );
+        self.draw_fuel_panel(ui, fuel_rect);
     }
-    fn draw_title(&self, ui: &mut Ui, rect: Rect) {
+
+    fn draw_fuel_panel(&self, ui: &mut Ui, fuel_rect: Rect) {
+        ui.painter().rect_filled(
+            fuel_rect,
+            CornerRadius::same(16),
+            Color32::from_white_alpha(17),
+        );
+
+        let usable_rect = Rect::from_min_max(
+            fuel_rect.min + vec2(16.0, 16.0),
+            fuel_rect.max - vec2(16.0, 16.0),
+        );
+
+        ui.put(usable_rect, |ui: &mut Ui| {
+            ui.vertical(|ui| {
+                ui.horizontal(|ui| {
+                    ui.label(
+                        egui_phosphor_icons::icons::GAS_PUMP
+                            .regular()
+                            .size(14.0)
+                            .color(Color32::from_white_alpha(64)),
+                    );
+                    ui.add_space(2.0);
+                    ui.label(
+                        RichText::new("FUEL & ENERGY")
+                            .size(12.0)
+                            .family(FontFamily::Name("BarlowCondensed".into()))
+                            .color(Color32::from_white_alpha(64)),
+                    );
+                });
+
+                ui.add_space(16.0);
+
+                ui.horizontal(|ui| {
+                    let (rect, _) = ui.allocate_exact_size(vec2(40.0, 40.0), Sense::empty());
+                    ui.painter().rect_filled(
+                        rect,
+                        CornerRadius::same(8),
+                        Color32::from_rgba_unmultiplied(255, 132, 0, 127),
+                    );
+                    ui.put(
+                        rect,
+                        Label::new(
+                            egui_phosphor_icons::icons::GAS_PUMP
+                                .regular()
+                                .color(Color32::from_rgb(254, 178, 0))
+                                .size(24.0),
+                        ),
+                    );
+
+                    ui.add_space(4.0);
+
+                    ui.vertical(|ui| {
+                        ui.horizontal(|ui| {
+                            ui.label(
+                                RichText::new(format!("{}%", self.fuel_info.fuel_percent * 100.0))
+                                    .size(16.0)
+                                    .family(FontFamily::Name("JetBrainsMono".into()))
+                                    .color(Color32::WHITE),
+                            );
+                            ui.label(
+                                RichText::new(format!("{}L", self.fuel_info.fuel_liters))
+                                    .size(12.0)
+                                    .family(FontFamily::Name("JetBrainsMono".into()))
+                                    .color(Color32::from_white_alpha(127)),
+                            );
+                        });
+                        ui.add_space(4.0);
+                        let (bar_rect, _) = ui
+                            .allocate_exact_size(vec2(ui.available_width(), 10.0), Sense::empty());
+                        ui.painter().rect_filled(
+                            bar_rect,
+                            CornerRadius::same(5),
+                            Color32::from_white_alpha(25),
+                        );
+                        ui.painter().rect_filled(
+                            Rect::from_min_size(
+                                bar_rect.min,
+                                vec2(
+                                    bar_rect.size().x * self.fuel_info.fuel_percent,
+                                    bar_rect.size().y,
+                                ),
+                            ),
+                            CornerRadius::same(5),
+                            Color32::from_rgb(255, 127, 0),
+                        )
+                    })
+                });
+
+                ui.add_space(16.0);
+
+                ui.horizontal(|ui| {
+                    let (rect, _) = ui.allocate_exact_size(vec2(40.0, 40.0), Sense::empty());
+                    ui.painter().rect_filled(
+                        rect,
+                        CornerRadius::same(8),
+                        Color32::from_rgba_unmultiplied(0, 144, 255, 127),
+                    );
+                    ui.put(
+                        rect,
+                        Label::new(
+                            egui_phosphor_icons::icons::BATTERY_CHARGING
+                                .regular()
+                                .color(Color32::from_rgb(0, 198, 255))
+                                .size(24.0),
+                        ),
+                    );
+
+                    ui.add_space(4.0);
+
+                    ui.vertical(|ui| {
+                        ui.label(
+                            RichText::new(format!("{}%", self.fuel_info.virt_eng_percent * 100.0))
+                                .size(16.0)
+                                .family(FontFamily::Name("JetBrainsMono".into()))
+                                .color(Color32::WHITE),
+                        );
+                        ui.add_space(4.0);
+                        let (bar_rect, _) = ui
+                            .allocate_exact_size(vec2(ui.available_width(), 10.0), Sense::empty());
+                        ui.painter().rect_filled(
+                            bar_rect,
+                            CornerRadius::same(5),
+                            Color32::from_white_alpha(25),
+                        );
+                        ui.painter().rect_filled(
+                            Rect::from_min_size(
+                                bar_rect.min,
+                                vec2(
+                                    bar_rect.size().x * self.fuel_info.virt_eng_percent,
+                                    bar_rect.size().y,
+                                ),
+                            ),
+                            CornerRadius::same(5),
+                            Color32::from_rgb(0, 132, 255),
+                        )
+                    })
+                });
+            })
+            .response
+        });
+    }
+
+    fn draw_title(&self, ui: &mut Ui, rect: Rect) -> Rect {
         let name_text_rect = ui.painter().text(
             rect.min + vec2(16.0, 16.0),
             Align2::LEFT_TOP,
@@ -62,6 +223,8 @@ impl CarInfo {
             vec2(48.0, car_text_rect.size().y),
         );
         self.draw_badge(ui, badge_rect);
+
+        Rect::from_min_max(name_text_rect.min, badge_rect.max)
     }
 
     fn draw_badge(&self, ui: &mut Ui, badge_rect: Rect) {

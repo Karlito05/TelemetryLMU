@@ -38,7 +38,6 @@ fn main() -> eframe::Result {
                     "../public/RacingSansOne-Regular.ttf"
                 ))),
             );
-
             fonts
                 .families
                 .entry(egui::FontFamily::Name("RacingSansOne".into()))
@@ -46,12 +45,23 @@ fn main() -> eframe::Result {
                 .insert(0, "RacingSansOne".to_owned());
 
             fonts.font_data.insert(
+                "JetBrainsMono".to_owned(),
+                std::sync::Arc::new(FontData::from_static(include_bytes!(
+                    "../public/JetBrainsMono-VariableFont_wght.ttf"
+                ))),
+            );
+            fonts
+                .families
+                .entry(egui::FontFamily::Name("JetBrainsMono".into()))
+                .or_default()
+                .insert(0, "JetBrainsMono".to_owned());
+
+            fonts.font_data.insert(
                 "RethinkSans".to_owned(),
                 std::sync::Arc::new(FontData::from_static(include_bytes!(
                     "../public/RethinkSans-Bold.ttf"
                 ))),
             );
-
             fonts
                 .families
                 .entry(egui::FontFamily::Name("RethinkSans".into()))
@@ -59,12 +69,23 @@ fn main() -> eframe::Result {
                 .insert(0, "RethinkSans".to_owned());
 
             fonts.font_data.insert(
+                "BarlowCondensed".to_owned(),
+                std::sync::Arc::new(FontData::from_static(include_bytes!(
+                    "../public/BarlowCondensed-SemiBold.ttf"
+                ))),
+            );
+            fonts
+                .families
+                .entry(egui::FontFamily::Name("BarlowCondensed".into()))
+                .or_default()
+                .insert(0, "BarlowCondensed".to_owned());
+
+            fonts.font_data.insert(
                 "DaysOne".to_owned(),
                 std::sync::Arc::new(FontData::from_static(include_bytes!(
                     "../public/DaysOne-Regular.ttf"
                 ))),
             );
-
             fonts
                 .families
                 .entry(egui::FontFamily::Name("DaysOne".into()))
