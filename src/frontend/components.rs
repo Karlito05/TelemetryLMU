@@ -2,7 +2,11 @@ use eframe::{egui::*, epaint::Hsva};
 use egui_material_icons::icons::ICON_ARROW_DROP_DOWN;
 use egui_phosphor_icons::icons;
 
-use crate::{backend::telemetry::GraphViewDataType, interface::SharedMemoryObjectOut};
+use crate::{
+    backend::telemetry::GraphViewDataType,
+    frontend::sidebar::{self, Sidebar},
+    interface::SharedMemoryObjectOut,
+};
 
 pub struct DropdownItem<T: PartialEq> {
     pub value: T,
@@ -748,4 +752,21 @@ pub fn button(
     );
 
     response
+}
+
+pub fn telemetry_not_found(ui: &mut Ui) {
+    Window::new("Error")
+        .collapsible(false)
+        .resizable(false)
+        .min_width(800.0)
+        .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
+        .show(ui.ctx(), |ui| {
+            ui.label(
+                RichText::new("You need to have the game open when launching this app on linux!")
+                    .size(24.0)
+                    .strong(),
+            );
+            ui.separator();
+            ui.label(RichText::new("Please restart the app or switch to another page!").size(16.0));
+        });
 }

@@ -1,8 +1,8 @@
 use crate::backend::telemetry::GraphViewDataType;
-use crate::frontend::components::dropdown;
 use crate::frontend::components::{
     DropdownItem, GraphChange, GraphInfo, button, graph, graph_edit,
 };
+use crate::frontend::components::{dropdown, telemetry_not_found};
 use crate::frontend::sidebar::Sidebar;
 use crate::interface::Telemetry;
 use eframe::egui::*;
@@ -84,6 +84,7 @@ impl Default for TelemetryPage {
 impl TelemetryPage {
     pub fn draw_telemetry_page(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
         if !self.telemetry.full_mode {
+            telemetry_not_found(ui);
             return;
         }
         self.process_telemetry_updates(

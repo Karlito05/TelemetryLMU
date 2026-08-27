@@ -4,7 +4,7 @@ use eframe::egui::*;
 
 use crate::{
     backend::car_info::{FuelInfo, TireInfo, get_dyn_driver_info, get_stale_driver_info},
-    frontend::{settings_page::Settings, sidebar::Sidebar},
+    frontend::{components::telemetry_not_found, settings_page::Settings, sidebar::Sidebar},
     interface::{IPVehicleClass, Telemetry},
 };
 
@@ -49,6 +49,7 @@ impl CarInfo {
         settings: &mut Settings,
     ) {
         if !self.telemetry.full_mode {
+            telemetry_not_found(ui);
             return;
         }
         if self.name.is_empty()
