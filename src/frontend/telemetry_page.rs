@@ -250,6 +250,10 @@ impl TelemetryPage {
         {
             self.layouts[self.edit_mode_context.layout.index].graphs =
                 self.edit_mode_context.layout.graphs.clone();
+            for graph in &mut self.layouts[self.edit_mode_context.layout.index].graphs {
+                graph.cur_lap = vec![];
+                graph.ref_lap = vec![];
+            }
             self.edit_mode_context = EditModeContext {
                 layout: EditLayoutInfo {
                     graphs: vec![],
