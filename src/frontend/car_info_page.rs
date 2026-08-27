@@ -3,7 +3,7 @@ use std::time::Duration;
 use eframe::egui::*;
 
 use crate::{
-    backend::car_info::{get_dyn_driver_info, get_stale_driver_info},
+    backend::car_info::{FuelInfo, TireInfo, get_dyn_driver_info, get_stale_driver_info},
     frontend::{settings_page::Settings, sidebar::Sidebar},
     interface::{IPVehicleClass, Telemetry},
 };
@@ -16,20 +16,6 @@ pub struct CarInfo {
     fuel_info: FuelInfo,
     tires: [TireInfo; 4],
     telemetry: Telemetry,
-}
-
-pub struct FuelInfo {
-    pub fuel_percent: f32,
-    pub virt_eng_percent: f32,
-    pub fuel_liters: f32,
-}
-
-#[derive(Default, Debug)]
-pub struct TireInfo {
-    pub inside_temp: f32,
-    pub outside_temp: f32,
-    pub brake_temp: f32,
-    pub health_percent: f32,
 }
 
 impl Default for CarInfo {
@@ -62,6 +48,9 @@ impl CarInfo {
         sidebar: &mut Sidebar,
         settings: &mut Settings,
     ) {
+        if !self.telemetry.full_mode {
+            return;
+        }
         if self.name.is_empty()
             && let Ok(info) =
                 get_stale_driver_info(&self.telemetry, settings.in_game_name.to_owned())

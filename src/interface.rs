@@ -17,16 +17,23 @@ use windows_sys::Win32::System::Memory::{
 const MAX_PATH: usize = 260;
 
 pub struct Telemetry {
-    #[expect(unused)]
     pub full_mode: bool,
     pub mmap: Mmap,
 }
 
 impl Telemetry {
     pub fn new(path: &str) -> Telemetry {
-        Self {
-            full_mode: false,
-            mmap: Telemetry::get_mmap(path),
+        let mmap = Telemetry::get_mmap(path);
+
+        match mmap {
+            Some(mmap) => Self {
+                full_mode: true,
+                mmap,
+            },
+            None => Self {
+                full_mode: false,
+                mmap: Telemetry::mmap_fallback(),
+            },
         }
     }
 
@@ -37,60 +44,45 @@ impl Telemetry {
     }
 
     #[cfg(not(target_os = "windows"))]
-    fn get_mmap(path: &str) -> Mmap {
+    fn get_mmap(path: &str) -> Option<Mmap> {
         const EXPECTED_LEN: u64 = std::mem::size_of::<SharedMemoryObjectOut>() as u64;
-        const MAX_RETRIES: u32 = 20;
-        const RETRY_DELAY: std::time::Duration = std::time::Duration::from_millis(100);
 
-        for attempt in 0..MAX_RETRIES {
-            let file = match File::open(path) {
-                Ok(v) => v,
-                Err(e) => {
-                    if attempt == 0 {
-                        println!("Could not open telemetry file: {e}");
-                    }
-                    std::thread::sleep(RETRY_DELAY);
-                    continue;
-                }
-            };
-
-            let len = match file.metadata() {
-                Ok(m) => m.len(),
-                Err(e) => {
-                    println!("Could not stat telemetry file: {e}");
-                    std::thread::sleep(RETRY_DELAY);
-                    continue;
-                }
-            };
-
-            if len < EXPECTED_LEN {
-                // writer hasn't pre-sized/written the file yet — don't mmap a short file
-                std::thread::sleep(RETRY_DELAY);
-                continue;
+        let file = match File::open(path) {
+            Ok(v) => v,
+            Err(e) => {
+                println!("Could not open telemetry file: {e}");
+                return None;
             }
+        };
 
-            match unsafe { Mmap::map(&file) } {
-                Ok(mmap) => {
-                    return mmap;
-                }
-                Err(e) => {
-                    println!("Could not mmap telemetry file: {e}");
-                    std::thread::sleep(RETRY_DELAY);
-                    continue;
-                }
+        let len = match file.metadata() {
+            Ok(m) => m.len(),
+            Err(e) => {
+                println!("Could not stat telemetry file: {e}");
+                return None;
             }
+        };
+
+        if len < EXPECTED_LEN {
+            // writer hasn't pre-sized/written the file yet — don't mmap a short file
+            return None;
         }
 
-        println!("Telemetry file never became ready after {MAX_RETRIES} attempts");
-        println!("Switching into no telemetry mode");
-        Telemetry::mmap_fallback()
+        match unsafe { Mmap::map(&file) } {
+            Ok(mmap) => Some(mmap),
+            Err(e) => {
+                println!("Could not mmap telemetry file: {e}");
+                println!("Switching into no telemetry mode");
+                None
+            }
+        }
     }
 
     #[cfg(target_os = "windows")]
-    fn get_mmap(_path: &str, state: &Mutex<TelemetryState>) -> Mmap {
+    fn get_mmap(_path: &str, state: &Mutex<TelemetryState>) -> Option<Mmap> {
         // Windows telemetry is read from the named mapping object directly in update_telemetry.
         state.lock().unwrap().full_mode = true;
-        mmap_fallback()
+        Some(mmap_fallback())
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -180,7 +172,6 @@ pub fn i8_array32_to_string(buf: &[i8; 32]) -> String {
     String::from_utf8_lossy(&bytes).to_string()
 }
 
-#[expect(unused)]
 pub fn i8_array64_to_string(buf: &[i8; 64]) -> String {
     let bytes: Vec<u8> = buf
         .iter()

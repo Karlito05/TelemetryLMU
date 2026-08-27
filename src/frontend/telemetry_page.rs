@@ -83,6 +83,9 @@ impl Default for TelemetryPage {
 
 impl TelemetryPage {
     pub fn draw_telemetry_page(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
+        if !self.telemetry.full_mode {
+            return;
+        }
         self.process_telemetry_updates(
             self.layouts[self.cur_layout_index]
                 .graphs

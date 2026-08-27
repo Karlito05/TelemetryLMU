@@ -1,8 +1,17 @@
-use crate::{
-    frontend::car_info_page::{FuelInfo, TireInfo},
-    interface::{IPVehicleClass, Telemetry, i8_array32_to_string, i8_array64_to_string},
-};
+use crate::interface::{IPVehicleClass, Telemetry, i8_array32_to_string, i8_array64_to_string};
+pub struct FuelInfo {
+    pub fuel_percent: f32,
+    pub virt_eng_percent: f32,
+    pub fuel_liters: f32,
+}
 
+#[derive(Default, Debug)]
+pub struct TireInfo {
+    pub inside_temp: f32,
+    pub outside_temp: f32,
+    pub brake_temp: f32,
+    pub health_percent: f32,
+}
 pub struct StaleDriverInfo {
     pub name: String,
     pub car: String,
