@@ -1,11 +1,7 @@
 use eframe::{egui::*, epaint::Hsva};
 use egui_phosphor_icons::icons;
 
-use crate::{
-    backend::telemetry::GraphViewDataType,
-    frontend::sidebar::{self, Sidebar},
-    interface::SharedMemoryObjectOut,
-};
+use crate::{backend::telemetry::GraphViewDataType, interface::SharedMemoryObjectOut};
 
 pub struct DropdownItem<T: PartialEq> {
     pub value: T,
