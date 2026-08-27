@@ -687,7 +687,9 @@ impl TelemetryPage {
         )
         .clicked()
         {
-            // TODO: Logic
+            for graph in &mut self.layouts[self.cur_layout_index].graphs {
+                graph.ref_lap = vec![];
+            }
         }
     }
 
