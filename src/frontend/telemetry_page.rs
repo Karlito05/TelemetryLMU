@@ -1,9 +1,10 @@
+use crate::backend::telemetry::GraphViewDataType;
+use crate::frontend::components::dropdown;
 use crate::frontend::components::{
     DropdownItem, GraphChange, GraphInfo, button, graph, graph_edit,
 };
 use crate::frontend::sidebar::Sidebar;
-use crate::telemetry_back::Telemetry;
-use crate::{frontend::components::dropdown, graph_view::GraphViewDataType};
+use crate::interface::Telemetry;
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
 

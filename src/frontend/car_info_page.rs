@@ -3,9 +3,9 @@ use std::time::Duration;
 use eframe::egui::*;
 
 use crate::{
-    championships::{get_dyn_driver_info, get_stale_driver_info},
-    frontend::{settings::Settings, sidebar::Sidebar},
-    telemetry_back::{IPVehicleClass, Telemetry},
+    backend::car_info::{get_dyn_driver_info, get_stale_driver_info},
+    frontend::{settings_page::Settings, sidebar::Sidebar},
+    interface::{IPVehicleClass, Telemetry},
 };
 
 pub struct CarInfo {

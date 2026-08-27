@@ -1,4 +1,4 @@
-use crate::telemetry_back::SharedMemoryObjectOut;
+use crate::interface::SharedMemoryObjectOut;
 
 pub const GRAPH_VIEW_DATA_TYPE_COUNT: i32 = 5;
 

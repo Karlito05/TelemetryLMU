@@ -2,7 +2,7 @@ use eframe::{egui::*, epaint::Hsva};
 use egui_material_icons::icons::ICON_ARROW_DROP_DOWN;
 use egui_phosphor_icons::icons;
 
-use crate::{graph_view::GraphViewDataType, telemetry_back::SharedMemoryObjectOut};
+use crate::{backend::telemetry::GraphViewDataType, interface::SharedMemoryObjectOut};
 
 pub struct DropdownItem<T: PartialEq> {
     pub value: T,

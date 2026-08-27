@@ -1,6 +1,6 @@
 use crate::{
-    frontend::car_info::{FuelInfo, TireInfo},
-    telemetry_back::{IPVehicleClass, Telemetry, i8_array32_to_string, i8_array64_to_string},
+    frontend::car_info_page::{FuelInfo, TireInfo},
+    interface::{IPVehicleClass, Telemetry, i8_array32_to_string, i8_array64_to_string},
 };
 
 pub struct StaleDriverInfo {

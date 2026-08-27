@@ -1,9 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-mod championships;
+mod backend;
 mod frontend;
-mod graph_view;
-mod telemetry_back;
+mod interface;
 
 use eframe::egui::{self, Color32, FontData, FontDefinitions};
 use egui_phosphor_icons::add_fonts;

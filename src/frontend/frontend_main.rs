@@ -1,6 +1,8 @@
 use eframe::egui;
 
-use crate::frontend::{car_info::CarInfo, settings::Settings, sidebar::Sidebar, telemetry_page};
+use crate::frontend::{
+    car_info_page::CarInfo, settings_page::Settings, sidebar::Sidebar, telemetry_page,
+};
 
 pub struct App {
     sidebar: Sidebar,
