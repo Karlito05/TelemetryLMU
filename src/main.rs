@@ -25,7 +25,6 @@ fn main() -> eframe::Result {
         Box::new(|cc| {
             // This gives us image support:
             egui_extras::install_image_loaders(&cc.egui_ctx);
-            egui_material_icons::initialize(&cc.egui_ctx);
 
             cc.egui_ctx
                 .all_styles_mut(|style| style.visuals.panel_fill = Color32::from_rgb(15, 15, 15));

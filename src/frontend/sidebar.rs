@@ -1,5 +1,5 @@
 use eframe::egui::{self, Color32, CornerRadius, pos2, vec2};
-use egui_material_icons::icons::{ICON_INFO, ICON_MAP, ICON_MORE_VERT, ICON_SHOW_CHART};
+use egui_phosphor_icons::{Icon, icons};
 
 use crate::frontend::frontend_main::Page;
 
@@ -102,7 +102,7 @@ impl Sidebar {
                     .draw_button(
                         ui,
                         "Telemetry".to_owned(),
-                        ICON_SHOW_CHART.outlined(),
+                        icons::CHART_LINE,
                         self.active_page == Page::Telemetry,
                     )
                     .clicked()
@@ -114,7 +114,7 @@ impl Sidebar {
                     .draw_button(
                         ui,
                         "Car Info".to_owned(),
-                        ICON_INFO.outlined(),
+                        icons::INFO,
                         self.active_page == Page::Info,
                     )
                     .clicked()
@@ -137,7 +137,7 @@ impl Sidebar {
                     .draw_button(
                         ui,
                         "Map".to_owned(),
-                        ICON_MAP.outlined(),
+                        icons::MAP_TRIFOLD,
                         self.active_page == Page::Map,
                     )
                     .clicked()
@@ -152,7 +152,7 @@ impl Sidebar {
         &self,
         ui: &mut egui::Ui,
         text: String,
-        icon: egui_material_icons::MaterialIcon,
+        icon: Icon,
         active: bool,
     ) -> egui::Response {
         let desired_size = egui::vec2(234.0, 36.0);
@@ -172,7 +172,7 @@ impl Sidebar {
             ui.horizontal(|ui| {
                 ui.add_space(2.0);
                 ui.label(
-                    egui::RichText::new(icon)
+                    icon.regular()
                         .size(24.0)
                         .color(Color32::from_rgb(19, 141, 241)),
                 );
@@ -226,7 +226,8 @@ impl Sidebar {
                 egui::vec2(24.0, 32.0),
             ),
             egui::Label::new(
-                egui::RichText::new(ICON_MORE_VERT)
+                icons::DOTS_THREE_VERTICAL
+                    .bold()
                     .size(24.0)
                     .color(Color32::WHITE),
             )

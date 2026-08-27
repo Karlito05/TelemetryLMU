@@ -1,5 +1,4 @@
 use eframe::{egui::*, epaint::Hsva};
-use egui_material_icons::icons::ICON_ARROW_DROP_DOWN;
 use egui_phosphor_icons::icons;
 
 use crate::{
@@ -58,12 +57,8 @@ pub fn dropdown<T: PartialEq>(
 
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.add(
-                    Label::new(
-                        RichText::new(ICON_ARROW_DROP_DOWN)
-                            .size(24.0)
-                            .color(Color32::WHITE),
-                    )
-                    .selectable(false),
+                    Label::new(icons::CARET_DOWN.regular().size(24.0).color(Color32::WHITE))
+                        .selectable(false),
                 );
             });
         })
