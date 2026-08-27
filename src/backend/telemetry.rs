@@ -102,14 +102,54 @@ impl GraphViewDataType {
         n_gridlines: i32,
     ) -> Vec<String> {
         let mut ret = vec![];
-        for i in 0..n_gridlines {
-            let str = format!(
-                "{} {}",
-                self.get_max_value(telemetry) * (n_gridlines - 1 - i) as f64
-                    / (n_gridlines - 1) as f64,
-                self.get_unit()
-            );
-            ret.push(str);
+        match self {
+            Self::Throttle(..) => {
+                for i in 0..n_gridlines {
+                    let str = format!(
+                        "{} {}",
+                        self.get_max_value(telemetry) * (n_gridlines - 1 - i) as f64
+                            / (n_gridlines - 1) as f64
+                            * 100.0,
+                        self.get_unit()
+                    );
+                    ret.push(str);
+                }
+            }
+            Self::Brake(..) => {
+                for i in 0..n_gridlines {
+                    let str = format!(
+                        "{} {}",
+                        self.get_max_value(telemetry) * (n_gridlines - 1 - i) as f64
+                            / (n_gridlines - 1) as f64
+                            * 100.0,
+                        self.get_unit()
+                    );
+                    ret.push(str);
+                }
+            }
+            Self::Delta(_, t) => {
+                for i in 0..n_gridlines {
+                    let str = format!(
+                        "{} {}",
+                        self.get_max_value(telemetry) * (n_gridlines - 1 - i) as f64
+                            / (n_gridlines - 1) as f64
+                            - t,
+                        self.get_unit()
+                    );
+                    ret.push(str);
+                }
+            }
+            _ => {
+                for i in 0..n_gridlines {
+                    let str = format!(
+                        "{} {}",
+                        self.get_max_value(telemetry) * (n_gridlines - 1 - i) as f64
+                            / (n_gridlines - 1) as f64,
+                        self.get_unit()
+                    );
+                    ret.push(str);
+                }
+            }
         }
         ret
     }
