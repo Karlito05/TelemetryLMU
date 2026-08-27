@@ -1,7 +1,7 @@
 #[derive(Default)]
 pub struct Settings {
-    name: String,
-    in_game_name: String,
+    pub name: String,
+    pub in_game_name: String,
 }
 
 impl Settings {

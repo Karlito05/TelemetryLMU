@@ -1,4 +1,4 @@
-mod car_info;
+pub mod car_info;
 mod components;
 pub mod frontend_main;
 mod settings;

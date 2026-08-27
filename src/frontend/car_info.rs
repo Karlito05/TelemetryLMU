@@ -1,38 +1,45 @@
+use std::time::Duration;
+
 use eframe::egui::*;
 
 use crate::{
+    championships::{get_dyn_driver_info, get_stale_driver_info},
     frontend::{settings::Settings, sidebar::Sidebar},
-    telemetry_back::IPVehicleClass,
+    telemetry_back::{IPVehicleClass, Telemetry},
 };
 
 pub struct CarInfo {
     name: String,
     car: String,
     car_class: IPVehicleClass,
+    driver_index: usize,
     fuel_info: FuelInfo,
     tires: [TireInfo; 4],
+    telemetry: Telemetry,
 }
 
-struct FuelInfo {
-    fuel_percent: f32,
-    virt_eng_percent: f32,
-    fuel_liters: f32,
+pub struct FuelInfo {
+    pub fuel_percent: f32,
+    pub virt_eng_percent: f32,
+    pub fuel_liters: f32,
 }
 
 #[derive(Default, Debug)]
-struct TireInfo {
-    inside_temp: f32,
-    outside_temp: f32,
-    brake_temp: f32,
-    health_percent: f32,
+pub struct TireInfo {
+    pub inside_temp: f32,
+    pub outside_temp: f32,
+    pub brake_temp: f32,
+    pub health_percent: f32,
 }
 
 impl Default for CarInfo {
     fn default() -> Self {
         Self {
-            name: "TestAcc".to_string(),
-            car: "Test car".to_string(),
-            car_class: IPVehicleClass::Gt3,
+            telemetry: Telemetry::new("/dev/shm/LMU_Data"),
+            driver_index: 0,
+            name: "".to_string(),
+            car: "".to_string(),
+            car_class: IPVehicleClass::Unknown,
             fuel_info: FuelInfo {
                 fuel_percent: 0.64,
                 virt_eng_percent: 0.43,
@@ -55,6 +62,23 @@ impl CarInfo {
         sidebar: &mut Sidebar,
         settings: &mut Settings,
     ) {
+        if self.name.is_empty()
+            && let Ok(info) =
+                get_stale_driver_info(&self.telemetry, settings.in_game_name.to_owned())
+        {
+            self.name = info.name;
+            self.car = info.car;
+            self.car_class = info.car_class;
+            self.driver_index = info.index;
+        }
+
+        if !self.name.is_empty() {
+            let dyn_driver_inf = get_dyn_driver_info(&self.telemetry, self.driver_index);
+            self.tires = dyn_driver_inf.tires;
+            self.fuel_info = dyn_driver_inf.fuel;
+        }
+        ui.request_repaint_after(Duration::from_millis(500));
+
         let rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
             vec2(
@@ -161,6 +185,7 @@ impl CarInfo {
         });
     }
 
+    // TODO: Clean up this code
     fn draw_tire(&self, ui: &mut Ui, tire_rect: Rect, tire_name: &str, tire_info: &TireInfo) {
         ui.painter().rect_filled(
             tire_rect,
@@ -187,7 +212,16 @@ impl CarInfo {
                         ui.painter().rect_filled(
                             rect,
                             CornerRadius::same(2),
-                            Color32::from_rgba_unmultiplied(0, 255, 0, 25),
+                            interpolate_color(
+                                tire_info.health_percent,
+                                0.0,
+                                0.5,
+                                1.0,
+                                Color32::from_rgb(255, 0, 0),
+                                Color32::from_rgb(127, 127, 0),
+                                Color32::from_rgb(0, 255, 0),
+                            )
+                            .gamma_multiply(0.1),
                         ); // TODO: Lerp based on health
 
                         ui.painter().text(
@@ -195,7 +229,15 @@ impl CarInfo {
                             Align2::CENTER_CENTER,
                             format!("{}%", tire_info.health_percent * 100.0),
                             FontId::new(14.0, FontFamily::Proportional),
-                            Color32::from_rgba_unmultiplied(0, 255, 0, 255),
+                            interpolate_color(
+                                tire_info.health_percent,
+                                0.0,
+                                0.5,
+                                1.0,
+                                Color32::from_rgb(255, 0, 0),
+                                Color32::from_rgb(127, 127, 0),
+                                Color32::from_rgb(0, 255, 0),
+                            ),
                         ); // TODO: Lerp based on health
                     });
                 });
@@ -221,7 +263,15 @@ impl CarInfo {
                             rect.max,
                         ),
                         CornerRadius::same(7),
-                        Color32::from_rgba_unmultiplied(0, 255, 0, 255),
+                        interpolate_color(
+                            (tire_info.inside_temp + tire_info.outside_temp) / 2.0,
+                            40.0,
+                            80.0,
+                            100.0,
+                            Color32::from_rgb(0, 0, 255),
+                            Color32::from_rgb(0, 255, 0),
+                            Color32::from_rgb(255, 0, 0),
+                        ),
                     );
                     // TODO: LERP the colors based on temps :)
                     ui.vertical(|ui| {
@@ -236,8 +286,16 @@ impl CarInfo {
                                 ui.label(
                                     RichText::new(format!("{}°C", tire_info.inside_temp.round()))
                                         .size(14.0)
-                                        .color(Color32::from_rgb(0, 255, 0))
-                                        .family(FontFamily::Name("JetBrainsMono".into())),
+                                        .family(FontFamily::Name("JetBrainsMono".into()))
+                                        .color(interpolate_color(
+                                            tire_info.inside_temp,
+                                            30.0,
+                                            80.0,
+                                            100.0,
+                                            Color32::from_rgb(66, 135, 245),
+                                            Color32::from_rgb(0, 255, 0),
+                                            Color32::from_rgb(255, 0, 0),
+                                        )),
                                 );
                             });
                         });
@@ -252,8 +310,16 @@ impl CarInfo {
                                 ui.label(
                                     RichText::new(format!("{}°C", tire_info.outside_temp.round()))
                                         .size(14.0)
-                                        .color(Color32::from_rgb(0, 255, 0))
-                                        .family(FontFamily::Name("JetBrainsMono".into())),
+                                        .family(FontFamily::Name("JetBrainsMono".into()))
+                                        .color(interpolate_color(
+                                            tire_info.outside_temp,
+                                            30.0,
+                                            80.0,
+                                            100.0,
+                                            Color32::from_rgb(66, 135, 245),
+                                            Color32::from_rgb(0, 255, 0),
+                                            Color32::from_rgb(255, 0, 0),
+                                        )),
                                 );
                             });
                         });
@@ -268,8 +334,16 @@ impl CarInfo {
                                 ui.label(
                                     RichText::new(format!("{}°C", tire_info.brake_temp.round()))
                                         .size(14.0)
-                                        .color(Color32::from_rgb(0, 255, 0))
-                                        .family(FontFamily::Name("JetBrainsMono".into())),
+                                        .family(FontFamily::Name("JetBrainsMono".into()))
+                                        .color(interpolate_color(
+                                            tire_info.brake_temp,
+                                            30.0,
+                                            120.0,
+                                            800.0,
+                                            Color32::from_rgb(66, 135, 245),
+                                            Color32::from_rgb(0, 255, 0),
+                                            Color32::from_rgb(255, 0, 0),
+                                        )),
                                 );
                             });
                         });
@@ -502,4 +576,32 @@ impl CarInfo {
             _ => {}
         };
     }
+}
+
+fn interpolate_color(
+    value: f32,
+    min: f32,
+    mid: f32,
+    max: f32,
+    start_color: Color32,
+    mid_color: Color32,
+    end_color: Color32,
+) -> Color32 {
+    let value = min.max(max.min(value));
+
+    if value <= mid {
+        let t = (value - min) / (mid - min);
+        return interpolate_between(start_color, mid_color, t);
+    }
+
+    let t = (value - mid) / (max - mid);
+    interpolate_between(mid_color, end_color, t)
+}
+
+fn interpolate_between(a: Color32, b: Color32, t: f32) -> Color32 {
+    let r_val = (a.r() as f32 + (b.r() as f32 - a.r() as f32) * t).round() as u8;
+    let g_val = (a.g() as f32 + (b.g() as f32 - a.g() as f32) * t).round() as u8;
+    let b_val = (a.b() as f32 + (b.b() as f32 - a.b() as f32) * t).round() as u8;
+
+    Color32::from_rgb(r_val, g_val, b_val)
 }
