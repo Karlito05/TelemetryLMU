@@ -16,6 +16,7 @@ pub struct TelemetryPage {
     layouts: Vec<LayoutInfo>,
     edit_mode_context: EditModeContext,
     show_delete_layout_dialog: bool,
+    show_add_limit_dialog: bool,
     save_as_dialog_info: SaveAsDialogInfo,
     cur_lap: i32,
 }
@@ -52,6 +53,7 @@ impl Default for TelemetryPage {
             cur_driver: ("".to_owned(), 0),
             in_layout_edit_mode: false,
             show_delete_layout_dialog: false,
+            show_add_limit_dialog: false,
             cur_layout_index: 0,
             cur_lap: 0,
             save_as_dialog_info: SaveAsDialogInfo {
@@ -369,24 +371,53 @@ impl TelemetryPage {
         )
         .clicked()
         {
-            self.edit_mode_context.layout.graphs.push(GraphInfo {
-                color: Color32::WHITE,
-                show_ref: true,
-                n_gridlines: 3,
-                size_percent: 0.0,
-                graph_type: GraphViewDataType::Rpm(self.cur_driver.1 as usize),
-                cur_lap: vec![],
-                ref_lap: vec![],
-            });
+            if self.edit_mode_context.layout.graphs.len() < 10 {
+                self.edit_mode_context.layout.graphs.push(GraphInfo {
+                    color: Color32::WHITE,
+                    show_ref: true,
+                    n_gridlines: 3,
+                    size_percent: 0.0,
+                    graph_type: GraphViewDataType::Rpm(self.cur_driver.1 as usize),
+                    cur_lap: vec![],
+                    ref_lap: vec![],
+                });
 
-            let new_num_graphs = self.edit_mode_context.layout.graphs.len();
+                let new_num_graphs = self.edit_mode_context.layout.graphs.len();
 
-            self.edit_mode_context
-                .layout
-                .graphs
-                .iter_mut()
-                .for_each(|g| {
-                    g.size_percent = 1.0 / new_num_graphs as f32;
+                self.edit_mode_context
+                    .layout
+                    .graphs
+                    .iter_mut()
+                    .for_each(|g| {
+                        g.size_percent = 1.0 / new_num_graphs as f32;
+                    });
+            } else {
+                self.show_add_limit_dialog = true
+            }
+        }
+        if self.show_add_limit_dialog {
+            Window::new("Couldn't Add Graph")
+                .collapsible(false)
+                .resizable(false)
+                .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
+                .show(ui.ctx(), |ui| {
+                    ui.label("You can't have more than 10 graphs!");
+
+                    ui.horizontal(|ui| {
+                        if button(
+                            ui,
+                            vec2(64.0, 32.0),
+                            CornerRadius::same(8),
+                            Color32::from_white_alpha(25),
+                            "Ok",
+                            FontId::new(16.0, FontFamily::Proportional),
+                            Color32::WHITE,
+                        )
+                        .clicked()
+                        {
+                            self.show_add_limit_dialog = false;
+                        }
+                    });
                 });
         }
     }
