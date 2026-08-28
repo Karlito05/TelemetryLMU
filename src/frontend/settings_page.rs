@@ -1,4 +1,5 @@
-#[derive(Default)]
+#[derive(Default, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
 pub struct Settings {
     pub name: String,
     pub in_game_name: String,

@@ -4,14 +4,17 @@ use crate::frontend::{
     car_info_page::CarInfo, settings_page::Settings, sidebar::Sidebar, telemetry_page,
 };
 
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(default)]
 pub struct App {
     sidebar: Sidebar,
     settings: Settings,
     telemetry: telemetry_page::TelemetryPage,
+    #[serde(skip)]
     car_info: CarInfo,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 pub enum Page {
     Telemetry,
     Info,
@@ -19,7 +22,15 @@ pub enum Page {
     Settings,
 }
 
-// Default init
+impl App {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        if let Some(storage) = cc.storage {
+            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        }
+        Default::default()
+    }
+}
+
 #[expect(clippy::derivable_impls)]
 impl Default for App {
     fn default() -> Self {
@@ -34,6 +45,9 @@ impl Default for App {
 
 // Main GUI entrypoint
 impl eframe::App for App {
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        eframe::set_value(storage, eframe::APP_KEY, self);
+    }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.sidebar.draw_sidebar(ui);
 

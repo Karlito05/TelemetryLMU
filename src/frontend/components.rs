@@ -562,9 +562,13 @@ pub fn graph_edit(
     change
 }
 
-#[derive(Clone, Debug)]
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+#[derive(Clone, Debug, Default)]
 pub struct GraphInfo {
+    #[serde(skip)]
     pub cur_lap: Vec<Vec2>,
+    #[serde(skip)]
     pub ref_lap: Vec<Vec2>,
     pub color: Color32,
     pub show_ref: bool,

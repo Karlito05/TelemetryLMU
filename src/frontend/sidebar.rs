@@ -3,6 +3,8 @@ use egui_phosphor_icons::{Icon, icons};
 
 use crate::frontend::frontend_main::Page;
 
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(default)]
 pub struct Sidebar {
     pub open: bool,
     pub active_page: Page,

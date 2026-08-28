@@ -8,39 +8,50 @@ use crate::interface::Telemetry;
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
 
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(default)]
 pub struct TelemetryPage {
-    telemetry: Telemetry,
-    cur_driver: (String, i32),
-    in_layout_edit_mode: bool,
     cur_layout_index: usize,
     layouts: Vec<LayoutInfo>,
+    #[serde(skip)]
+    telemetry: Telemetry,
+    #[serde(skip)]
+    cur_driver: (String, i32),
+    #[serde(skip)]
+    in_layout_edit_mode: bool,
+    #[serde(skip)]
     edit_mode_context: EditModeContext,
+    #[serde(skip)]
     show_delete_layout_dialog: bool,
+    #[serde(skip)]
     show_add_limit_dialog: bool,
+    #[serde(skip)]
     save_as_dialog_info: SaveAsDialogInfo,
+    #[serde(skip)]
     cur_lap: i32,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 struct EditModeContext {
     layout: EditLayoutInfo,
     #[expect(unused)]
     started_edtiting: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 struct SaveAsDialogInfo {
     name: String,
     show: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 struct EditLayoutInfo {
     index: usize,
     graphs: Vec<GraphInfo>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(serde::Deserialize, serde::Serialize, Clone, Debug, Default)]
+#[serde(default)]
 struct LayoutInfo {
     name: String,
     graphs: Vec<GraphInfo>,

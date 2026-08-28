@@ -2,7 +2,7 @@ use crate::interface::SharedMemoryObjectOut;
 
 pub const GRAPH_VIEW_DATA_TYPE_COUNT: i32 = 5;
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(serde::Deserialize, serde::Serialize, PartialEq, Clone, Copy, Debug, Default)]
 #[repr(usize)]
 pub enum GraphViewDataType {
     Rpm(usize) = 0,    //vehicle number
@@ -10,6 +10,8 @@ pub enum GraphViewDataType {
     Throttle(usize),   //vehicle number
     Brake(usize),      //vehicle number
     Delta(usize, f64), //vehicle number, range (how much up and down should the normalized value be referencing in seconds)
+    #[default]
+    Unknown,
 }
 
 impl GraphViewDataType {
@@ -42,6 +44,7 @@ impl GraphViewDataType {
             GraphViewDataType::Throttle(..) => "throttle".to_owned(),
             GraphViewDataType::Brake(..) => "brake".to_owned(),
             GraphViewDataType::Delta(..) => "delta".to_owned(),
+            GraphViewDataType::Unknown => "unknown".to_owned(),
         }
     }
 
@@ -52,6 +55,9 @@ impl GraphViewDataType {
             GraphViewDataType::Throttle(..) => 1.0,
             GraphViewDataType::Brake(..) => 1.0,
             GraphViewDataType::Delta(_, r) => r * 2.0,
+            GraphViewDataType::Unknown => {
+                panic!("Can't call get_max_value() on GraphViewDataType::Unknown ")
+            }
         }
     }
 
@@ -73,6 +79,9 @@ impl GraphViewDataType {
                 (t.telemetry.telemetry_info[*v].m_delta_best.clamp(-*r, *r) + *r)
                     / self.get_max_value(t)
             }
+            GraphViewDataType::Unknown => {
+                panic!("Can't call get_normalized_values() on GraphViewDataType::Unknown ")
+            }
         }
     }
 
@@ -83,6 +92,9 @@ impl GraphViewDataType {
             GraphViewDataType::Throttle(_) => "%".to_owned(),
             GraphViewDataType::Brake(_) => "%".to_owned(),
             GraphViewDataType::Delta(_, _) => "s".to_owned(),
+            GraphViewDataType::Unknown => {
+                panic!("Can't call get_unit() on GraphViewDataType::Unknown ")
+            }
         }
     }
 
@@ -93,6 +105,9 @@ impl GraphViewDataType {
             GraphViewDataType::Throttle(v, ..) => *v,
             GraphViewDataType::Brake(v, ..) => *v,
             GraphViewDataType::Delta(v, ..) => *v,
+            GraphViewDataType::Unknown => {
+                panic!("Can't call get_car_number() on GraphViewDataType::Unknown ")
+            }
         }
     }
 
@@ -138,6 +153,9 @@ impl GraphViewDataType {
                     );
                     ret.push(str);
                 }
+            }
+            GraphViewDataType::Unknown => {
+                panic!("Can't call get_car_unit_labels() on GraphViewDataType::Unknown ")
             }
             _ => {
                 for i in 0..n_gridlines {

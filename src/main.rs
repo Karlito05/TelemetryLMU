@@ -7,7 +7,7 @@ mod interface;
 use eframe::egui::{self, Color32, FontData, FontDefinitions};
 use egui_phosphor_icons::add_fonts;
 
-use crate::frontend::frontend_main;
+use crate::frontend::frontend_main::{self, App};
 
 fn main() -> eframe::Result {
     //env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -95,7 +95,7 @@ fn main() -> eframe::Result {
 
             cc.egui_ctx.set_fonts(fonts);
 
-            Ok(Box::<frontend_main::App>::default())
+            Ok(Box::new(App::new(cc)))
         }),
     )
 }
