@@ -166,7 +166,7 @@ impl TelemetryPage {
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 80.0),
             vec2(
                 ui.available_width() - if sidebar.open { 8.0 } else { 16.0 },
-                ui.available_height() - 20.0,
+                ui.viewport_rect().size().y - (32.0 + 64.0),
             ),
         );
         self.draw_graphs_edit(ui, graphs_rect);
@@ -187,7 +187,7 @@ impl TelemetryPage {
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 80.0),
             vec2(
                 ui.available_width() - if sidebar.open { 8.0 } else { 16.0 },
-                ui.available_height() - 20.0,
+                ui.viewport_rect().size().y - (32.0 + 64.0),
             ),
         );
 
@@ -775,7 +775,7 @@ impl TelemetryPage {
                             graph_info,
                             vec2(
                                 graphs_rect.width(),
-                                graph_info.size_percent * graphs_rect.height(),
+                                graph_info.size_percent * graphs_rect.height() - 3.0,
                             ),
                             true,
                             CornerRadius {
@@ -808,7 +808,7 @@ impl TelemetryPage {
                             graph_info,
                             vec2(
                                 graphs_rect.width(),
-                                graph_info.size_percent * graphs_rect.height(),
+                                graph_info.size_percent * graphs_rect.height() - 3.0,
                             ),
                             true,
                             CornerRadius::same(0),
@@ -922,13 +922,15 @@ impl TelemetryPage {
                         );
                         continue;
                     }
+
                     if i == 0 {
                         graph(
                             ui,
                             graph_info,
                             vec2(
                                 graphs_rect.width(),
-                                graph_info.size_percent * graphs_rect.height(),
+                                graph_info.size_percent * graphs_rect.height() - 3.0, // - 3.0 to
+                                                                                      // adjust for spacing because why tf not make it 3 px :D
                             ),
                             CornerRadius {
                                 nw: 24,
@@ -967,7 +969,7 @@ impl TelemetryPage {
                         graph_info,
                         vec2(
                             graphs_rect.width(),
-                            graph_info.size_percent * graphs_rect.height(),
+                            graph_info.size_percent * graphs_rect.height() - 3.0,
                         ),
                         CornerRadius::same(0),
                         margins,
