@@ -31,8 +31,8 @@ impl Settings {
                             ui,
                             vec2(200.0, 32.0),
                             CornerRadius::same(8),
-                            Stroke::new(2.0, Color32::from_gray(127)),
-                            Color32::from_white_alpha(25),
+                            Stroke::new(1.0, Color32::from_gray(127)),
+                            Color32::from_white_alpha(17),
                             &mut self.name,
                             FontSelection::FontId(FontId::proportional(16.0)),
                             32,
@@ -41,13 +41,14 @@ impl Settings {
                 });
                 ui.horizontal(|ui| {
                     ui.label(RichText::new("In Game Name").size(24.0));
+
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         input(
                             ui,
                             vec2(200.0, 32.0),
                             CornerRadius::same(8),
-                            Stroke::new(2.0, Color32::from_gray(127)),
-                            Color32::from_white_alpha(25),
+                            Stroke::new(1.0, Color32::from_gray(127)),
+                            Color32::from_white_alpha(17),
                             &mut self.in_game_name,
                             FontSelection::FontId(FontId::proportional(16.0)),
                             32,

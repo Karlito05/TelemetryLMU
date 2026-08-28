@@ -27,6 +27,8 @@ fn main() -> eframe::Result {
 
             cc.egui_ctx
                 .all_styles_mut(|style| style.visuals.panel_fill = Color32::from_rgb(15, 15, 15));
+            cc.egui_ctx
+                .all_styles_mut(|s| s.visuals.window_fill = Color32::from_rgb(22, 23, 28));
 
             let mut fonts = FontDefinitions::default();
             add_font(
