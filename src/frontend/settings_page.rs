@@ -1,6 +1,7 @@
 use eframe::egui::*;
+use egui_phosphor_icons::icons;
 
-use crate::frontend::components::input;
+use crate::frontend::{components::input, sidebar::Sidebar};
 #[derive(Default, serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct Settings {
@@ -9,7 +10,7 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn draw_settings_page(&mut self, ui: &mut Ui) {
+    pub fn draw_settings_page(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
         Window::new("Settings")
             .resizable(false)
             .collapsible(false)
@@ -17,15 +18,30 @@ impl Settings {
             .title_bar(false)
             .show(ui, |ui| {
                 ui.set_min_size(vec2(500.0, 600.0));
-                ui.label(
-                    RichText::new("Settings")
-                        .size(32.0)
-                        .color(Color32::WHITE)
-                        .family(FontFamily::Name("RacingSansOne".into())),
-                );
+                ui.horizontal(|ui| {
+                    ui.label(
+                        RichText::new("Settings")
+                            .size(32.0)
+                            .color(Color32::WHITE)
+                            .family(FontFamily::Name("RacingSansOne".into())),
+                    );
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        if ui
+                            .add(
+                                Button::new(icons::X.regular().size(32.0))
+                                    .fill(Color32::TRANSPARENT)
+                                    .stroke(Stroke::NONE),
+                            )
+                            .clicked()
+                        {
+                            sidebar.settings_open = false
+                        }
+                    });
+                });
+
                 ui.add_space(16.0);
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("Name").size(24.0));
+                    ui.label(RichText::new("Name").size(20.0));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         input(
                             ui,
@@ -40,7 +56,7 @@ impl Settings {
                     })
                 });
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("In Game Name").size(24.0));
+                    ui.label(RichText::new("In Game Name").size(20.0));
 
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         input(

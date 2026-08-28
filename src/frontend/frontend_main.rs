@@ -51,7 +51,7 @@ impl eframe::App for App {
         self.sidebar.draw_sidebar(ui, &self.settings);
 
         if self.sidebar.settings_open {
-            self.settings.draw_settings_page(ui);
+            self.settings.draw_settings_page(ui, &mut self.sidebar);
         }
 
         egui::CentralPanel::default().show(ui, |ui| match self.sidebar.active_page {
