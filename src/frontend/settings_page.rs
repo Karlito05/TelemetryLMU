@@ -1,4 +1,6 @@
 use eframe::egui::*;
+
+use crate::frontend::components::input;
 #[derive(Default, serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct Settings {
@@ -24,7 +26,33 @@ impl Settings {
                 ui.add_space(16.0);
                 ui.horizontal(|ui| {
                     ui.label(RichText::new("Name").size(24.0));
-                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {})
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        input(
+                            ui,
+                            vec2(200.0, 32.0),
+                            CornerRadius::same(8),
+                            Stroke::new(2.0, Color32::from_gray(127)),
+                            Color32::from_white_alpha(25),
+                            &mut self.name,
+                            FontSelection::FontId(FontId::proportional(16.0)),
+                            32,
+                        )
+                    })
+                });
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new("In Game Name").size(24.0));
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        input(
+                            ui,
+                            vec2(200.0, 32.0),
+                            CornerRadius::same(8),
+                            Stroke::new(2.0, Color32::from_gray(127)),
+                            Color32::from_white_alpha(25),
+                            &mut self.in_game_name,
+                            FontSelection::FontId(FontId::proportional(16.0)),
+                            32,
+                        )
+                    })
                 });
             });
     }
