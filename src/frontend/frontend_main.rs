@@ -19,7 +19,6 @@ pub enum Page {
     Telemetry,
     Info,
     Map,
-    Settings,
 }
 
 impl App {
@@ -51,14 +50,15 @@ impl eframe::App for App {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.sidebar.draw_sidebar(ui);
 
+        if self.sidebar.settings_open {
+            self.settings.draw_settings_page(ui);
+        }
+
         egui::CentralPanel::default().show(ui, |ui| match self.sidebar.active_page {
             Page::Telemetry => self.telemetry.draw_telemetry_page(ui, &mut self.sidebar),
             Page::Info => {
                 self.car_info
                     .draw_car_info_page(ui, &mut self.sidebar, &mut self.settings)
-            }
-            Page::Settings => {
-                self.settings.draw_settings_page();
             }
             Page::Map => {}
         });

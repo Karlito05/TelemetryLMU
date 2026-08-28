@@ -8,6 +8,8 @@ use crate::frontend::frontend_main::Page;
 pub struct Sidebar {
     pub open: bool,
     pub active_page: Page,
+    #[serde(skip)]
+    pub settings_open: bool,
 }
 
 impl Default for Sidebar {
@@ -15,6 +17,7 @@ impl Default for Sidebar {
         Self {
             open: true,
             active_page: Page::Telemetry,
+            settings_open: false,
         }
     }
 }
@@ -57,7 +60,7 @@ impl Sidebar {
                         ui.add_space(ui.available_height() - 70.0);
 
                         if self.draw_profile(ui).clicked() {
-                            self.active_page = Page::Settings;
+                            self.settings_open = true;
                         }
                     })
                     .response

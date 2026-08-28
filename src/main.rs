@@ -4,16 +4,16 @@ mod backend;
 mod frontend;
 mod interface;
 
-use eframe::egui::{self, Color32, FontData, FontDefinitions};
+use eframe::egui::*;
 use egui_phosphor_icons::add_fonts;
 
-use crate::frontend::frontend_main::{self, App};
+use crate::frontend::frontend_main::App;
 
 fn main() -> eframe::Result {
     //env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
+        viewport: ViewportBuilder::default()
             .with_inner_size([1920.0, 1080.0])
             .with_min_inner_size([1280.0, 720.0]),
         ..Default::default()
@@ -72,7 +72,7 @@ fn add_font(fonts: &mut FontDefinitions, name: &str, data: &'static [u8]) {
     );
     fonts
         .families
-        .entry(egui::FontFamily::Name(name.into()))
+        .entry(FontFamily::Name(name.into()))
         .or_default()
         .insert(0, name.to_owned());
 }
