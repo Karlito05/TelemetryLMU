@@ -1,12 +1,26 @@
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
 
-use crate::frontend::{components::input, sidebar::Sidebar};
-#[derive(Default, serde::Deserialize, serde::Serialize)]
+use crate::frontend::{
+    components::{input, switch},
+    sidebar::Sidebar,
+};
+#[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct Settings {
     pub name: String,
     pub in_game_name: String,
+    pub record_laps: bool,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            name: "".to_owned(),
+            in_game_name: "".to_owned(),
+            record_laps: true,
+        }
+    }
 }
 
 impl Settings {
@@ -68,6 +82,20 @@ impl Settings {
                             &mut self.in_game_name,
                             FontSelection::FontId(FontId::proportional(16.0)),
                             32,
+                        )
+                    })
+                });
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new("Record Laps").size(20.0));
+
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        self.record_laps = switch(
+                            ui,
+                            vec2(48.0, 24.0),
+                            CornerRadius::same(8),
+                            Color32::from_white_alpha(25),
+                            Color32::from_rgb(19, 141, 241),
+                            self.record_laps,
                         )
                     })
                 });
