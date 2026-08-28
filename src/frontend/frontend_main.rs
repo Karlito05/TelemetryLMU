@@ -48,7 +48,7 @@ impl eframe::App for App {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        self.sidebar.draw_sidebar(ui);
+        self.sidebar.draw_sidebar(ui, &self.settings);
 
         if self.sidebar.settings_open {
             self.settings.draw_settings_page(ui);
