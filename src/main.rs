@@ -23,74 +23,39 @@ fn main() -> eframe::Result {
         "Telemetry LMU",
         options,
         Box::new(|cc| {
-            // This gives us image support:
             egui_extras::install_image_loaders(&cc.egui_ctx);
 
             cc.egui_ctx
                 .all_styles_mut(|style| style.visuals.panel_fill = Color32::from_rgb(15, 15, 15));
 
             let mut fonts = FontDefinitions::default();
-
-            fonts.font_data.insert(
-                "RacingSansOne".to_owned(),
-                std::sync::Arc::new(FontData::from_static(include_bytes!(
-                    "../public/RacingSansOne-Regular.ttf"
-                ))),
+            add_font(
+                &mut fonts,
+                "RacingSansOne",
+                include_bytes!("../public/RacingSansOne-Regular.ttf"),
             );
-            fonts
-                .families
-                .entry(egui::FontFamily::Name("RacingSansOne".into()))
-                .or_default()
-                .insert(0, "RacingSansOne".to_owned());
-
-            fonts.font_data.insert(
-                "JetBrainsMono".to_owned(),
-                std::sync::Arc::new(FontData::from_static(include_bytes!(
-                    "../public/JetBrainsMono-VariableFont_wght.ttf"
-                ))),
+            add_font(
+                &mut fonts,
+                "JetBrainsMono",
+                include_bytes!("../public/JetBrainsMono-VariableFont_wght.ttf"),
             );
-            fonts
-                .families
-                .entry(egui::FontFamily::Name("JetBrainsMono".into()))
-                .or_default()
-                .insert(0, "JetBrainsMono".to_owned());
-
-            fonts.font_data.insert(
-                "RethinkSans".to_owned(),
-                std::sync::Arc::new(FontData::from_static(include_bytes!(
-                    "../public/RethinkSans-Bold.ttf"
-                ))),
+            add_font(
+                &mut fonts,
+                "RethinkSans",
+                include_bytes!("../public/RethinkSans-Bold.ttf"),
             );
-            fonts
-                .families
-                .entry(egui::FontFamily::Name("RethinkSans".into()))
-                .or_default()
-                .insert(0, "RethinkSans".to_owned());
-
-            fonts.font_data.insert(
-                "BarlowCondensed".to_owned(),
-                std::sync::Arc::new(FontData::from_static(include_bytes!(
-                    "../public/BarlowCondensed-SemiBold.ttf"
-                ))),
+            add_font(
+                &mut fonts,
+                "BarlowCondensed",
+                include_bytes!("../public/BarlowCondensed-SemiBold.ttf"),
             );
-            fonts
-                .families
-                .entry(egui::FontFamily::Name("BarlowCondensed".into()))
-                .or_default()
-                .insert(0, "BarlowCondensed".to_owned());
-
-            fonts.font_data.insert(
-                "DaysOne".to_owned(),
-                std::sync::Arc::new(FontData::from_static(include_bytes!(
-                    "../public/DaysOne-Regular.ttf"
-                ))),
+            add_font(
+                &mut fonts,
+                "DaysOne",
+                include_bytes!("../public/DaysOne-Regular.ttf"),
             );
-            fonts
-                .families
-                .entry(egui::FontFamily::Name("DaysOne".into()))
-                .or_default()
-                .insert(0, "DaysOne".to_owned());
 
+            //Icon fonts
             add_fonts(&mut fonts);
 
             cc.egui_ctx.set_fonts(fonts);
@@ -98,4 +63,16 @@ fn main() -> eframe::Result {
             Ok(Box::new(App::new(cc)))
         }),
     )
+}
+
+fn add_font(fonts: &mut FontDefinitions, name: &str, data: &'static [u8]) {
+    fonts.font_data.insert(
+        name.to_owned(),
+        std::sync::Arc::new(FontData::from_static(data)),
+    );
+    fonts
+        .families
+        .entry(egui::FontFamily::Name(name.into()))
+        .or_default()
+        .insert(0, name.to_owned());
 }
