@@ -1,12 +1,17 @@
+use std::fs;
+
+use crate::backend::lap_stores::SaveData;
 use crate::backend::telemetry::GraphViewDataType;
 use crate::frontend::components::{
     DropdownItem, GraphChange, GraphInfo, button, graph, graph_edit,
 };
 use crate::frontend::components::{dropdown, telemetry_not_found};
+use crate::frontend::settings_page::Settings;
 use crate::frontend::sidebar::Sidebar;
 use crate::interface::Telemetry;
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
+use serde::Deserialize;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
@@ -25,6 +30,8 @@ pub struct TelemetryPage {
     show_delete_layout_dialog: bool,
     #[serde(skip)]
     show_add_limit_dialog: bool,
+    #[serde(skip)]
+    cur_ref_path: Option<String>,
     #[serde(skip)]
     save_as_dialog_info: SaveAsDialogInfo,
     #[serde(skip)]
@@ -65,6 +72,7 @@ impl Default for TelemetryPage {
             in_layout_edit_mode: false,
             show_delete_layout_dialog: false,
             show_add_limit_dialog: false,
+            cur_ref_path: None,
             cur_layout_index: 0,
             cur_lap: 0,
             save_as_dialog_info: SaveAsDialogInfo {
@@ -95,7 +103,7 @@ impl Default for TelemetryPage {
 }
 
 impl TelemetryPage {
-    pub fn draw_telemetry_page(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
+    pub fn draw_telemetry_page(&mut self, ui: &mut Ui, sidebar: &mut Sidebar, settings: &Settings) {
         if !self.telemetry.full_mode {
             telemetry_not_found(ui);
             return;
@@ -109,7 +117,7 @@ impl TelemetryPage {
         );
         ui.request_repaint_after(std::time::Duration::from_millis(16));
         if !self.in_layout_edit_mode {
-            self.draw_normal_mode(ui, sidebar);
+            self.draw_normal_mode(ui, sidebar, settings);
         } else {
             self.draw_edit_mode(ui, sidebar);
         }
@@ -119,7 +127,7 @@ impl TelemetryPage {
         let t = self.telemetry.update_telemetry().unwrap();
 
         if self.cur_lap != graph_data_types[0].get_lap(&t) {
-            if graph_data_types[0].is_last_best(&t) {
+            if graph_data_types[0].is_last_best(&t) && self.cur_ref_path.is_none() {
                 graph_data_types.iter().enumerate().for_each(|(i, _)| {
                     self.layouts[self.cur_layout_index].graphs[i].ref_lap =
                         self.layouts[self.cur_layout_index].graphs[i]
@@ -172,7 +180,7 @@ impl TelemetryPage {
         self.draw_graphs_edit(ui, graphs_rect);
     }
 
-    fn draw_normal_mode(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
+    fn draw_normal_mode(&mut self, ui: &mut Ui, sidebar: &mut Sidebar, settings: &Settings) {
         let top_bar_rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
             vec2(
@@ -181,7 +189,7 @@ impl TelemetryPage {
             ),
         );
 
-        self.draw_top_bar_normal(ui, top_bar_rect, sidebar);
+        self.draw_top_bar_normal(ui, top_bar_rect, sidebar, settings);
 
         let graphs_rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 80.0),
@@ -524,7 +532,13 @@ impl TelemetryPage {
         }
     }
 
-    fn draw_top_bar_normal(&mut self, ui: &mut Ui, top_bar_rect: Rect, sidebar: &mut Sidebar) {
+    fn draw_top_bar_normal(
+        &mut self,
+        ui: &mut Ui,
+        top_bar_rect: Rect,
+        sidebar: &mut Sidebar,
+        settings: &Settings,
+    ) {
         ui.painter().rect_filled(
             top_bar_rect,
             CornerRadius::same(24),
@@ -547,7 +561,7 @@ impl TelemetryPage {
 
                 ui.separator();
 
-                self.draw_reference_controls(ui);
+                self.draw_reference_controls(ui, settings);
 
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.add_space(4.0);
@@ -668,7 +682,7 @@ impl TelemetryPage {
         }
     }
 
-    fn draw_reference_controls(&mut self, ui: &mut Ui) {
+    fn draw_reference_controls(&mut self, ui: &mut Ui, settings: &Settings) {
         ui.add(
             Label::new(RichText::new("Reference:").size(16.0).color(Color32::WHITE))
                 .selectable(false),
@@ -685,7 +699,29 @@ impl TelemetryPage {
         )
         .clicked()
         {
-            // TODO: Logic
+            if let Some(path) = rfd::FileDialog::new()
+                .set_title("Select a reference file")
+                .set_directory(settings.record_save_path.clone())
+                .add_filter("JSON files", &["json"])
+                .pick_file()
+            {
+                self.cur_ref_path = Some(path.display().to_string());
+
+                let contents = fs::read_to_string(path).unwrap_or_default();
+                let save_data: SaveData = serde_json::from_str(&contents).unwrap_or_default();
+
+                for graph in self.layouts[self.cur_layout_index].graphs.iter_mut() {
+                    let gt = graph.graph_type.to_string();
+
+                    graph.ref_lap = save_data
+                        .lap_data
+                        .iter()
+                        .find(|d| d.data_type == gt)
+                        .unwrap()
+                        .values
+                        .clone()
+                }
+            }
         }
         if button(
             ui,
@@ -698,6 +734,7 @@ impl TelemetryPage {
         )
         .clicked()
         {
+            self.cur_ref_path = None;
             for graph in &mut self.layouts[self.cur_layout_index].graphs {
                 graph.ref_lap = vec![];
             }

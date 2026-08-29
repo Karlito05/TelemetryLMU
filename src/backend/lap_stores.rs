@@ -1,32 +1,32 @@
-use std::{fs, thread::sleep, time::Duration};
+use std::{fs, time::Duration};
 
 use chrono::Local;
 use eframe::egui::{Vec2, vec2};
 
 use crate::{
-    backend::telemetry::{self, GRAPH_VIEW_DATA_TYPE_COUNT, GraphViewDataType},
+    backend::telemetry::{GRAPH_VIEW_DATA_TYPE_COUNT, GraphViewDataType},
     interface::Telemetry,
 };
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
 #[serde(default)]
 pub struct SaveData {
-    lap_info: LapInfo,
-    lap_data: Vec<LapData>,
+    pub lap_info: LapInfo,
+    pub lap_data: Vec<LapData>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
 #[serde(default)]
 pub struct LapData {
-    data_type: String,
-    values: Vec<Vec2>,
+    pub data_type: String,
+    pub values: Vec<Vec2>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
 #[serde(default)]
 pub struct LapInfo {
-    lap_time: f64,
-    date: String,
+    pub lap_time: f64,
+    pub date: String,
 }
 
 pub struct Logger {
@@ -75,8 +75,8 @@ impl Logger {
         for i in 0..GRAPH_VIEW_DATA_TYPE_COUNT {
             let graph_type = GraphViewDataType::from_int(i, self.car_num);
             self.save_data.lap_data[i as usize].values.push(vec2(
-                graph_type.get_normalized_values(&cur_data) as f32,
                 graph_type.get_normalized_distance(&cur_data) as f32,
+                graph_type.get_normalized_values(&cur_data) as f32,
             ));
         }
 

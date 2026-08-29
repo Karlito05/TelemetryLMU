@@ -67,9 +67,10 @@ impl eframe::App for App {
         }
 
         egui::CentralPanel::default().show(ui, |ui| match self.sidebar.active_page {
-            Page::Telemetry => self
-                .telemetry_page
-                .draw_telemetry_page(ui, &mut self.sidebar),
+            Page::Telemetry => {
+                self.telemetry_page
+                    .draw_telemetry_page(ui, &mut self.sidebar, &self.settings_page)
+            }
             Page::Info => self.car_info_page.draw_car_info_page(
                 ui,
                 &mut self.sidebar,
