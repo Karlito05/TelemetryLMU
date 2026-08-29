@@ -110,7 +110,7 @@ pub async fn save(mut save_data: SaveData, telemetry: Telemetry, car_num: usize,
         .veh_scoring_info[car_num]
         .m_last_lap_time;
 
-    if save_data.lap_info.lap_time != -1.0 {
+    if save_data.lap_info.lap_time != 0.0 {
         fs::write(
             Local::now().format("%d-%m-%Y-%H-%M-%S").to_string() + ".json",
             serde_json::to_string(&save_data).unwrap(),
