@@ -67,7 +67,7 @@ impl CarInfo {
             self.tires = dyn_driver_inf.tires;
             self.fuel_info = dyn_driver_inf.fuel;
         }
-        ui.request_repaint_after(Duration::from_millis(500));
+        ui.request_repaint_after(Duration::from_millis(16));
 
         let rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
@@ -197,7 +197,7 @@ impl CarInfo {
                             .size(14.0),
                     );
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        let (rect, _) = ui.allocate_exact_size(vec2(26.0, 16.0), Sense::empty());
+                        let (rect, _) = ui.allocate_exact_size(vec2(48.0, 16.0), Sense::empty());
 
                         ui.painter().rect_filled(
                             rect,
@@ -217,7 +217,7 @@ impl CarInfo {
                         ui.painter().text(
                             rect.center(),
                             Align2::CENTER_CENTER,
-                            format!("{}%", tire_info.health_percent * 100.0),
+                            format!("{}%", (tire_info.health_percent * 1000.0).round() / 10.0),
                             FontId::new(14.0, FontFamily::Proportional),
                             interpolate_color(
                                 tire_info.health_percent,
@@ -274,18 +274,21 @@ impl CarInfo {
                             );
                             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                                 ui.label(
-                                    RichText::new(format!("{}°C", tire_info.inside_temp.round()))
-                                        .size(14.0)
-                                        .family(FontFamily::Name("JetBrainsMono".into()))
-                                        .color(interpolate_color(
-                                            tire_info.inside_temp,
-                                            30.0,
-                                            80.0,
-                                            100.0,
-                                            Color32::from_rgb(66, 135, 245),
-                                            Color32::from_rgb(0, 255, 0),
-                                            Color32::from_rgb(255, 0, 0),
-                                        )),
+                                    RichText::new(format!(
+                                        "{}°C",
+                                        (tire_info.inside_temp * 100.0).round() / 100.0
+                                    ))
+                                    .size(14.0)
+                                    .family(FontFamily::Name("JetBrainsMono".into()))
+                                    .color(interpolate_color(
+                                        tire_info.inside_temp,
+                                        30.0,
+                                        80.0,
+                                        100.0,
+                                        Color32::from_rgb(66, 135, 245),
+                                        Color32::from_rgb(0, 255, 0),
+                                        Color32::from_rgb(255, 0, 0),
+                                    )),
                                 );
                             });
                         });
@@ -298,18 +301,21 @@ impl CarInfo {
                             );
                             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                                 ui.label(
-                                    RichText::new(format!("{}°C", tire_info.outside_temp.round()))
-                                        .size(14.0)
-                                        .family(FontFamily::Name("JetBrainsMono".into()))
-                                        .color(interpolate_color(
-                                            tire_info.outside_temp,
-                                            30.0,
-                                            80.0,
-                                            100.0,
-                                            Color32::from_rgb(66, 135, 245),
-                                            Color32::from_rgb(0, 255, 0),
-                                            Color32::from_rgb(255, 0, 0),
-                                        )),
+                                    RichText::new(format!(
+                                        "{}°C",
+                                        (tire_info.outside_temp * 100.0).round() / 100.0
+                                    ))
+                                    .size(14.0)
+                                    .family(FontFamily::Name("JetBrainsMono".into()))
+                                    .color(interpolate_color(
+                                        tire_info.outside_temp,
+                                        30.0,
+                                        80.0,
+                                        100.0,
+                                        Color32::from_rgb(66, 135, 245),
+                                        Color32::from_rgb(0, 255, 0),
+                                        Color32::from_rgb(255, 0, 0),
+                                    )),
                                 );
                             });
                         });
@@ -322,18 +328,21 @@ impl CarInfo {
                             );
                             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                                 ui.label(
-                                    RichText::new(format!("{}°C", tire_info.brake_temp.round()))
-                                        .size(14.0)
-                                        .family(FontFamily::Name("JetBrainsMono".into()))
-                                        .color(interpolate_color(
-                                            tire_info.brake_temp,
-                                            30.0,
-                                            120.0,
-                                            800.0,
-                                            Color32::from_rgb(66, 135, 245),
-                                            Color32::from_rgb(0, 255, 0),
-                                            Color32::from_rgb(255, 0, 0),
-                                        )),
+                                    RichText::new(format!(
+                                        "{}°C",
+                                        (tire_info.brake_temp * 100.0).round() / 100.0
+                                    ))
+                                    .size(14.0)
+                                    .family(FontFamily::Name("JetBrainsMono".into()))
+                                    .color(interpolate_color(
+                                        tire_info.brake_temp,
+                                        30.0,
+                                        120.0,
+                                        800.0,
+                                        Color32::from_rgb(66, 135, 245),
+                                        Color32::from_rgb(0, 255, 0),
+                                        Color32::from_rgb(255, 0, 0),
+                                    )),
                                 );
                             });
                         });
@@ -405,16 +414,22 @@ impl CarInfo {
                     ui.vertical(|ui| {
                         ui.horizontal(|ui| {
                             ui.label(
-                                RichText::new(format!("{}%", self.fuel_info.fuel_percent * 100.0))
-                                    .size(16.0)
-                                    .family(FontFamily::Name("JetBrainsMono".into()))
-                                    .color(Color32::WHITE),
+                                RichText::new(format!(
+                                    "{}%",
+                                    (self.fuel_info.fuel_percent * 10000.0).round() / 100.0
+                                ))
+                                .size(16.0)
+                                .family(FontFamily::Name("JetBrainsMono".into()))
+                                .color(Color32::WHITE),
                             );
                             ui.label(
-                                RichText::new(format!("{}L", self.fuel_info.fuel_liters))
-                                    .size(12.0)
-                                    .family(FontFamily::Name("JetBrainsMono".into()))
-                                    .color(Color32::from_white_alpha(127)),
+                                RichText::new(format!(
+                                    "{}L",
+                                    (self.fuel_info.fuel_liters * 100.0).round() / 100.0
+                                ))
+                                .size(12.0)
+                                .family(FontFamily::Name("JetBrainsMono".into()))
+                                .color(Color32::from_white_alpha(127)),
                             );
                         });
                         ui.add_space(4.0);
@@ -462,10 +477,13 @@ impl CarInfo {
 
                     ui.vertical(|ui| {
                         ui.label(
-                            RichText::new(format!("{}%", self.fuel_info.virt_eng_percent * 100.0))
-                                .size(16.0)
-                                .family(FontFamily::Name("JetBrainsMono".into()))
-                                .color(Color32::WHITE),
+                            RichText::new(format!(
+                                "{}%",
+                                (self.fuel_info.virt_eng_percent * 10000.0).round() / 100.0
+                            ))
+                            .size(16.0)
+                            .family(FontFamily::Name("JetBrainsMono".into()))
+                            .color(Color32::WHITE),
                         );
                         ui.add_space(4.0);
                         let (bar_rect, _) = ui
