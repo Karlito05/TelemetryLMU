@@ -160,6 +160,12 @@ impl Telemetry {
         }
         result
     }
+
+    pub fn find_driver(&self, name: String) -> Option<(String, i32)> {
+        let drivers = self.get_drivers();
+
+        drivers.iter().find(|(n, _)| *n == name).cloned()
+    }
 }
 
 pub fn i8_array32_to_string(buf: &[i8; 32]) -> String {

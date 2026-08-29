@@ -1,17 +1,24 @@
 use eframe::egui;
 
-use crate::frontend::{
-    car_info_page::CarInfo, settings_page::Settings, sidebar::Sidebar, telemetry_page,
+use crate::{
+    TOKIO,
+    backend::lap_stores::{Logger, save},
+    frontend::{car_info_page::CarInfo, settings_page::Settings, sidebar::Sidebar, telemetry_page},
+    interface::Telemetry,
 };
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct App {
     sidebar: Sidebar,
-    settings: Settings,
-    telemetry: telemetry_page::TelemetryPage,
+    settings_page: Settings,
+    telemetry_page: telemetry_page::TelemetryPage,
     #[serde(skip)]
-    car_info: CarInfo,
+    car_info_page: CarInfo,
+    #[serde(skip)]
+    logger: Logger,
+    #[serde(skip)]
+    telemetry: Telemetry,
 }
 
 #[derive(Debug, PartialEq, serde::Deserialize, serde::Serialize)]
@@ -30,14 +37,15 @@ impl App {
     }
 }
 
-#[expect(clippy::derivable_impls)]
 impl Default for App {
     fn default() -> Self {
         Self {
             sidebar: Sidebar::default(),
-            telemetry: telemetry_page::TelemetryPage::default(),
-            settings: Settings::default(),
-            car_info: CarInfo::default(),
+            telemetry_page: telemetry_page::TelemetryPage::default(),
+            settings_page: Settings::default(),
+            car_info_page: CarInfo::default(),
+            logger: Logger::new("/dev/shm/LMU_Data"),
+            telemetry: Telemetry::new("/dev/shm/LMU_Data"),
         }
     }
 }
@@ -48,19 +56,50 @@ impl eframe::App for App {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        self.sidebar.draw_sidebar(ui, &self.settings);
+        self.sidebar.draw_sidebar(ui, &self.settings_page);
 
         if self.sidebar.settings_open {
-            self.settings.draw_settings_page(ui, &mut self.sidebar);
+            self.settings_page.draw_settings_page(ui, &mut self.sidebar);
+        }
+
+        if self.settings_page.record_laps && self.telemetry.full_mode {
+            self.process_record_laps();
         }
 
         egui::CentralPanel::default().show(ui, |ui| match self.sidebar.active_page {
-            Page::Telemetry => self.telemetry.draw_telemetry_page(ui, &mut self.sidebar),
-            Page::Info => {
-                self.car_info
-                    .draw_car_info_page(ui, &mut self.sidebar, &mut self.settings)
-            }
+            Page::Telemetry => self
+                .telemetry_page
+                .draw_telemetry_page(ui, &mut self.sidebar),
+            Page::Info => self.car_info_page.draw_car_info_page(
+                ui,
+                &mut self.sidebar,
+                &mut self.settings_page,
+            ),
             Page::Map => {}
         });
+    }
+}
+
+impl App {
+    fn process_record_laps(&mut self) {
+        if let Some(d) = self.telemetry.find_driver(self.settings_page.name.clone()) {
+            if d.1 as usize == self.logger.car_num {
+                if self.logger.add_datapoints() {
+                    TOKIO
+                        .get()
+                        .expect("tokio runtime not initialised")
+                        .spawn(save(
+                            self.logger.save_data.clone(),
+                            Telemetry::new("/dev/shm/LMU_Data"),
+                            self.logger.car_num,
+                            "".to_owned(),
+                        ));
+                    self.logger.clear();
+                }
+            } else {
+                self.logger.clear();
+                self.logger.car_num = d.1 as usize;
+            }
+        }
     }
 }

@@ -4,13 +4,23 @@ mod backend;
 mod frontend;
 mod interface;
 
+use std::sync::OnceLock;
+
 use eframe::egui::*;
 use egui_phosphor_icons::add_fonts;
 
 use crate::frontend::frontend_main::App;
 
+pub static TOKIO: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
+
 fn main() -> eframe::Result {
     //env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
+
+    let rt = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .expect("failed to build tokio runtime");
+    let _ = TOKIO.set(rt);
 
     let options = eframe::NativeOptions {
         viewport: ViewportBuilder::default()
