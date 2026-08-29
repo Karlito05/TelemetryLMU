@@ -82,7 +82,10 @@ impl eframe::App for App {
 
 impl App {
     fn process_record_laps(&mut self) {
-        if let Some(d) = self.telemetry.find_driver(self.settings_page.name.clone()) {
+        if let Some(d) = self
+            .telemetry
+            .find_driver(self.settings_page.in_game_name.clone())
+        {
             if d.1 as usize == self.logger.car_num {
                 if self.logger.add_datapoints() {
                     TOKIO
@@ -92,7 +95,7 @@ impl App {
                             self.logger.save_data.clone(),
                             Telemetry::new("/dev/shm/LMU_Data"),
                             self.logger.car_num,
-                            "".to_owned(),
+                            self.settings_page.record_save_path.clone() + "/",
                         ));
                     self.logger.clear();
                 }

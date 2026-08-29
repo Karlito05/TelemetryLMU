@@ -40,12 +40,7 @@ impl Logger {
     pub fn new(path: &str) -> Self {
         let telemetry = Telemetry::new(path);
 
-        let cur_lap = telemetry
-            .update_telemetry()
-            .unwrap()
-            .telemetry
-            .telemetry_info[0]
-            .m_lap_number;
+        let cur_lap = 0;
 
         let mut save_data = SaveData::default();
 
@@ -99,8 +94,9 @@ impl Logger {
 pub async fn save(mut save_data: SaveData, telemetry: Telemetry, car_num: usize, path: String) {
     // Saves the save data passed in after 100ms of delay due to telemetry refreshing. If the
     // lap was invalid it discards the data.
+    println!("Tried to save");
 
-    sleep(Duration::from_millis(100));
+    tokio::time::sleep(Duration::from_millis(100)).await;
     save_data.lap_info.date = Local::now().format("%d-%m-%Y-%H-%M-%S").to_string();
 
     save_data.lap_info.lap_time = telemetry
@@ -110,9 +106,9 @@ pub async fn save(mut save_data: SaveData, telemetry: Telemetry, car_num: usize,
         .veh_scoring_info[car_num]
         .m_last_lap_time;
 
-    if save_data.lap_info.lap_time != 0.0 {
+    if save_data.lap_info.lap_time > 0.0 {
         fs::write(
-            Local::now().format("%d-%m-%Y-%H-%M-%S").to_string() + ".json",
+            path + &Local::now().format("%d-%m-%Y-%H-%M-%S").to_string() + ".json",
             serde_json::to_string(&save_data).unwrap(),
         )
         .unwrap();

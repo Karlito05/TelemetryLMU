@@ -2,7 +2,7 @@ use eframe::egui::*;
 use egui_phosphor_icons::icons;
 
 use crate::frontend::{
-    components::{input, switch},
+    components::{button, input, switch},
     sidebar::Sidebar,
 };
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -11,6 +11,7 @@ pub struct Settings {
     pub name: String,
     pub in_game_name: String,
     pub record_laps: bool,
+    pub record_save_path: String,
 }
 
 impl Default for Settings {
@@ -19,6 +20,7 @@ impl Default for Settings {
             name: "".to_owned(),
             in_game_name: "".to_owned(),
             record_laps: true,
+            record_save_path: "".to_owned(),
         }
     }
 }
@@ -97,6 +99,37 @@ impl Settings {
                             Color32::from_rgb(19, 141, 241),
                             self.record_laps,
                         )
+                    })
+                });
+                ui.horizontal(|ui| {
+                    ui.vertical(|ui| {
+                        ui.label(RichText::new("Lap Save Path").size(20.0));
+                        ui.label(RichText::new(&self.record_save_path).size(12.0));
+                    });
+
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        #[expect(clippy::collapsible_if)]
+                        if button(
+                            ui,
+                            vec2(140.0, 32.0),
+                            CornerRadius::same(8),
+                            Color32::from_white_alpha(25),
+                            "Browse",
+                            FontId::new(16.0, FontFamily::Proportional),
+                            Color32::WHITE,
+                        )
+                        .clicked()
+                        {
+                            if let Some(path) = rfd::FileDialog::new()
+                                .set_title("Select folder")
+                                .set_directory(self.record_save_path.clone())
+                                .add_filter("All files", &["*"])
+                                .set_can_create_directories(true)
+                                .pick_folder()
+                            {
+                                self.record_save_path = path.display().to_string()
+                            }
+                        }
                     })
                 });
             });
