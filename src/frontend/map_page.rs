@@ -54,8 +54,14 @@ impl MapPage {
             ui,
             map_rect,
             &[
-                self.car_1.iter().map(|dp| dp.pos).collect(),
-                self.car_2.iter().map(|dp| dp.pos).collect(),
+                (
+                    self.car_1.iter().map(|dp| dp.pos).collect(),
+                    Color32::from_rgb(19, 141, 241),
+                ),
+                (
+                    self.car_2.iter().map(|dp| dp.pos).collect(),
+                    Color32::from_rgb(255, 107, 53),
+                ),
             ],
         );
 
@@ -181,7 +187,7 @@ impl MapPage {
         (p - rect.center() - self.offset) / self.zoom
     }
 
-    fn draw_map(&mut self, ui: &mut Ui, rect: Rect, lines: &[Vec<Pos2>]) {
+    fn draw_map(&mut self, ui: &mut Ui, rect: Rect, lines: &[(Vec<Pos2>, Color32)]) {
         ui.painter()
             .rect_filled(rect, CornerRadius::same(24), Color32::from_rgb(22, 23, 28));
         let response = ui.allocate_rect(rect, Sense::click_and_drag());
@@ -209,13 +215,11 @@ impl MapPage {
 
         for line in lines {
             let points: Vec<Pos2> = line
+                .0
                 .iter()
                 .map(|p| self.to_screen(rect, p.to_vec2()))
                 .collect();
-            painter.add(Shape::line(
-                points,
-                Stroke::new(0.5 * self.zoom, Color32::from_rgb(19, 141, 241)),
-            ));
+            painter.add(Shape::line(points, Stroke::new(0.5 * self.zoom, line.1)));
         }
     }
 }
