@@ -96,11 +96,12 @@ impl MapPage {
                 // }
                 slider(
                     ui,
-                    vec2(ui.available_width(), 8.0),
+                    vec2(ui.available_width(), 24.0),
                     Color32::from_rgb(19, 141, 241),
                     &mut self.time,
                     0.0,
                     1.0,
+                    8.0,
                 );
             })
             .response

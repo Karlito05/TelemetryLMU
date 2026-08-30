@@ -76,17 +76,47 @@ pub fn dropdown<T: PartialEq>(
     ret
 }
 
-pub fn slider(ui: &mut Ui, size: Vec2, color: Color32, value: &mut f32, min: f32, max: f32) {
+pub fn slider(
+    ui: &mut Ui,
+    size: Vec2,
+    color: Color32,
+    value: &mut f32,
+    min: f32,
+    max: f32,
+    slider_width: f32,
+) {
     let (rect, response) = ui.allocate_exact_size(size, Sense::click_and_drag());
-    ui.painter()
-        .rect_filled(rect, rect.height() / 2.0, Color32::from_white_alpha(25));
+    let slider_rect = Rect::from_min_max(
+        pos2(
+            rect.min.x,
+            rect.min.y + rect.height() / 2.0 - slider_width / 2.0,
+        ),
+        pos2(
+            rect.max.x,
+            rect.max.y - rect.height() / 2.0 + slider_width / 2.0,
+        ),
+    );
+    ui.painter().rect_filled(
+        slider_rect,
+        slider_rect.height() / 2.0,
+        Color32::from_white_alpha(25),
+    );
     ui.painter().rect_filled(
         Rect::from_min_size(
-            rect.min,
+            slider_rect.min,
             vec2(
-                rect.size().x * ((*value - min) / (max - min)),
-                rect.size().y,
+                slider_rect.size().x * ((*value - min) / (max - min)),
+                slider_rect.size().y,
             ),
+        ),
+        slider_rect.height() / 2.0,
+        color,
+    );
+
+    ui.painter().circle_filled(
+        pos2(
+            slider_rect.min.x + slider_rect.size().x * ((*value - min) / (max - min)),
+            slider_rect.min.y + slider_rect.size().y / 2.0,
         ),
         rect.height() / 2.0,
         color,
