@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use eframe::egui;
 
 use crate::{
@@ -67,6 +69,7 @@ impl eframe::App for App {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        ui.request_repaint_after(Duration::from_millis(16));
         self.sidebar.draw_sidebar(ui, &self.settings_page);
 
         if self.sidebar.settings_open {
@@ -87,7 +90,9 @@ impl eframe::App for App {
                 &mut self.sidebar,
                 &mut self.settings_page,
             ),
-            Page::Map => self.map_page.draw_map_page(ui, &self.sidebar),
+            Page::Map => self
+                .map_page
+                .draw_map_page(ui, &self.sidebar, &self.settings_page),
         });
     }
 }

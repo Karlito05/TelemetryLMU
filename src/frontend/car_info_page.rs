@@ -67,7 +67,6 @@ impl CarInfo {
             self.tires = dyn_driver_inf.tires;
             self.fuel_info = dyn_driver_inf.fuel;
         }
-        ui.request_repaint_after(Duration::from_millis(16));
 
         let rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),

@@ -102,6 +102,7 @@ impl Logger {
             data.values.clear();
         }
         self.save_data.lap_info = LapInfo::default();
+        self.save_data.pos_data = vec![];
     }
 }
 pub async fn save(mut save_data: SaveData, telemetry: Telemetry, car_num: usize, path: String) {

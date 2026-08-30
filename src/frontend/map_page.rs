@@ -1,12 +1,25 @@
+use std::fs;
+
 use eframe::egui::*;
 
-use crate::frontend::sidebar::Sidebar;
+use crate::{
+    backend::lap_stores::SaveData,
+    frontend::{components::button, settings_page::Settings, sidebar::Sidebar},
+};
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct MapPage {
     zoom: f32,
     offset: Vec2,
+    car_1: Vec<Dp>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[serde(default)]
+struct Dp {
+    pos: Pos2,
+    time_since_lap_start: f64,
 }
 
 impl Default for MapPage {
@@ -14,12 +27,13 @@ impl Default for MapPage {
         Self {
             offset: Vec2::ZERO,
             zoom: 1.0,
+            car_1: vec![],
         }
     }
 }
 
 impl MapPage {
-    pub fn draw_map_page(&mut self, ui: &mut Ui, sidebar: &Sidebar) {
+    pub fn draw_map_page(&mut self, ui: &mut Ui, sidebar: &Sidebar, settings: &Settings) {
         let map_rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
             vec2(
@@ -37,10 +51,7 @@ impl MapPage {
         self.draw_map(
             ui,
             map_rect,
-            &[
-                vec![pos2(0.0, 0.0), pos2(20.0, 15.0)],
-                vec![pos2(12.3, 23.0), pos2(33.0, 45.0)],
-            ],
+            &[self.car_1.iter().map(|dp| dp.pos).collect()],
         );
 
         let controls_rect = Rect::from_min_max(
@@ -50,6 +61,45 @@ impl MapPage {
 
         ui.painter()
             .rect_filled(controls_rect, 16, Color32::from_white_alpha(17));
+
+        ui.put(controls_rect, |ui: &mut Ui| {
+            ui.horizontal(|ui| {
+                #[expect(clippy::collapsible_if)]
+                if button(
+                    ui,
+                    vec2(140.0, 32.0),
+                    CornerRadius::same(8),
+                    Color32::from_white_alpha(25),
+                    "Select ref from file",
+                    FontId::new(14.0, FontFamily::Proportional),
+                    Color32::WHITE,
+                )
+                .clicked()
+                {
+                    if let Some(path) = rfd::FileDialog::new()
+                        .set_title("Select a reference file")
+                        .set_directory(settings.record_save_path.clone())
+                        .add_filter("JSON files", &["json"])
+                        .pick_file()
+                    {
+                        let contents = fs::read_to_string(path).unwrap_or_default();
+                        let save_data: SaveData =
+                            serde_json::from_str(&contents).unwrap_or_default();
+
+                        self.car_1.clear();
+                        self.car_1 = save_data
+                            .pos_data
+                            .iter()
+                            .map(|pd| Dp {
+                                pos: pos2(pd.pos.x as f32, -pd.pos.z as f32),
+                                time_since_lap_start: pd.time_since_lap_start,
+                            })
+                            .collect();
+                    }
+                }
+            })
+            .response
+        });
     }
 
     fn to_screen(&self, rect: Rect, p: Vec2) -> Pos2 {

@@ -114,7 +114,6 @@ impl TelemetryPage {
                 .map(|g| g.graph_type)
                 .collect(),
         );
-        ui.request_repaint_after(std::time::Duration::from_millis(16));
         if !self.in_layout_edit_mode {
             self.draw_normal_mode(ui, sidebar, settings);
         } else {
