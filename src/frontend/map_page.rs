@@ -20,7 +20,7 @@ impl Default for MapPage {
 
 impl MapPage {
     pub fn draw_map_page(&mut self, ui: &mut Ui, sidebar: &Sidebar) {
-        let rect = Rect::from_min_size(
+        let map_rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
             vec2(
                 ui.available_width() - if sidebar.open { 8.0 } else { 16.0 },
@@ -28,17 +28,28 @@ impl MapPage {
             ),
         );
 
-        ui.painter()
-            .rect_filled(rect, CornerRadius::same(24), Color32::from_rgb(22, 23, 28));
+        ui.painter().rect_filled(
+            map_rect,
+            CornerRadius::same(24),
+            Color32::from_rgb(22, 23, 28),
+        );
 
         self.draw_map(
             ui,
-            rect,
+            map_rect,
             &[
                 vec![pos2(0.0, 0.0), pos2(20.0, 15.0)],
                 vec![pos2(12.3, 23.0), pos2(33.0, 45.0)],
             ],
         );
+
+        let controls_rect = Rect::from_min_max(
+            pos2(map_rect.min.x + 8.0, map_rect.max.y - 200.0),
+            map_rect.max - vec2(8.0, 8.0),
+        );
+
+        ui.painter()
+            .rect_filled(controls_rect, 16, Color32::from_white_alpha(17));
     }
 
     fn to_screen(&self, rect: Rect, p: Vec2) -> Pos2 {
