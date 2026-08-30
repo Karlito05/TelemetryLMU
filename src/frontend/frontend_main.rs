@@ -30,10 +30,16 @@ pub enum Page {
 
 impl App {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        if let Some(storage) = cc.storage {
-            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-        }
-        Default::default()
+        let mut app: App = if let Some(storage) = cc.storage {
+            eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default()
+        } else {
+            Default::default()
+        };
+
+        // rebuild the GPU texture from the persisted bytes
+        app.settings_page.restore_pfp(&cc.egui_ctx);
+
+        app
     }
 }
 

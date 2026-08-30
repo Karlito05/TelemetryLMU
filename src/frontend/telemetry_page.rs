@@ -11,7 +11,6 @@ use crate::frontend::sidebar::Sidebar;
 use crate::interface::Telemetry;
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
-use serde::Deserialize;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
@@ -150,11 +149,30 @@ impl TelemetryPage {
                     .is_empty()
                     || graph_data_type.get_normalized_distance(&t) < 0.9
                 {
+                    let new_y = graph_data_type.get_normalized_values(&t) as f32;
+                    // match self.layouts[self.cur_layout_index].graphs[i].cur_lap.last() {
+                    //     Some(last) => {
+                    //         if (last.y - new_y).abs() > 0.005 {
+                    //             self.layouts[self.cur_layout_index].graphs[i]
+                    //                 .cur_lap
+                    //                 .push(vec2(
+                    //                     graph_data_type.get_normalized_distance(&t) as f32,
+                    //                     new_y,
+                    //                 ))
+                    //         }
+                    //     }
+                    //     None => self.layouts[self.cur_layout_index].graphs[i]
+                    //         .cur_lap
+                    //         .push(vec2(
+                    //             graph_data_type.get_normalized_distance(&t) as f32,
+                    //             new_y,
+                    //         )),
+                    // }
                     self.layouts[self.cur_layout_index].graphs[i]
                         .cur_lap
                         .push(vec2(
                             graph_data_type.get_normalized_distance(&t) as f32,
-                            graph_data_type.get_normalized_values(&t) as f32,
+                            new_y,
                         ));
                 }
             });
@@ -688,6 +706,7 @@ impl TelemetryPage {
                 .selectable(false),
         );
 
+        #[expect(clippy::collapsible_if)]
         if button(
             ui,
             vec2(140.0, 32.0),

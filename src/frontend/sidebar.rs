@@ -201,12 +201,14 @@ impl Sidebar {
         // Profile image
         let image_rect = Rect::from_min_size(rect.min + vec2(8.0, 8.0), vec2(48.0, 48.0));
 
-        ui.put(
-            image_rect,
-            Image::new(include_image!("../../public/Logo.svg"))
-                .fit_to_exact_size(vec2(48.0, 48.0))
-                .corner_radius(CornerRadius::same(8)),
-        );
+        if let Some(img) = &settings.pfp_texture {
+            ui.put(
+                image_rect,
+                Image::new(img)
+                    .fit_to_exact_size(vec2(48.0, 48.0))
+                    .corner_radius(CornerRadius::same(8)),
+            );
+        }
 
         // Name
         ui.painter().text(
