@@ -1,6 +1,15 @@
+use std::fs;
+
 use eframe::egui::*;
 
-use crate::frontend::{components::slider, settings_page::Settings, sidebar::Sidebar};
+use crate::{
+    backend::lap_stores::SaveData,
+    frontend::{
+        components::{button, slider},
+        settings_page::Settings,
+        sidebar::Sidebar,
+    },
+};
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
@@ -9,6 +18,7 @@ pub struct MapPage {
     offset: Vec2,
     time: f32,
     car_1: Vec<Dp>,
+    car_2: Vec<Dp>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
@@ -25,6 +35,7 @@ impl Default for MapPage {
             offset: Vec2::ZERO,
             zoom: 1.0,
             car_1: vec![],
+            car_2: vec![],
         }
     }
 }
@@ -42,7 +53,10 @@ impl MapPage {
         self.draw_map(
             ui,
             map_rect,
-            &[self.car_1.iter().map(|dp| dp.pos).collect()],
+            &[
+                self.car_1.iter().map(|dp| dp.pos).collect(),
+                self.car_2.iter().map(|dp| dp.pos).collect(),
+            ],
         );
 
         let controls_rect = Rect::from_min_max(
@@ -61,39 +75,6 @@ impl MapPage {
 
         ui.put(usable_rect, |ui: &mut Ui| {
             ui.vertical(|ui| {
-                // #[expect(clippy::collapsible_if)]
-                // if button(
-                //     ui,
-                //     vec2(140.0, 32.0),
-                //     CornerRadius::same(8),
-                //     Color32::from_white_alpha(25),
-                //     "Select ref from file",
-                //     FontId::new(14.0, FontFamily::Proportional),
-                //     Color32::WHITE,
-                // )
-                // .clicked()
-                // {
-                //     if let Some(path) = rfd::FileDialog::new()
-                //         .set_title("Select a reference file")
-                //         .set_directory(settings.record_save_path.clone())
-                //         .add_filter("JSON files", &["json"])
-                //         .pick_file()
-                //     {
-                //         let contents = fs::read_to_string(path).unwrap_or_default();
-                //         let save_data: SaveData =
-                //             serde_json::from_str(&contents).unwrap_or_default();
-                //
-                //         self.car_1.clear();
-                //         self.car_1 = save_data
-                //             .pos_data
-                //             .iter()
-                //             .map(|pd| Dp {
-                //                 pos: pos2(pd.pos.x as f32, -pd.pos.z as f32),
-                //                 time_since_lap_start: pd.time_since_lap_start,
-                //             })
-                //             .collect();
-                //     }
-                // }
                 slider(
                     ui,
                     vec2(ui.available_width(), 24.0),
@@ -103,6 +84,90 @@ impl MapPage {
                     1.0,
                     8.0,
                 );
+                ui.add_sized(vec2(ui.available_width(), 48.0), |ui: &mut Ui| {
+                    ui.horizontal(|ui| {
+                        ui.label(
+                            RichText::new("Blue:")
+                                .color(Color32::from_rgb(19, 141, 241))
+                                .size(16.0),
+                        );
+                        #[expect(clippy::collapsible_if)]
+                        if button(
+                            ui,
+                            vec2(140.0, 32.0),
+                            CornerRadius::same(8),
+                            Color32::from_white_alpha(25),
+                            "Select ref from file",
+                            FontId::new(14.0, FontFamily::Proportional),
+                            Color32::WHITE,
+                        )
+                        .clicked()
+                        {
+                            if let Some(path) = rfd::FileDialog::new()
+                                .set_title("Select a reference file")
+                                .set_directory(settings.record_save_path.clone())
+                                .add_filter("JSON files", &["json"])
+                                .pick_file()
+                            {
+                                let contents = fs::read_to_string(path).unwrap_or_default();
+                                let save_data: SaveData =
+                                    serde_json::from_str(&contents).unwrap_or_default();
+
+                                self.car_1.clear();
+                                self.car_1 = save_data
+                                    .pos_data
+                                    .iter()
+                                    .map(|pd| Dp {
+                                        pos: pos2(pd.pos.x as f32, -pd.pos.z as f32),
+                                        time_since_lap_start: pd.time_since_lap_start,
+                                    })
+                                    .collect();
+                            }
+                        }
+
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            #[expect(clippy::collapsible_if)]
+                            if button(
+                                ui,
+                                vec2(140.0, 32.0),
+                                CornerRadius::same(8),
+                                Color32::from_white_alpha(25),
+                                "Select ref from file",
+                                FontId::new(14.0, FontFamily::Proportional),
+                                Color32::WHITE,
+                            )
+                            .clicked()
+                            {
+                                if let Some(path) = rfd::FileDialog::new()
+                                    .set_title("Select a reference file")
+                                    .set_directory(settings.record_save_path.clone())
+                                    .add_filter("JSON files", &["json"])
+                                    .pick_file()
+                                {
+                                    let contents = fs::read_to_string(path).unwrap_or_default();
+                                    let save_data: SaveData =
+                                        serde_json::from_str(&contents).unwrap_or_default();
+
+                                    self.car_2.clear();
+                                    self.car_2 = save_data
+                                        .pos_data
+                                        .iter()
+                                        .map(|pd| Dp {
+                                            pos: pos2(pd.pos.x as f32, -pd.pos.z as f32),
+                                            time_since_lap_start: pd.time_since_lap_start,
+                                        })
+                                        .collect();
+                                }
+                            }
+                            ui.label(
+                                RichText::new("Orange:")
+                                    .color(Color32::from_rgb(255, 107, 53))
+                                    .size(16.0),
+                            );
+                        })
+                    })
+                    .response
+                });
             })
             .response
         });
