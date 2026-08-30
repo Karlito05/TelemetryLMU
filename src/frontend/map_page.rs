@@ -42,12 +42,6 @@ impl MapPage {
             ),
         );
 
-        ui.painter().rect_filled(
-            map_rect,
-            CornerRadius::same(24),
-            Color32::from_rgb(22, 23, 28),
-        );
-
         self.draw_map(
             ui,
             map_rect,
@@ -110,7 +104,9 @@ impl MapPage {
         (p - rect.center() - self.offset) / self.zoom
     }
 
-    pub fn draw_map(&mut self, ui: &mut Ui, rect: Rect, lines: &[Vec<Pos2>]) {
+    fn draw_map(&mut self, ui: &mut Ui, rect: Rect, lines: &[Vec<Pos2>]) {
+        ui.painter()
+            .rect_filled(rect, CornerRadius::same(24), Color32::from_rgb(22, 23, 28));
         let response = ui.allocate_rect(rect, Sense::click_and_drag());
         let painter = ui.painter().with_clip_rect(rect);
 
@@ -125,10 +121,11 @@ impl MapPage {
         if response.hovered() {
             let scroll = ui.input(|i| i.smooth_scroll_delta.y);
             if scroll != 0.0 {
-                self.zoom = (self.zoom * (1.0 + scroll * 0.01)).clamp(0.1, 10.0);
-
                 let mouse = response.hover_pos().unwrap_or(rect.center());
                 let world = self.to_world(rect, mouse);
+
+                self.zoom = (self.zoom * (1.0 + scroll * 0.01)).clamp(0.1, 10.0);
+
                 self.offset = mouse - rect.center() - world * self.zoom;
             }
         }
