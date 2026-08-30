@@ -1,17 +1,13 @@
-use std::fs;
-
 use eframe::egui::*;
 
-use crate::{
-    backend::lap_stores::SaveData,
-    frontend::{components::button, settings_page::Settings, sidebar::Sidebar},
-};
+use crate::frontend::{components::slider, settings_page::Settings, sidebar::Sidebar};
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct MapPage {
     zoom: f32,
     offset: Vec2,
+    time: f32,
     car_1: Vec<Dp>,
 }
 
@@ -25,6 +21,7 @@ struct Dp {
 impl Default for MapPage {
     fn default() -> Self {
         Self {
+            time: 0.0,
             offset: Vec2::ZERO,
             zoom: 1.0,
             car_1: vec![],
@@ -52,45 +49,59 @@ impl MapPage {
             pos2(map_rect.min.x + 8.0, map_rect.max.y - 200.0),
             map_rect.max - vec2(8.0, 8.0),
         );
+        self.draw_controls(ui, controls_rect, settings);
+    }
 
+    fn draw_controls(&mut self, ui: &mut Ui, rect: Rect, settings: &Settings) {
         ui.painter()
-            .rect_filled(controls_rect, 16, Color32::from_white_alpha(17));
+            .rect_filled(rect, 16, Color32::from_white_alpha(17));
 
-        ui.put(controls_rect, |ui: &mut Ui| {
-            ui.horizontal(|ui| {
-                #[expect(clippy::collapsible_if)]
-                if button(
+        let usable_rect =
+            Rect::from_min_max(rect.min + vec2(16.0, 16.0), rect.max - vec2(16.0, 16.0));
+
+        ui.put(usable_rect, |ui: &mut Ui| {
+            ui.vertical(|ui| {
+                // #[expect(clippy::collapsible_if)]
+                // if button(
+                //     ui,
+                //     vec2(140.0, 32.0),
+                //     CornerRadius::same(8),
+                //     Color32::from_white_alpha(25),
+                //     "Select ref from file",
+                //     FontId::new(14.0, FontFamily::Proportional),
+                //     Color32::WHITE,
+                // )
+                // .clicked()
+                // {
+                //     if let Some(path) = rfd::FileDialog::new()
+                //         .set_title("Select a reference file")
+                //         .set_directory(settings.record_save_path.clone())
+                //         .add_filter("JSON files", &["json"])
+                //         .pick_file()
+                //     {
+                //         let contents = fs::read_to_string(path).unwrap_or_default();
+                //         let save_data: SaveData =
+                //             serde_json::from_str(&contents).unwrap_or_default();
+                //
+                //         self.car_1.clear();
+                //         self.car_1 = save_data
+                //             .pos_data
+                //             .iter()
+                //             .map(|pd| Dp {
+                //                 pos: pos2(pd.pos.x as f32, -pd.pos.z as f32),
+                //                 time_since_lap_start: pd.time_since_lap_start,
+                //             })
+                //             .collect();
+                //     }
+                // }
+                slider(
                     ui,
-                    vec2(140.0, 32.0),
-                    CornerRadius::same(8),
-                    Color32::from_white_alpha(25),
-                    "Select ref from file",
-                    FontId::new(14.0, FontFamily::Proportional),
-                    Color32::WHITE,
-                )
-                .clicked()
-                {
-                    if let Some(path) = rfd::FileDialog::new()
-                        .set_title("Select a reference file")
-                        .set_directory(settings.record_save_path.clone())
-                        .add_filter("JSON files", &["json"])
-                        .pick_file()
-                    {
-                        let contents = fs::read_to_string(path).unwrap_or_default();
-                        let save_data: SaveData =
-                            serde_json::from_str(&contents).unwrap_or_default();
-
-                        self.car_1.clear();
-                        self.car_1 = save_data
-                            .pos_data
-                            .iter()
-                            .map(|pd| Dp {
-                                pos: pos2(pd.pos.x as f32, -pd.pos.z as f32),
-                                time_since_lap_start: pd.time_since_lap_start,
-                            })
-                            .collect();
-                    }
-                }
+                    vec2(ui.available_width(), 8.0),
+                    Color32::from_rgb(19, 141, 241),
+                    &mut self.time,
+                    0.0,
+                    1.0,
+                );
             })
             .response
         });
