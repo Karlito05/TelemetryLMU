@@ -139,29 +139,6 @@ impl Settings {
                 });
 
                 ui.horizontal(|ui| {
-                    // preview image, or a placeholder circle
-                    // match &self.pfp_texture {
-                    //     Some(tex) => {
-                    //         ui.add(Image::new(tex).max_size(vec2(64.0, 64.0)));
-                    //     }
-                    //     None => {
-                    //         let (rect, _) =
-                    //             ui.allocate_exact_size(vec2(64.0, 64.0), Sense::hover());
-                    //         ui.painter().circle_filled(
-                    //             rect.center(),
-                    //             32.0,
-                    //             Color32::from_white_alpha(25),
-                    //         );
-                    //         // ui.painter().text(
-                    //         //     rect.center(),
-                    //         //     Align2::CENTER_CENTER,
-                    //         //     icons::USER.regular().size(32.0),
-                    //         //     FontId::proportional(32.0),
-                    //         //     Color32::from_gray(127),
-                    //         // );
-                    //     }
-                    // }
-                    //
                     ui.label(RichText::new("Change Profile Picture").size(20.0));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         #[expect(clippy::collapsible_if)]
@@ -218,6 +195,7 @@ impl Settings {
 
     /// Rebuild texture from persisted bytes (call once on startup).
     pub fn restore_pfp(&mut self, ctx: &Context) {
+        #[expect(clippy::collapsible_if)]
         if self.pfp_texture.is_none() {
             if let Some(bytes) = self.pfp_bytes.clone() {
                 self.load_pfp(ctx, &bytes);

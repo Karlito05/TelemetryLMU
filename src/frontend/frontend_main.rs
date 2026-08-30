@@ -3,7 +3,10 @@ use eframe::egui;
 use crate::{
     TOKIO,
     backend::lap_stores::{Logger, save},
-    frontend::{car_info_page::CarInfo, settings_page::Settings, sidebar::Sidebar, telemetry_page},
+    frontend::{
+        car_info_page::CarInfo, map_page::MapPage, settings_page::Settings, sidebar::Sidebar,
+        telemetry_page,
+    },
     interface::Telemetry,
 };
 
@@ -13,6 +16,7 @@ pub struct App {
     sidebar: Sidebar,
     settings_page: Settings,
     telemetry_page: telemetry_page::TelemetryPage,
+    map_page: MapPage,
     #[serde(skip)]
     car_info_page: CarInfo,
     #[serde(skip)]
@@ -47,6 +51,7 @@ impl Default for App {
     fn default() -> Self {
         Self {
             sidebar: Sidebar::default(),
+            map_page: MapPage::default(),
             telemetry_page: telemetry_page::TelemetryPage::default(),
             settings_page: Settings::default(),
             car_info_page: CarInfo::default(),
@@ -82,7 +87,7 @@ impl eframe::App for App {
                 &mut self.sidebar,
                 &mut self.settings_page,
             ),
-            Page::Map => {}
+            Page::Map => self.map_page.draw_map_page(ui, &self.sidebar),
         });
     }
 }

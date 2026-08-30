@@ -175,7 +175,6 @@ impl CarInfo {
         });
     }
 
-    // TODO: Clean up this code
     fn draw_tire(&self, ui: &mut Ui, tire_rect: Rect, tire_name: &str, tire_info: &TireInfo) {
         ui.painter().rect_filled(
             tire_rect,
