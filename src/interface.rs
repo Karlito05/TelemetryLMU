@@ -283,7 +283,8 @@ pub struct ApplicationStateV01 {
 }
 
 #[repr(C, packed(4))] // Crucial for matching C++ memory layout (3 doubles in a row)
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, serde::Serialize, serde::Deserialize, Default)]
+#[serde(default)]
 pub struct TelemVect3 {
     pub x: f64,
     pub y: f64,

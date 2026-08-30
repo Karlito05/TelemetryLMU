@@ -5,7 +5,7 @@ use eframe::egui::{Vec2, vec2};
 
 use crate::{
     backend::telemetry::{GRAPH_VIEW_DATA_TYPE_COUNT, GraphViewDataType},
-    interface::Telemetry,
+    interface::{TelemVect3, Telemetry},
 };
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
@@ -13,6 +13,14 @@ use crate::{
 pub struct SaveData {
     pub lap_info: LapInfo,
     pub lap_data: Vec<LapData>,
+    pub pos_data: Vec<PosData>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
+#[serde(default)]
+pub struct PosData {
+    pub pos: TelemVect3,
+    pub time_since_lap_start: f64,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
@@ -79,6 +87,11 @@ impl Logger {
                 graph_type.get_normalized_values(&cur_data) as f32,
             ));
         }
+
+        self.save_data.pos_data.push(PosData {
+            pos: cur_data.telemetry.telemetry_info[self.car_num].m_pos,
+            time_since_lap_start: cur_data.scoring.veh_scoring_info[self.car_num].m_time_into_lap,
+        });
 
         false
     }
