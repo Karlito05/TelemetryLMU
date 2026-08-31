@@ -1,5 +1,4 @@
 // NOTE: Problems:
-// - Index should use the larger one (the lower should just max out)
 // - Gears are wrong for hypers
 // - No track
 // - Crashes on load of incorrect data
@@ -8,7 +7,7 @@
 // - Redisign the pick to include a clear button and some info about the lap (car time)
 // - Make sure user picks a lap in the same class and on the same track
 
-use std::fs;
+use std::{f32::consts::PI, fs};
 
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
@@ -91,6 +90,7 @@ impl MapPage {
             } else {
                 self.car_1.last().unwrap().pos
             };
+
             let car_2_pos = if i < self.car_2.len() {
                 self.car_2[i].pos
             } else {
@@ -438,7 +438,22 @@ impl MapPage {
                                     Image::new(include_image!(
                                         "../../public/steering-wheel-blue.svg"
                                     ))
-                                    .rotate(5.4, Vec2::splat(0.5)), // TODO: Into a var
+                                    .rotate(
+                                        if let Some(i) = self.cur_dp_index {
+                                            if i < self.car_1.len() {
+                                                (self.car_1[i].steering - 0.5)
+                                                    * 360.0
+                                                    * (PI / 180.0)
+                                            } else {
+                                                (self.car_1.last().unwrap().steering - 0.5)
+                                                    * 360.0
+                                                    * (PI / 180.0)
+                                            }
+                                        } else {
+                                            0.0
+                                        },
+                                        Vec2::splat(0.5),
+                                    ),
                                 );
 
                                 ui.separator();
@@ -574,7 +589,22 @@ impl MapPage {
                                         Image::new(include_image!(
                                             "../../public/steering-wheel-orange.svg"
                                         ))
-                                        .rotate(5.4, Vec2::splat(0.5)), // TODO: Into a var
+                                        .rotate(
+                                            if let Some(i) = self.cur_dp_index {
+                                                if i < self.car_1.len() {
+                                                    (self.car_1[i].steering - 0.5)
+                                                        * 360.0
+                                                        * (PI / 180.0)
+                                                } else {
+                                                    (self.car_1.last().unwrap().steering - 0.5)
+                                                        * 360.0
+                                                        * (PI / 180.0)
+                                                }
+                                            } else {
+                                                0.0
+                                            },
+                                            Vec2::splat(0.5),
+                                        ),
                                     );
 
                                     ui.separator();
@@ -600,7 +630,7 @@ impl MapPage {
                                                     )
                                                 } else {
                                                     "N/A".to_owned()
-                                                }) // TODO: Into a var
+                                                })
                                                 .size(24.0)
                                                 .color(Color32::WHITE)
                                                 .family(FontFamily::Name("JetBrainsMono".into())),
