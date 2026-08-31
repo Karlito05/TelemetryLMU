@@ -1,3 +1,13 @@
+// NOTE: Problems:
+// - Index should use the larger one (the lower should just max out)
+// - Gears are wrong for hypers
+// - No track
+// - Crashes on load of incorrect data
+// - Playback controls not working
+// - Time delta not working
+// - Redisign the pick to include a clear button and some info about the lap (car time)
+// - Make sure user picks a lap in the same class and on the same track
+
 use std::fs;
 
 use eframe::egui::*;
@@ -81,12 +91,12 @@ impl MapPage {
 
             ui.painter().circle_filled(
                 self.to_screen(map_rect, car_1_pos.to_vec2()),
-                5.0,
+                2.0 * self.zoom,
                 Color32::from_rgb(19, 141, 241),
             );
             ui.painter().circle_filled(
                 self.to_screen(map_rect, car_2_pos.to_vec2()),
-                5.0,
+                2.0 * self.zoom,
                 Color32::from_rgb(255, 107, 53),
             );
         }
