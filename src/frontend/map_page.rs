@@ -1,6 +1,7 @@
 use std::fs;
 
 use eframe::egui::*;
+use egui_phosphor_icons::icons;
 
 use crate::{
     backend::lap_stores::SaveData,
@@ -90,48 +91,15 @@ impl MapPage {
                     1.0,
                     8.0,
                 );
-                ui.add_sized(vec2(ui.available_width(), 48.0), |ui: &mut Ui| {
-                    ui.horizontal(|ui| {
-                        ui.label(
-                            RichText::new("Blue:")
-                                .color(Color32::from_rgb(19, 141, 241))
-                                .size(16.0),
-                        );
-                        #[expect(clippy::collapsible_if)]
-                        if button(
-                            ui,
-                            vec2(140.0, 32.0),
-                            CornerRadius::same(8),
-                            Color32::from_white_alpha(25),
-                            "Select ref from file",
-                            FontId::new(14.0, FontFamily::Proportional),
-                            Color32::WHITE,
-                        )
-                        .clicked()
-                        {
-                            if let Some(path) = rfd::FileDialog::new()
-                                .set_title("Select a reference file")
-                                .set_directory(settings.record_save_path.clone())
-                                .add_filter("JSON files", &["json"])
-                                .pick_file()
-                            {
-                                let contents = fs::read_to_string(path).unwrap_or_default();
-                                let save_data: SaveData =
-                                    serde_json::from_str(&contents).unwrap_or_default();
 
-                                self.car_1.clear();
-                                self.car_1 = save_data
-                                    .pos_data
-                                    .iter()
-                                    .map(|pd| Dp {
-                                        pos: pos2(pd.pos.x as f32, -pd.pos.z as f32),
-                                        time_since_lap_start: pd.time_since_lap_start,
-                                    })
-                                    .collect();
-                            }
-                        }
-
-                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                let row_rect = ui
+                    .add_sized(vec2(ui.available_width(), 48.0), |ui: &mut Ui| {
+                        ui.horizontal(|ui| {
+                            ui.label(
+                                RichText::new("Blue:")
+                                    .color(Color32::from_rgb(19, 141, 241))
+                                    .size(16.0),
+                            );
                             #[expect(clippy::collapsible_if)]
                             if button(
                                 ui,
@@ -154,8 +122,8 @@ impl MapPage {
                                     let save_data: SaveData =
                                         serde_json::from_str(&contents).unwrap_or_default();
 
-                                    self.car_2.clear();
-                                    self.car_2 = save_data
+                                    self.car_1.clear();
+                                    self.car_1 = save_data
                                         .pos_data
                                         .iter()
                                         .map(|pd| Dp {
@@ -165,20 +133,210 @@ impl MapPage {
                                         .collect();
                                 }
                             }
-                            ui.label(
-                                RichText::new("Orange:")
-                                    .color(Color32::from_rgb(255, 107, 53))
-                                    .size(16.0),
-                            );
+
+                            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                #[expect(clippy::collapsible_if)]
+                                if button(
+                                    ui,
+                                    vec2(140.0, 32.0),
+                                    CornerRadius::same(8),
+                                    Color32::from_white_alpha(25),
+                                    "Select ref from file",
+                                    FontId::new(14.0, FontFamily::Proportional),
+                                    Color32::WHITE,
+                                )
+                                .clicked()
+                                {
+                                    if let Some(path) = rfd::FileDialog::new()
+                                        .set_title("Select a reference file")
+                                        .set_directory(settings.record_save_path.clone())
+                                        .add_filter("JSON files", &["json"])
+                                        .pick_file()
+                                    {
+                                        let contents = fs::read_to_string(path).unwrap_or_default();
+                                        let save_data: SaveData =
+                                            serde_json::from_str(&contents).unwrap_or_default();
+
+                                        self.car_2.clear();
+                                        self.car_2 = save_data
+                                            .pos_data
+                                            .iter()
+                                            .map(|pd| Dp {
+                                                pos: pos2(pd.pos.x as f32, -pd.pos.z as f32),
+                                                time_since_lap_start: pd.time_since_lap_start,
+                                            })
+                                            .collect();
+                                    }
+                                }
+                                ui.label(
+                                    RichText::new("Orange:")
+                                        .color(Color32::from_rgb(255, 107, 53))
+                                        .size(16.0),
+                                );
+                            });
                         })
+                        .response
+                    })
+                    .rect;
+
+                let spacing = ui.spacing().item_spacing.x;
+                let group_size = vec2(48.0 * 3.0 + spacing * 2.0, 48.0);
+                let group_rect = Rect::from_center_size(row_rect.center(), group_size);
+
+                ui.put(group_rect, |ui: &mut Ui| {
+                    ui.horizontal(|ui| {
+                        let resp = ui.add_sized(
+                            vec2(48.0, 48.0),
+                            Button::new(
+                                icons::SKIP_BACK
+                                    .regular()
+                                    .size(32.0)
+                                    .color(Color32::from_rgb(19, 141, 241)),
+                            )
+                            .fill(Color32::TRANSPARENT)
+                            .stroke(Stroke::NONE)
+                            .small(),
+                        );
+                        if resp.hovered() {
+                            ui.painter()
+                                .rect_filled(resp.rect, 24, Color32::from_white_alpha(25));
+                        }
+                        if resp.clicked() {}
+
+                        let resp = ui.add_sized(
+                            vec2(48.0, 48.0),
+                            Button::new(
+                                icons::PAUSE
+                                    .regular()
+                                    .size(32.0)
+                                    .color(Color32::from_rgb(19, 141, 241)),
+                            )
+                            .fill(Color32::TRANSPARENT)
+                            .stroke(Stroke::NONE)
+                            .small(),
+                        );
+                        if resp.hovered() {
+                            ui.painter()
+                                .rect_filled(resp.rect, 24, Color32::from_white_alpha(25));
+                        }
+                        if resp.clicked() {}
+
+                        let resp = ui.add_sized(
+                            vec2(48.0, 48.0),
+                            Button::new(
+                                icons::SKIP_FORWARD
+                                    .regular()
+                                    .size(32.0)
+                                    .color(Color32::from_rgb(19, 141, 241)),
+                            )
+                            .fill(Color32::TRANSPARENT)
+                            .stroke(Stroke::NONE)
+                            .small(),
+                        );
+                        if resp.hovered() {
+                            ui.painter()
+                                .rect_filled(resp.rect, 24, Color32::from_white_alpha(25));
+                        }
+                        if resp.clicked() {}
                     })
                     .response
                 });
+
+                let row2_rect = ui.add_sized(
+                    vec2(ui.available_width(), ui.available_height()),
+                    |ui: &mut Ui| {
+                        ui.horizontal_centered(|ui| {
+                            let (bars_rect, _) =
+                                ui.allocate_exact_size(vec2(200.0, 40.0), Sense::empty());
+
+                            let throttle_rect =
+                                Rect::from_min_size(bars_rect.min, vec2(200.0, 16.0));
+                            let brake_rect = Rect::from_min_max(
+                                bars_rect.max - vec2(200.0, 16.0),
+                                bars_rect.max,
+                            );
+
+                            ui.painter().rect_filled(
+                                throttle_rect,
+                                8,
+                                Color32::from_white_alpha(25),
+                            );
+                            ui.painter().rect_filled(
+                                Rect::from_min_size(
+                                    throttle_rect.min,
+                                    throttle_rect.size() * vec2(0.5, 1.0), // TODO: Make
+                                                                           // 0.5 to a var
+                                ),
+                                8,
+                                Color32::from_rgb(0, 255, 0),
+                            );
+
+                            ui.painter()
+                                .rect_filled(brake_rect, 8, Color32::from_white_alpha(25));
+                            ui.painter().rect_filled(
+                                Rect::from_min_size(
+                                    brake_rect.min,
+                                    brake_rect.size() * vec2(0.5, 1.0), // TODO: Make
+                                                                        // 0.5 to a var
+                                ),
+                                8,
+                                Color32::from_rgb(255, 0, 0),
+                            );
+
+                            ui.add_space(8.0);
+
+                            ui.add(
+                                Image::new(include_image!("../../public/steering-wheel.svg"))
+                                    .rotate(5.4, Vec2::splat(0.5)), // TODO: Into a var
+                            );
+
+                            ui.separator();
+
+                            let rect = ui.allocate_exact_size(vec2(100.0, 55.0), Sense::empty()).0;
+                            ui.put(rect, |ui: &mut Ui| {
+                                ui.vertical(|ui| {
+                                    ui.label(
+                                        RichText::new("Speed")
+                                            .size(12.0)
+                                            .color(Color32::from_white_alpha(64)),
+                                    );
+                                    ui.label(
+                                        RichText::new("145km/h") // TODO: Into a var
+                                            .size(24.0)
+                                            .color(Color32::WHITE)
+                                            .family(FontFamily::Name("JetBrainsMono".into())),
+                                    );
+                                })
+                                .response
+                            });
+
+                            ui.separator();
+
+                            let rect = ui.allocate_exact_size(vec2(30.0, 55.0), Sense::empty()).0;
+                            ui.put(rect, |ui: &mut Ui| {
+                                ui.vertical_centered(|ui| {
+                                    ui.label(
+                                        RichText::new("Gear")
+                                            .size(12.0)
+                                            .color(Color32::from_white_alpha(64)),
+                                    );
+                                    ui.label(
+                                        RichText::new("5") // TODO: Into a var
+                                            .size(24.0)
+                                            .color(Color32::WHITE)
+                                            .family(FontFamily::Name("JetBrainsMono".into())),
+                                    );
+                                })
+                                .response
+                            });
+                        })
+                        .response
+                    },
+                );
             })
             .response
         });
     }
-
     fn to_screen(&self, rect: Rect, p: Vec2) -> Pos2 {
         rect.center() + (p * self.zoom) + self.offset
     }
