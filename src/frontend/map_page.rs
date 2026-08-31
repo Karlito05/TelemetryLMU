@@ -242,97 +242,207 @@ impl MapPage {
                     .response
                 });
 
-                let row2_rect = ui.add_sized(
-                    vec2(ui.available_width(), ui.available_height()),
-                    |ui: &mut Ui| {
-                        ui.horizontal_centered(|ui| {
-                            let (bars_rect, _) =
-                                ui.allocate_exact_size(vec2(200.0, 40.0), Sense::empty());
+                let row3_rect = ui
+                    .add_sized(
+                        vec2(ui.available_width(), ui.available_height()),
+                        |ui: &mut Ui| {
+                            ui.horizontal_centered(|ui| {
+                                let (bars_rect, _) =
+                                    ui.allocate_exact_size(vec2(200.0, 40.0), Sense::empty());
 
-                            let throttle_rect =
-                                Rect::from_min_size(bars_rect.min, vec2(200.0, 16.0));
-                            let brake_rect = Rect::from_min_max(
-                                bars_rect.max - vec2(200.0, 16.0),
-                                bars_rect.max,
-                            );
+                                let throttle_rect =
+                                    Rect::from_min_size(bars_rect.min, vec2(200.0, 16.0));
+                                let brake_rect = Rect::from_min_max(
+                                    bars_rect.max - vec2(200.0, 16.0),
+                                    bars_rect.max,
+                                );
 
-                            ui.painter().rect_filled(
-                                throttle_rect,
-                                8,
-                                Color32::from_white_alpha(25),
-                            );
-                            ui.painter().rect_filled(
-                                Rect::from_min_size(
-                                    throttle_rect.min,
-                                    throttle_rect.size() * vec2(0.5, 1.0), // TODO: Make
-                                                                           // 0.5 to a var
-                                ),
-                                8,
-                                Color32::from_rgb(0, 255, 0),
-                            );
+                                ui.painter().rect_filled(
+                                    throttle_rect,
+                                    8,
+                                    Color32::from_white_alpha(25),
+                                );
+                                ui.painter().rect_filled(
+                                    Rect::from_min_size(
+                                        throttle_rect.min,
+                                        throttle_rect.size() * vec2(0.5, 1.0), // TODO: Make
+                                                                               // 0.5 to a var
+                                    ),
+                                    8,
+                                    Color32::from_rgb(0, 255, 0),
+                                );
 
-                            ui.painter()
-                                .rect_filled(brake_rect, 8, Color32::from_white_alpha(25));
-                            ui.painter().rect_filled(
-                                Rect::from_min_size(
-                                    brake_rect.min,
-                                    brake_rect.size() * vec2(0.5, 1.0), // TODO: Make
-                                                                        // 0.5 to a var
-                                ),
-                                8,
-                                Color32::from_rgb(255, 0, 0),
-                            );
+                                ui.painter().rect_filled(
+                                    brake_rect,
+                                    8,
+                                    Color32::from_white_alpha(25),
+                                );
+                                ui.painter().rect_filled(
+                                    Rect::from_min_size(
+                                        brake_rect.min,
+                                        brake_rect.size() * vec2(0.5, 1.0), // TODO: Make
+                                                                            // 0.5 to a var
+                                    ),
+                                    8,
+                                    Color32::from_rgb(255, 0, 0),
+                                );
 
-                            ui.add_space(8.0);
+                                ui.add_space(8.0);
 
-                            ui.add(
-                                Image::new(include_image!("../../public/steering-wheel.svg"))
+                                ui.add(
+                                    Image::new(include_image!(
+                                        "../../public/steering-wheel-blue.svg"
+                                    ))
                                     .rotate(5.4, Vec2::splat(0.5)), // TODO: Into a var
-                            );
+                                );
 
-                            ui.separator();
+                                ui.separator();
 
-                            let rect = ui.allocate_exact_size(vec2(100.0, 55.0), Sense::empty()).0;
-                            ui.put(rect, |ui: &mut Ui| {
-                                ui.vertical(|ui| {
-                                    ui.label(
-                                        RichText::new("Speed")
-                                            .size(12.0)
-                                            .color(Color32::from_white_alpha(64)),
-                                    );
-                                    ui.label(
+                                let rect =
+                                    ui.allocate_exact_size(vec2(100.0, 55.0), Sense::empty()).0;
+                                ui.put(rect, |ui: &mut Ui| {
+                                    ui.vertical(|ui| {
+                                        ui.label(
+                                            RichText::new("Speed")
+                                                .size(12.0)
+                                                .color(Color32::from_white_alpha(64)),
+                                        );
+                                        ui.label(
                                         RichText::new("145km/h") // TODO: Into a var
                                             .size(24.0)
                                             .color(Color32::WHITE)
                                             .family(FontFamily::Name("JetBrainsMono".into())),
                                     );
-                                })
-                                .response
-                            });
+                                    })
+                                    .response
+                                });
 
-                            ui.separator();
+                                ui.separator();
 
-                            let rect = ui.allocate_exact_size(vec2(30.0, 55.0), Sense::empty()).0;
-                            ui.put(rect, |ui: &mut Ui| {
-                                ui.vertical_centered(|ui| {
-                                    ui.label(
-                                        RichText::new("Gear")
-                                            .size(12.0)
-                                            .color(Color32::from_white_alpha(64)),
-                                    );
-                                    ui.label(
+                                let rect =
+                                    ui.allocate_exact_size(vec2(30.0, 55.0), Sense::empty()).0;
+                                ui.put(rect, |ui: &mut Ui| {
+                                    ui.vertical_centered(|ui| {
+                                        ui.label(
+                                            RichText::new("Gear")
+                                                .size(12.0)
+                                                .color(Color32::from_white_alpha(64)),
+                                        );
+                                        ui.label(
                                         RichText::new("5") // TODO: Into a var
                                             .size(24.0)
                                             .color(Color32::WHITE)
                                             .family(FontFamily::Name("JetBrainsMono".into())),
                                     );
+                                    })
+                                    .response
+                                });
+
+                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                    let (bars_rect, _) =
+                                        ui.allocate_exact_size(vec2(200.0, 40.0), Sense::empty());
+
+                                    let throttle_rect =
+                                        Rect::from_min_size(bars_rect.min, vec2(200.0, 16.0));
+                                    let brake_rect = Rect::from_min_max(
+                                        bars_rect.max - vec2(200.0, 16.0),
+                                        bars_rect.max,
+                                    );
+
+                                    ui.painter().rect_filled(
+                                        throttle_rect,
+                                        8,
+                                        Color32::from_white_alpha(25),
+                                    );
+                                    ui.painter().rect_filled(
+                                        Rect::from_min_size(
+                                            throttle_rect.min,
+                                            throttle_rect.size() * vec2(0.5, 1.0), // TODO: Make
+                                                                                   // 0.5 to a var
+                                        ),
+                                        8,
+                                        Color32::from_rgb(0, 255, 0),
+                                    );
+
+                                    ui.painter().rect_filled(
+                                        brake_rect,
+                                        8,
+                                        Color32::from_white_alpha(25),
+                                    );
+                                    ui.painter().rect_filled(
+                                        Rect::from_min_size(
+                                            brake_rect.min,
+                                            brake_rect.size() * vec2(0.5, 1.0), // TODO: Make
+                                                                                // 0.5 to a var
+                                        ),
+                                        8,
+                                        Color32::from_rgb(255, 0, 0),
+                                    );
+
+                                    ui.add_space(8.0);
+
+                                    ui.add(
+                                        Image::new(include_image!(
+                                            "../../public/steering-wheel-orange.svg"
+                                        ))
+                                        .rotate(5.4, Vec2::splat(0.5)), // TODO: Into a var
+                                    );
+
+                                    ui.separator();
+
+                                    let rect =
+                                        ui.allocate_exact_size(vec2(100.0, 55.0), Sense::empty()).0;
+                                    ui.put(rect, |ui: &mut Ui| {
+                                        ui.vertical(|ui| {
+                                            ui.label(
+                                                RichText::new("Speed")
+                                                    .size(12.0)
+                                                    .color(Color32::from_white_alpha(64)),
+                                            );
+                                            ui.label(
+                                        RichText::new("145km/h") // TODO: Into a var
+                                            .size(24.0)
+                                            .color(Color32::WHITE)
+                                            .family(FontFamily::Name("JetBrainsMono".into())),
+                                    );
+                                        })
+                                        .response
+                                    });
+
+                                    ui.separator();
+
+                                    let rect =
+                                        ui.allocate_exact_size(vec2(30.0, 55.0), Sense::empty()).0;
+                                    ui.put(rect, |ui: &mut Ui| {
+                                        ui.vertical_centered(|ui| {
+                                            ui.label(
+                                                RichText::new("Gear")
+                                                    .size(12.0)
+                                                    .color(Color32::from_white_alpha(64)),
+                                            );
+                                            ui.label(
+                                        RichText::new("5") // TODO: Into a var
+                                            .size(24.0)
+                                            .color(Color32::WHITE)
+                                            .family(FontFamily::Name("JetBrainsMono".into())),
+                                    );
+                                        })
+                                        .response
+                                    });
                                 })
-                                .response
-                            });
-                        })
-                        .response
-                    },
-                );
+                            })
+                            .response
+                        },
+                    )
+                    .rect;
+
+                ui.painter().text(
+                    row3_rect.center(),
+                    Align2::CENTER_CENTER,
+                    "+0.345",
+                    FontId::new(32.0, FontFamily::Name("JetBrainsMono".into())),
+                    Color32::RED,
+                )
             })
             .response
         });
