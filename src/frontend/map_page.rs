@@ -18,6 +18,7 @@ pub struct MapPage {
     zoom: f32,
     offset: Vec2,
     time: f32,
+    cur_dp_index: Option<usize>,
     car_1: Vec<Dp>,
     car_2: Vec<Dp>,
 }
@@ -27,6 +28,11 @@ pub struct MapPage {
 struct Dp {
     pos: Pos2,
     time_since_lap_start: f64,
+    speed: f32,
+    gear: i32,
+    throttle: f32,
+    brake: f32,
+    steering: f32,
 }
 
 impl Default for MapPage {
@@ -35,6 +41,7 @@ impl Default for MapPage {
             time: 0.0,
             offset: Vec2::ZERO,
             zoom: 1.0,
+            cur_dp_index: None,
             car_1: vec![],
             car_2: vec![],
         }
@@ -43,6 +50,9 @@ impl Default for MapPage {
 
 impl MapPage {
     pub fn draw_map_page(&mut self, ui: &mut Ui, sidebar: &Sidebar, settings: &Settings) {
+        let ref_len = self.car_1.len().min(self.car_2.len());
+        self.cur_dp_index = Some((self.time * (ref_len - 1) as f32) as usize);
+
         let map_rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
             vec2(
@@ -65,6 +75,21 @@ impl MapPage {
                 ),
             ],
         );
+        if let Some(i) = self.cur_dp_index {
+            let car_1_pos = self.car_1[i].pos;
+            let car_2_pos = self.car_2[i].pos;
+
+            ui.painter().circle_filled(
+                self.to_screen(map_rect, car_1_pos.to_vec2()),
+                5.0,
+                Color32::from_rgb(19, 141, 241),
+            );
+            ui.painter().circle_filled(
+                self.to_screen(map_rect, car_2_pos.to_vec2()),
+                5.0,
+                Color32::from_rgb(255, 107, 53),
+            );
+        }
 
         let controls_rect = Rect::from_min_max(
             pos2(map_rect.min.x + 8.0, map_rect.max.y - 200.0),
@@ -122,13 +147,53 @@ impl MapPage {
                                     let save_data: SaveData =
                                         serde_json::from_str(&contents).unwrap_or_default();
 
+                                    self.cur_dp_index = None;
                                     self.car_1.clear();
                                     self.car_1 = save_data
                                         .pos_data
                                         .iter()
-                                        .map(|pd| Dp {
+                                        .enumerate()
+                                        .map(|(i, pd)| Dp {
                                             pos: pos2(pd.pos.x as f32, -pd.pos.z as f32),
                                             time_since_lap_start: pd.time_since_lap_start,
+                                            speed: save_data
+                                                .lap_data
+                                                .iter()
+                                                .find(|ld| ld.data_type == "speed")
+                                                .unwrap()
+                                                .values[i]
+                                                .y
+                                                * 350.0, // 350 is hardcoded max speed on the backend
+                                            gear: (save_data
+                                                .lap_data
+                                                .iter()
+                                                .find(|ld| ld.data_type == "gear")
+                                                .unwrap()
+                                                .values[i]
+                                                .y
+                                                * 6.0) // Do this based on car class
+                                                as i32,
+                                            throttle: save_data
+                                                .lap_data
+                                                .iter()
+                                                .find(|ld| ld.data_type == "throttle")
+                                                .unwrap()
+                                                .values[i]
+                                                .y,
+                                            brake: save_data
+                                                .lap_data
+                                                .iter()
+                                                .find(|ld| ld.data_type == "brake")
+                                                .unwrap()
+                                                .values[i]
+                                                .y,
+                                            steering: save_data
+                                                .lap_data
+                                                .iter()
+                                                .find(|ld| ld.data_type == "steering")
+                                                .unwrap()
+                                                .values[i]
+                                                .y,
                                         })
                                         .collect();
                                 }
@@ -157,13 +222,53 @@ impl MapPage {
                                         let save_data: SaveData =
                                             serde_json::from_str(&contents).unwrap_or_default();
 
+                                        self.cur_dp_index = None;
                                         self.car_2.clear();
                                         self.car_2 = save_data
                                             .pos_data
                                             .iter()
-                                            .map(|pd| Dp {
+                                            .enumerate()
+                                            .map(|(i, pd)| Dp {
                                                 pos: pos2(pd.pos.x as f32, -pd.pos.z as f32),
                                                 time_since_lap_start: pd.time_since_lap_start,
+                                                speed: save_data
+                                                    .lap_data
+                                                    .iter()
+                                                    .find(|ld| ld.data_type == "speed")
+                                                    .unwrap()
+                                                    .values[i]
+                                                    .y
+                                                    * 350.0, // 350 is hardcoded max speed on the backend
+                                                gear: (save_data
+                                                    .lap_data
+                                                    .iter()
+                                                    .find(|ld| ld.data_type == "gear")
+                                                    .unwrap()
+                                                    .values[i]
+                                                    .y
+                                                    * 6.0) // Do this based on car class
+                                                    as i32,
+                                                throttle: save_data
+                                                    .lap_data
+                                                    .iter()
+                                                    .find(|ld| ld.data_type == "throttle")
+                                                    .unwrap()
+                                                    .values[i]
+                                                    .y,
+                                                brake: save_data
+                                                    .lap_data
+                                                    .iter()
+                                                    .find(|ld| ld.data_type == "brake")
+                                                    .unwrap()
+                                                    .values[i]
+                                                    .y,
+                                                steering: save_data
+                                                    .lap_data
+                                                    .iter()
+                                                    .find(|ld| ld.data_type == "steering")
+                                                    .unwrap()
+                                                    .values[i]
+                                                    .y,
                                             })
                                             .collect();
                                     }
@@ -265,8 +370,15 @@ impl MapPage {
                                 ui.painter().rect_filled(
                                     Rect::from_min_size(
                                         throttle_rect.min,
-                                        throttle_rect.size() * vec2(0.5, 1.0), // TODO: Make
-                                                                               // 0.5 to a var
+                                        throttle_rect.size()
+                                            * vec2(
+                                                if let Some(i) = self.cur_dp_index {
+                                                    self.car_1[i].throttle
+                                                } else {
+                                                    0.0
+                                                },
+                                                1.0,
+                                            ),
                                     ),
                                     8,
                                     Color32::from_rgb(0, 255, 0),
@@ -280,8 +392,15 @@ impl MapPage {
                                 ui.painter().rect_filled(
                                     Rect::from_min_size(
                                         brake_rect.min,
-                                        brake_rect.size() * vec2(0.5, 1.0), // TODO: Make
-                                                                            // 0.5 to a var
+                                        brake_rect.size()
+                                            * vec2(
+                                                if let Some(i) = self.cur_dp_index {
+                                                    self.car_1[i].brake
+                                                } else {
+                                                    0.0
+                                                },
+                                                1.0,
+                                            ),
                                     ),
                                     8,
                                     Color32::from_rgb(255, 0, 0),
@@ -308,11 +427,15 @@ impl MapPage {
                                                 .color(Color32::from_white_alpha(64)),
                                         );
                                         ui.label(
-                                        RichText::new("145km/h") // TODO: Into a var
+                                            RichText::new(if let Some(i) = self.cur_dp_index {
+                                                format!("{}km/h", self.car_1[i].speed.round())
+                                            } else {
+                                                "N/A".to_owned()
+                                            })
                                             .size(24.0)
                                             .color(Color32::WHITE)
                                             .family(FontFamily::Name("JetBrainsMono".into())),
-                                    );
+                                        );
                                     })
                                     .response
                                 });
@@ -329,11 +452,15 @@ impl MapPage {
                                                 .color(Color32::from_white_alpha(64)),
                                         );
                                         ui.label(
-                                        RichText::new("5") // TODO: Into a var
+                                            RichText::new(if let Some(i) = self.cur_dp_index {
+                                                format!("{}", self.car_1[i].gear)
+                                            } else {
+                                                "N/A".to_owned()
+                                            })
                                             .size(24.0)
                                             .color(Color32::WHITE)
                                             .family(FontFamily::Name("JetBrainsMono".into())),
-                                    );
+                                        );
                                     })
                                     .response
                                 });
@@ -357,8 +484,15 @@ impl MapPage {
                                     ui.painter().rect_filled(
                                         Rect::from_min_size(
                                             throttle_rect.min,
-                                            throttle_rect.size() * vec2(0.5, 1.0), // TODO: Make
-                                                                                   // 0.5 to a var
+                                            throttle_rect.size()
+                                                * vec2(
+                                                    if let Some(i) = self.cur_dp_index {
+                                                        self.car_2[i].throttle
+                                                    } else {
+                                                        0.0
+                                                    },
+                                                    1.0,
+                                                ),
                                         ),
                                         8,
                                         Color32::from_rgb(0, 255, 0),
@@ -372,8 +506,15 @@ impl MapPage {
                                     ui.painter().rect_filled(
                                         Rect::from_min_size(
                                             brake_rect.min,
-                                            brake_rect.size() * vec2(0.5, 1.0), // TODO: Make
-                                                                                // 0.5 to a var
+                                            brake_rect.size()
+                                                * vec2(
+                                                    if let Some(i) = self.cur_dp_index {
+                                                        self.car_2[i].brake
+                                                    } else {
+                                                        0.0
+                                                    },
+                                                    1.0,
+                                                ),
                                         ),
                                         8,
                                         Color32::from_rgb(255, 0, 0),
@@ -400,11 +541,15 @@ impl MapPage {
                                                     .color(Color32::from_white_alpha(64)),
                                             );
                                             ui.label(
-                                        RichText::new("145km/h") // TODO: Into a var
-                                            .size(24.0)
-                                            .color(Color32::WHITE)
-                                            .family(FontFamily::Name("JetBrainsMono".into())),
-                                    );
+                                                RichText::new(if let Some(i) = self.cur_dp_index {
+                                                    format!("{}km/h", self.car_2[i].speed.round())
+                                                } else {
+                                                    "N/A".to_owned()
+                                                }) // TODO: Into a var
+                                                .size(24.0)
+                                                .color(Color32::WHITE)
+                                                .family(FontFamily::Name("JetBrainsMono".into())),
+                                            );
                                         })
                                         .response
                                     });
@@ -421,11 +566,15 @@ impl MapPage {
                                                     .color(Color32::from_white_alpha(64)),
                                             );
                                             ui.label(
-                                        RichText::new("5") // TODO: Into a var
-                                            .size(24.0)
-                                            .color(Color32::WHITE)
-                                            .family(FontFamily::Name("JetBrainsMono".into())),
-                                    );
+                                                RichText::new(if let Some(i) = self.cur_dp_index {
+                                                    format!("{}", self.car_2[i].gear)
+                                                } else {
+                                                    "N/A".to_owned()
+                                                })
+                                                .size(24.0)
+                                                .color(Color32::WHITE)
+                                                .family(FontFamily::Name("JetBrainsMono".into())),
+                                            );
                                         })
                                         .response
                                     });

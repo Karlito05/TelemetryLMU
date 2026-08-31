@@ -1,6 +1,6 @@
-use crate::interface::SharedMemoryObjectOut;
+use crate::interface::{IPVehicleClass::Hypercar, SharedMemoryObjectOut};
 
-pub const GRAPH_VIEW_DATA_TYPE_COUNT: i32 = 5;
+pub const GRAPH_VIEW_DATA_TYPE_COUNT: i32 = 7;
 
 #[derive(serde::Deserialize, serde::Serialize, PartialEq, Clone, Copy, Debug, Default)]
 #[repr(usize)]
@@ -10,6 +10,8 @@ pub enum GraphViewDataType {
     Throttle(usize),   //vehicle number
     Brake(usize),      //vehicle number
     Delta(usize, f64), //vehicle number, range (how much up and down should the normalized value be referencing in seconds)
+    Gear(usize),       //vehicle number
+    Steering(usize),   //vehicle number
     #[default]
     Unknown,
 }
@@ -22,6 +24,8 @@ impl GraphViewDataType {
             "throttle" => GraphViewDataType::Throttle(car_num),
             "brake" => GraphViewDataType::Brake(car_num),
             "delta" => GraphViewDataType::Delta(car_num, 5.0),
+            "gear" => GraphViewDataType::Gear(car_num),
+            "steering" => GraphViewDataType::Steering(car_num),
             &_ => todo!(),
         }
     }
@@ -32,6 +36,8 @@ impl GraphViewDataType {
             2 => GraphViewDataType::Throttle(car_num),
             3 => GraphViewDataType::Brake(car_num),
             4 => GraphViewDataType::Delta(car_num, 5.0),
+            5 => GraphViewDataType::Gear(car_num),
+            6 => GraphViewDataType::Steering(car_num),
             _ => todo!(),
         }
     }
@@ -44,6 +50,8 @@ impl GraphViewDataType {
             GraphViewDataType::Throttle(..) => "throttle".to_owned(),
             GraphViewDataType::Brake(..) => "brake".to_owned(),
             GraphViewDataType::Delta(..) => "delta".to_owned(),
+            GraphViewDataType::Gear(..) => "gear".to_owned(),
+            GraphViewDataType::Steering(..) => "steering".to_owned(),
             GraphViewDataType::Unknown => "unknown".to_owned(),
         }
     }
@@ -55,6 +63,14 @@ impl GraphViewDataType {
             GraphViewDataType::Throttle(..) => 1.0,
             GraphViewDataType::Brake(..) => 1.0,
             GraphViewDataType::Delta(_, r) => r * 2.0,
+            GraphViewDataType::Gear(v) => {
+                if t.telemetry.telemetry_info[*v].m_vehicle_class == Hypercar {
+                    7.0
+                } else {
+                    6.0
+                }
+            }
+            GraphViewDataType::Steering(..) => 1.0,
             GraphViewDataType::Unknown => {
                 panic!("Can't call get_max_value() on GraphViewDataType::Unknown ")
             }
@@ -79,6 +95,12 @@ impl GraphViewDataType {
                 (t.telemetry.telemetry_info[*v].m_delta_best.clamp(-*r, *r) + *r)
                     / self.get_max_value(t)
             }
+            GraphViewDataType::Gear(v) => {
+                t.telemetry.telemetry_info[*v].m_gear as f64 / self.get_max_value(t)
+            }
+            GraphViewDataType::Steering(v) => {
+                t.telemetry.telemetry_info[*v].m_filtered_steering / 2.0 + 0.5
+            }
             GraphViewDataType::Unknown => {
                 panic!("Can't call get_normalized_values() on GraphViewDataType::Unknown ")
             }
@@ -92,6 +114,8 @@ impl GraphViewDataType {
             GraphViewDataType::Throttle(_) => "%".to_owned(),
             GraphViewDataType::Brake(_) => "%".to_owned(),
             GraphViewDataType::Delta(_, _) => "s".to_owned(),
+            GraphViewDataType::Gear(..) => "".to_owned(),
+            GraphViewDataType::Steering(..) => "".to_owned(),
             GraphViewDataType::Unknown => {
                 panic!("Can't call get_unit() on GraphViewDataType::Unknown ")
             }
@@ -105,6 +129,8 @@ impl GraphViewDataType {
             GraphViewDataType::Throttle(v, ..) => *v,
             GraphViewDataType::Brake(v, ..) => *v,
             GraphViewDataType::Delta(v, ..) => *v,
+            GraphViewDataType::Gear(v, ..) => *v,
+            GraphViewDataType::Steering(v, ..) => *v,
             GraphViewDataType::Unknown => {
                 panic!("Can't call get_car_number() on GraphViewDataType::Unknown ")
             }
