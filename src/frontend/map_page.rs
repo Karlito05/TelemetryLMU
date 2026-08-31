@@ -60,7 +60,7 @@ impl Default for MapPage {
 
 impl MapPage {
     pub fn draw_map_page(&mut self, ui: &mut Ui, sidebar: &Sidebar, settings: &Settings) {
-        let ref_len = self.car_1.len().min(self.car_2.len());
+        let ref_len = self.car_1.len().max(self.car_2.len());
         self.cur_dp_index = Some((self.time * (ref_len - 1) as f32) as usize);
 
         let map_rect = Rect::from_min_size(
@@ -86,8 +86,16 @@ impl MapPage {
             ],
         );
         if let Some(i) = self.cur_dp_index {
-            let car_1_pos = self.car_1[i].pos;
-            let car_2_pos = self.car_2[i].pos;
+            let car_1_pos = if i < self.car_1.len() {
+                self.car_1[i].pos
+            } else {
+                self.car_1.last().unwrap().pos
+            };
+            let car_2_pos = if i < self.car_2.len() {
+                self.car_2[i].pos
+            } else {
+                self.car_2.last().unwrap().pos
+            };
 
             ui.painter().circle_filled(
                 self.to_screen(map_rect, car_1_pos.to_vec2()),
@@ -383,7 +391,11 @@ impl MapPage {
                                         throttle_rect.size()
                                             * vec2(
                                                 if let Some(i) = self.cur_dp_index {
-                                                    self.car_1[i].throttle
+                                                    if i < self.car_1.len() {
+                                                        self.car_1[i].throttle
+                                                    } else {
+                                                        self.car_1.last().unwrap().throttle
+                                                    }
                                                 } else {
                                                     0.0
                                                 },
@@ -405,7 +417,11 @@ impl MapPage {
                                         brake_rect.size()
                                             * vec2(
                                                 if let Some(i) = self.cur_dp_index {
-                                                    self.car_1[i].brake
+                                                    if i < self.car_1.len() {
+                                                        self.car_1[i].brake
+                                                    } else {
+                                                        self.car_1.last().unwrap().brake
+                                                    }
                                                 } else {
                                                     0.0
                                                 },
@@ -438,7 +454,14 @@ impl MapPage {
                                         );
                                         ui.label(
                                             RichText::new(if let Some(i) = self.cur_dp_index {
-                                                format!("{}km/h", self.car_1[i].speed.round())
+                                                format!(
+                                                    "{}km/h",
+                                                    if i < self.car_1.len() {
+                                                        self.car_1[i].speed.round()
+                                                    } else {
+                                                        self.car_1.last().unwrap().speed.round()
+                                                    }
+                                                )
                                             } else {
                                                 "N/A".to_owned()
                                             })
@@ -463,7 +486,14 @@ impl MapPage {
                                         );
                                         ui.label(
                                             RichText::new(if let Some(i) = self.cur_dp_index {
-                                                format!("{}", self.car_1[i].gear)
+                                                format!(
+                                                    "{}",
+                                                    if i < self.car_1.len() {
+                                                        self.car_1[i].gear
+                                                    } else {
+                                                        self.car_1.last().unwrap().gear
+                                                    }
+                                                )
                                             } else {
                                                 "N/A".to_owned()
                                             })
@@ -497,7 +527,11 @@ impl MapPage {
                                             throttle_rect.size()
                                                 * vec2(
                                                     if let Some(i) = self.cur_dp_index {
-                                                        self.car_2[i].throttle
+                                                        if i < self.car_2.len() {
+                                                            self.car_2[i].throttle
+                                                        } else {
+                                                            self.car_2.last().unwrap().throttle
+                                                        }
                                                     } else {
                                                         0.0
                                                     },
@@ -519,7 +553,11 @@ impl MapPage {
                                             brake_rect.size()
                                                 * vec2(
                                                     if let Some(i) = self.cur_dp_index {
-                                                        self.car_2[i].brake
+                                                        if i < self.car_2.len() {
+                                                            self.car_2[i].brake
+                                                        } else {
+                                                            self.car_2.last().unwrap().brake
+                                                        }
                                                     } else {
                                                         0.0
                                                     },
@@ -552,7 +590,14 @@ impl MapPage {
                                             );
                                             ui.label(
                                                 RichText::new(if let Some(i) = self.cur_dp_index {
-                                                    format!("{}km/h", self.car_2[i].speed.round())
+                                                    format!(
+                                                        "{}km/h",
+                                                        if i < self.car_2.len() {
+                                                            self.car_2[i].speed.round()
+                                                        } else {
+                                                            self.car_2.last().unwrap().speed.round()
+                                                        }
+                                                    )
                                                 } else {
                                                     "N/A".to_owned()
                                                 }) // TODO: Into a var
@@ -577,7 +622,14 @@ impl MapPage {
                                             );
                                             ui.label(
                                                 RichText::new(if let Some(i) = self.cur_dp_index {
-                                                    format!("{}", self.car_2[i].gear)
+                                                    format!(
+                                                        "{}",
+                                                        if i < self.car_2.len() {
+                                                            self.car_2[i].gear
+                                                        } else {
+                                                            self.car_2.last().unwrap().gear
+                                                        }
+                                                    )
                                                 } else {
                                                     "N/A".to_owned()
                                                 })
