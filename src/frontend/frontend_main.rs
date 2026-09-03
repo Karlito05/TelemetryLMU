@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{path::PathBuf, str::FromStr, time::Duration};
 
 use eframe::egui;
 
@@ -9,7 +9,7 @@ use crate::{
         car_info_page::CarInfo, map_page::MapPage, settings_page::Settings, sidebar::Sidebar,
         telemetry_page,
     },
-    interface::Telemetry,
+    telemetry::Telemetry,
 };
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -25,7 +25,9 @@ pub struct App {
     #[serde(skip)]
     logger: Logger,
     #[serde(skip)]
-    telemetry: Telemetry,
+    telemetry: crate::interface::Telemetry,
+    #[serde(skip)]
+    telemetry_interface: Telemetry,
 }
 
 #[derive(Debug, PartialEq, serde::Deserialize, serde::Serialize)]
@@ -59,7 +61,8 @@ impl Default for App {
             settings_page: Settings::default(),
             car_info_page: CarInfo::default(),
             logger: Logger::new("/dev/shm/LMU_Data"),
-            telemetry: Telemetry::new("/dev/shm/LMU_Data"),
+            telemetry: crate::interface::Telemetry::new("/dev/shm/LMU_Data"),
+            telemetry_interface: Telemetry::new("/dev/shm/LMU_Data".into()).unwrap(),
         }
     }
 }
@@ -111,7 +114,7 @@ impl App {
                         .expect("tokio runtime not initialised")
                         .spawn(save(
                             self.logger.save_data.clone(),
-                            Telemetry::new("/dev/shm/LMU_Data"),
+                            crate::interface::Telemetry::new("/dev/shm/LMU_Data"),
                             self.logger.car_num,
                             self.settings_page.record_save_path.clone() + "/",
                         ));

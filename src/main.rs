@@ -3,6 +3,7 @@
 mod backend;
 mod frontend;
 mod interface;
+mod telemetry;
 
 use std::sync::OnceLock;
 
