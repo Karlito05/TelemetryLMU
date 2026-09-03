@@ -18,6 +18,7 @@ pub struct App {
     sidebar: Sidebar,
     settings_page: Settings,
     telemetry_page: telemetry_page::TelemetryPage,
+    #[serde(skip)]
     map_page: MapPage,
     #[serde(skip)]
     car_info_page: CarInfo,

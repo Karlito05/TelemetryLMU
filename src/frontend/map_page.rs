@@ -30,6 +30,8 @@ pub struct MapPage {
     cur_dp_index: Option<usize>,
     car_1: Vec<Dp>,
     car_2: Vec<Dp>,
+    map: MapData,
+    map2: MapData,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
@@ -46,6 +48,22 @@ struct Dp {
 
 impl Default for MapPage {
     fn default() -> Self {
+        let map_data: MapData =
+            fs::read_to_string("/home/karlito/Projects/TelemetryLMU/public/spa.json")
+                .map_err(|e| e.to_string())
+                .and_then(|contents| serde_json::from_str(&contents).map_err(|e| e.to_string()))
+                .unwrap_or_else(|e| {
+                    eprintln!("Failed to load map data: {e}");
+                    MapData::default()
+                });
+        let map_data2: MapData =
+            fs::read_to_string("/home/karlito/Projects/TelemetryLMU/public/spa2.json")
+                .map_err(|e| e.to_string())
+                .and_then(|contents| serde_json::from_str(&contents).map_err(|e| e.to_string()))
+                .unwrap_or_else(|e| {
+                    eprintln!("Failed to load map data: {e}");
+                    MapData::default()
+                });
         Self {
             time: 0.0,
             offset: Vec2::ZERO,
@@ -53,14 +71,26 @@ impl Default for MapPage {
             cur_dp_index: None,
             car_1: vec![],
             car_2: vec![],
+            map: map_data,
+            map2: map_data2,
         }
     }
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[serde(default)]
+struct MapData {
+    inside: Vec<[f64; 2]>,
+    outside: Vec<[f64; 2]>,
+    // average: Vec<[f64; 2]>,
 }
 
 impl MapPage {
     pub fn draw_map_page(&mut self, ui: &mut Ui, sidebar: &Sidebar, settings: &Settings) {
         let ref_len = self.car_1.len().max(self.car_2.len());
-        self.cur_dp_index = Some((self.time * (ref_len - 1) as f32) as usize);
+        if ref_len > 0 {
+            self.cur_dp_index = Some((self.time * (ref_len - 1) as f32) as usize);
+        }
 
         let map_rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
@@ -82,6 +112,38 @@ impl MapPage {
                     self.car_2.iter().map(|dp| dp.pos).collect(),
                     Color32::from_rgb(255, 107, 53),
                 ),
+                (
+                    self.map
+                        .inside
+                        .iter()
+                        .map(|vec| pos2(vec[0] as f32, vec[1] as f32))
+                        .collect(),
+                    Color32::WHITE,
+                ),
+                (
+                    self.map
+                        .outside
+                        .iter()
+                        .map(|vec| pos2(vec[0] as f32, vec[1] as f32))
+                        .collect(),
+                    Color32::WHITE,
+                ),
+                (
+                    self.map2
+                        .inside
+                        .iter()
+                        .map(|vec| pos2(vec[0] as f32, vec[1] as f32))
+                        .collect(),
+                    Color32::RED,
+                ),
+                (
+                    self.map2
+                        .outside
+                        .iter()
+                        .map(|vec| pos2(vec[0] as f32, vec[1] as f32))
+                        .collect(),
+                    Color32::RED,
+                ),
             ],
         );
         if let Some(i) = self.cur_dp_index {
@@ -94,7 +156,11 @@ impl MapPage {
             let car_2_pos = if i < self.car_2.len() {
                 self.car_2[i].pos
             } else {
-                self.car_2.last().unwrap().pos
+                if let Some(v) = self.car_2.last() {
+                    v.pos
+                } else {
+                    pos2(0.0, 0.0)
+                }
             };
 
             ui.painter().circle_filled(
@@ -545,7 +611,11 @@ impl MapPage {
                                                         if i < self.car_2.len() {
                                                             self.car_2[i].throttle
                                                         } else {
-                                                            self.car_2.last().unwrap().throttle
+                                                            if let Some(v) = self.car_2.last() {
+                                                                v.throttle
+                                                            } else {
+                                                                0.0
+                                                            }
                                                         }
                                                     } else {
                                                         0.0
@@ -571,7 +641,11 @@ impl MapPage {
                                                         if i < self.car_2.len() {
                                                             self.car_2[i].brake
                                                         } else {
-                                                            self.car_2.last().unwrap().brake
+                                                            if let Some(v) = self.car_2.last() {
+                                                                v.brake
+                                                            } else {
+                                                                0.0
+                                                            }
                                                         }
                                                     } else {
                                                         0.0
@@ -625,7 +699,11 @@ impl MapPage {
                                                         if i < self.car_2.len() {
                                                             self.car_2[i].speed.round()
                                                         } else {
-                                                            self.car_2.last().unwrap().speed.round()
+                                                            if let Some(v) = self.car_2.last() {
+                                                                v.speed.round()
+                                                            } else {
+                                                                0.0
+                                                            }
                                                         }
                                                     )
                                                 } else {
@@ -657,7 +735,11 @@ impl MapPage {
                                                         if i < self.car_2.len() {
                                                             self.car_2[i].gear
                                                         } else {
-                                                            self.car_2.last().unwrap().gear
+                                                            if let Some(v) = self.car_2.last() {
+                                                                v.gear
+                                                            } else {
+                                                                0
+                                                            }
                                                         }
                                                     )
                                                 } else {
