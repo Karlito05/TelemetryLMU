@@ -1,4 +1,6 @@
 use crate::interface::{IPVehicleClass, Telemetry, i8_array32_to_string, i8_array64_to_string};
+
+#[derive(Debug)]
 pub struct FuelInfo {
     pub fuel_percent: f32,
     pub virt_eng_percent: f32,

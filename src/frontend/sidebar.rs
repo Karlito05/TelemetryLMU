@@ -3,7 +3,7 @@ use egui_phosphor_icons::{Icon, icons};
 
 use crate::frontend::{frontend_main::Page, settings_page::Settings};
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
 #[serde(default)]
 pub struct Sidebar {
     pub open: bool,

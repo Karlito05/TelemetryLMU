@@ -8,7 +8,7 @@ use crate::{
     interface::{TelemVect3, Telemetry},
 };
 
-#[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
+#[derive(serde::Serialize, serde::Deserialize, Default, Clone, Debug)]
 #[serde(default)]
 pub struct SaveData {
     pub lap_info: LapInfo,
@@ -16,27 +16,27 @@ pub struct SaveData {
     pub pos_data: Vec<PosData>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
+#[derive(serde::Serialize, serde::Deserialize, Default, Clone, Debug)]
 #[serde(default)]
 pub struct PosData {
     pub pos: TelemVect3,
     pub time_since_lap_start: f64,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
+#[derive(serde::Serialize, serde::Deserialize, Default, Clone, Debug)]
 #[serde(default)]
 pub struct LapData {
     pub data_type: String,
     pub values: Vec<Vec2>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
+#[derive(serde::Serialize, serde::Deserialize, Default, Clone, Debug)]
 #[serde(default)]
 pub struct LapInfo {
     pub lap_time: f64,
     pub date: String,
 }
-
+#[derive(Debug)]
 pub struct Logger {
     pub car_num: usize,
     cur_lap: i32,

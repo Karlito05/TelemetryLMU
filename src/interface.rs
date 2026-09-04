@@ -16,6 +16,7 @@ use windows_sys::Win32::System::Memory::{
 //##################################################################################################
 const MAX_PATH: usize = 260;
 
+#[derive(Debug)]
 pub struct Telemetry {
     pub full_mode: bool,
     pub mmap: Mmap,

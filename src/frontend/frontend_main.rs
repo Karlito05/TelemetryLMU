@@ -12,7 +12,7 @@ use crate::{
     telemetry::Telemetry,
 };
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
 #[serde(default)]
 pub struct App {
     sidebar: Sidebar,
@@ -84,11 +84,20 @@ impl eframe::App for App {
             self.process_record_laps();
         }
 
+        // egui::Window::new("Debug").show(ui.ctx(), |ui| {
+        //     ui.ctx().clone().inspection_ui(ui);
+        //     ui.ctx().clone().memory_ui(ui);
+        //     ui.ctx().clone().settings_ui(ui);
+        //     ui.ctx().clone().texture_ui(ui);
+        // });
+
         egui::CentralPanel::default().show(ui, |ui| match self.sidebar.active_page {
-            Page::Telemetry => {
-                self.telemetry_page
-                    .draw_telemetry_page(ui, &mut self.sidebar, &self.settings_page)
-            }
+            Page::Telemetry => self.telemetry_page.draw_telemetry_page(
+                ui,
+                &mut self.sidebar,
+                &self.settings_page,
+                &self.telemetry_interface,
+            ),
             Page::Info => self.car_info_page.draw_car_info_page(
                 ui,
                 &mut self.sidebar,

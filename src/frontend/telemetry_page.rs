@@ -3,22 +3,20 @@ use std::fs;
 use crate::backend::lap_stores::SaveData;
 use crate::backend::telemetry::GraphViewDataType;
 use crate::frontend::components::{
-    DropdownItem, GraphChange, GraphInfo, button, graph, graph_edit,
+    DropdownItem, DynGraphData, GraphChange, GraphInfo, Lap, button, graph, graph_edit,
 };
 use crate::frontend::components::{dropdown, telemetry_not_found};
 use crate::frontend::settings_page::Settings;
 use crate::frontend::sidebar::Sidebar;
-use crate::interface::Telemetry;
+use crate::telemetry::{Telemetry, TelemetryValueType};
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
 #[serde(default)]
 pub struct TelemetryPage {
     cur_layout_index: usize,
     layouts: Vec<LayoutInfo>,
-    #[serde(skip)]
-    telemetry: Telemetry,
     #[serde(skip)]
     cur_driver: (String, i32),
     #[serde(skip)]
@@ -66,7 +64,6 @@ struct LayoutInfo {
 impl Default for TelemetryPage {
     fn default() -> Self {
         Self {
-            telemetry: Telemetry::new("/dev/shm/LMU_Data"),
             cur_driver: ("".to_owned(), 0),
             in_layout_edit_mode: false,
             show_delete_layout_dialog: false,
@@ -89,12 +86,10 @@ impl Default for TelemetryPage {
                 name: "Main".to_owned(),
                 graphs: vec![GraphInfo {
                     show_ref: false,
-                    cur_lap: vec![],
-                    ref_lap: vec![],
+                    ref_val_type: TelemetryValueType::Rpm,
                     color: Color32::WHITE,
                     n_gridlines: 3,
                     size_percent: 1.0,
-                    graph_type: GraphViewDataType::Rpm(0),
                 }],
             }],
         }
@@ -102,80 +97,90 @@ impl Default for TelemetryPage {
 }
 
 impl TelemetryPage {
-    pub fn draw_telemetry_page(&mut self, ui: &mut Ui, sidebar: &mut Sidebar, settings: &Settings) {
-        if !self.telemetry.full_mode {
-            telemetry_not_found(ui);
-            return;
-        }
-        self.process_telemetry_updates(
-            self.layouts[self.cur_layout_index]
-                .graphs
-                .iter()
-                .map(|g| g.graph_type)
-                .collect(),
-        );
+    pub fn draw_telemetry_page(
+        &mut self,
+        ui: &mut Ui,
+        sidebar: &mut Sidebar,
+        settings: &Settings,
+        telemetry: &Telemetry,
+    ) {
+        // TODO: Refactor this into frontend_main!
+        // if !self.telemetry.full_mode {
+        //     telemetry_not_found(ui);
+        //     return;
+        // }
+        //
+        // self.process_telemetry_updates(
+        //     self.layouts[self.cur_layout_index]
+        //         .graphs
+        //         .iter()
+        //         .map(|g| g.graph_type)
+        //         .collect(),
+        // );
         if !self.in_layout_edit_mode {
-            self.draw_normal_mode(ui, sidebar, settings);
+            self.draw_normal_mode(ui, sidebar, settings, telemetry);
         } else {
             self.draw_edit_mode(ui, sidebar);
         }
     }
 
-    fn process_telemetry_updates(&mut self, graph_data_types: Vec<GraphViewDataType>) {
-        let t = self.telemetry.update_telemetry().unwrap();
+    fn update_graph_data(&mut self) {}
 
-        if self.cur_lap != graph_data_types[0].get_lap(&t) {
-            if graph_data_types[0].is_last_best(&t) && self.cur_ref_path.is_none() {
-                graph_data_types.iter().enumerate().for_each(|(i, _)| {
-                    self.layouts[self.cur_layout_index].graphs[i].ref_lap =
-                        self.layouts[self.cur_layout_index].graphs[i]
-                            .cur_lap
-                            .clone();
-                });
-            }
-            graph_data_types.iter().enumerate().for_each(|(i, _)| {
-                self.layouts[self.cur_layout_index].graphs[i].cur_lap = vec![];
-            });
-            self.cur_lap = graph_data_types[0].get_lap(&t);
-        }
-
-        graph_data_types
-            .iter()
-            .enumerate()
-            .for_each(|(i, graph_data_type)| {
-                if !self.layouts[self.cur_layout_index].graphs[i]
-                    .cur_lap
-                    .is_empty()
-                    || graph_data_type.get_normalized_distance(&t) < 0.9
-                {
-                    let new_y = graph_data_type.get_normalized_values(&t) as f32;
-                    // match self.layouts[self.cur_layout_index].graphs[i].cur_lap.last() {
-                    //     Some(last) => {
-                    //         if (last.y - new_y).abs() > 0.005 {
-                    //             self.layouts[self.cur_layout_index].graphs[i]
-                    //                 .cur_lap
-                    //                 .push(vec2(
-                    //                     graph_data_type.get_normalized_distance(&t) as f32,
-                    //                     new_y,
-                    //                 ))
-                    //         }
-                    //     }
-                    //     None => self.layouts[self.cur_layout_index].graphs[i]
-                    //         .cur_lap
-                    //         .push(vec2(
-                    //             graph_data_type.get_normalized_distance(&t) as f32,
-                    //             new_y,
-                    //         )),
-                    // }
-                    self.layouts[self.cur_layout_index].graphs[i]
-                        .cur_lap
-                        .push(vec2(
-                            graph_data_type.get_normalized_distance(&t) as f32,
-                            new_y,
-                        ));
-                }
-            });
-    }
+    // fn process_telemetry_updates(&mut self, graph_data_types: Vec<GraphViewDataType>) {
+    //     let t = self.telemetry.update_telemetry().unwrap();
+    //
+    //     if self.cur_lap != graph_data_types[0].get_lap(&t) {
+    //         if graph_data_types[0].is_last_best(&t) && self.cur_ref_path.is_none() {
+    //             graph_data_types.iter().enumerate().for_each(|(i, _)| {
+    //                 self.layouts[self.cur_layout_index].graphs[i].ref_lap =
+    //                     self.layouts[self.cur_layout_index].graphs[i]
+    //                         .cur_lap
+    //                         .clone();
+    //             });
+    //         }
+    //         graph_data_types.iter().enumerate().for_each(|(i, _)| {
+    //             self.layouts[self.cur_layout_index].graphs[i].cur_lap = vec![];
+    //         });
+    //         self.cur_lap = graph_data_types[0].get_lap(&t);
+    //     }
+    //
+    //     graph_data_types
+    //         .iter()
+    //         .enumerate()
+    //         .for_each(|(i, graph_data_type)| {
+    //             if !self.layouts[self.cur_layout_index].graphs[i]
+    //                 .cur_lap
+    //                 .is_empty()
+    //                 || graph_data_type.get_normalized_distance(&t) < 0.9
+    //             {
+    //                 let new_y = graph_data_type.get_normalized_values(&t) as f32;
+    //                 // match self.layouts[self.cur_layout_index].graphs[i].cur_lap.last() {
+    //                 //     Some(last) => {
+    //                 //         if (last.y - new_y).abs() > 0.005 {
+    //                 //             self.layouts[self.cur_layout_index].graphs[i]
+    //                 //                 .cur_lap
+    //                 //                 .push(vec2(
+    //                 //                     graph_data_type.get_normalized_distance(&t) as f32,
+    //                 //                     new_y,
+    //                 //                 ))
+    //                 //         }
+    //                 //     }
+    //                 //     None => self.layouts[self.cur_layout_index].graphs[i]
+    //                 //         .cur_lap
+    //                 //         .push(vec2(
+    //                 //             graph_data_type.get_normalized_distance(&t) as f32,
+    //                 //             new_y,
+    //                 //         )),
+    //                 // }
+    //                 self.layouts[self.cur_layout_index].graphs[i]
+    //                     .cur_lap
+    //                     .push(vec2(
+    //                         graph_data_type.get_normalized_distance(&t) as f32,
+    //                         new_y,
+    //                     ));
+    //             }
+    //         });
+    // }
 
     fn draw_edit_mode(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
         let top_bar_rect = Rect::from_min_size(
@@ -197,7 +202,13 @@ impl TelemetryPage {
         self.draw_graphs_edit(ui, graphs_rect);
     }
 
-    fn draw_normal_mode(&mut self, ui: &mut Ui, sidebar: &mut Sidebar, settings: &Settings) {
+    fn draw_normal_mode(
+        &mut self,
+        ui: &mut Ui,
+        sidebar: &mut Sidebar,
+        settings: &Settings,
+        telemetry: &Telemetry,
+    ) {
         let top_bar_rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
             vec2(
@@ -206,7 +217,7 @@ impl TelemetryPage {
             ),
         );
 
-        self.draw_top_bar_normal(ui, top_bar_rect, sidebar, settings);
+        self.draw_top_bar_normal(ui, top_bar_rect, sidebar, settings, telemetry);
 
         let graphs_rect = Rect::from_min_size(
             pos2(if sidebar.open { 300.0 } else { 16.0 }, 80.0),
@@ -216,7 +227,7 @@ impl TelemetryPage {
             ),
         );
 
-        self.draw_graphs_normal(ui, graphs_rect);
+        self.draw_graphs_normal(ui, graphs_rect, telemetry);
     }
 
     fn draw_top_bar_edit(&mut self, ui: &mut Ui, top_bar_rect: Rect, sidebar: &mut Sidebar) {
@@ -288,10 +299,10 @@ impl TelemetryPage {
         {
             self.layouts[self.edit_mode_context.layout.index].graphs =
                 self.edit_mode_context.layout.graphs.clone();
-            for graph in &mut self.layouts[self.edit_mode_context.layout.index].graphs {
-                graph.cur_lap = vec![];
-                graph.ref_lap = vec![];
-            }
+            // for graph in &mut self.layouts[self.edit_mode_context.layout.index].graphs {
+            //     graph.cur_lap = Lap::default();
+            //     graph.ref_lap = Lap::default();
+            // }
             self.edit_mode_context = EditModeContext {
                 layout: EditLayoutInfo {
                     graphs: vec![],
@@ -413,9 +424,7 @@ impl TelemetryPage {
                     show_ref: true,
                     n_gridlines: 3,
                     size_percent: 0.0,
-                    graph_type: GraphViewDataType::Rpm(self.cur_driver.1 as usize),
-                    cur_lap: vec![],
-                    ref_lap: vec![],
+                    ref_val_type: TelemetryValueType::Rpm,
                 });
 
                 let new_num_graphs = self.edit_mode_context.layout.graphs.len();
@@ -555,6 +564,7 @@ impl TelemetryPage {
         top_bar_rect: Rect,
         sidebar: &mut Sidebar,
         settings: &Settings,
+        telemetry: &Telemetry,
     ) {
         ui.painter().rect_filled(
             top_bar_rect,
@@ -570,7 +580,7 @@ impl TelemetryPage {
 
                 ui.separator();
 
-                self.draw_driver_select(ui);
+                self.draw_driver_select(ui, telemetry);
 
                 ui.separator();
 
@@ -623,7 +633,7 @@ impl TelemetryPage {
         );
     }
 
-    fn draw_driver_select(&mut self, ui: &mut Ui) {
+    fn draw_driver_select(&mut self, ui: &mut Ui, telemetry: &Telemetry) {
         ui.add(
             Label::new(RichText::new("Driver:").size(16.0).color(Color32::WHITE)).selectable(false),
         );
@@ -641,7 +651,7 @@ impl TelemetryPage {
                 size: 14.0,
                 family: FontFamily::Proportional,
             },
-            self.telemetry
+            telemetry
                 .get_drivers()
                 .iter()
                 .map(|driver| DropdownItem {
@@ -652,12 +662,13 @@ impl TelemetryPage {
         ) {
             for layout in &mut self.layouts {
                 for graph in &mut layout.graphs {
-                    graph.graph_type = GraphViewDataType::from_string(
-                        &graph.graph_type.to_string(),
-                        self.cur_driver.1 as usize,
-                    );
-                    graph.cur_lap = vec![];
-                    graph.ref_lap = vec![];
+                    // TODO: Fix this
+                    // graph. = GraphViewDataType::from_string(
+                    //     &graph.ref_val_type.to_string(),
+                    //     self.cur_driver.1 as usize,
+                    // );
+                    // graph.cur_lap = Lap::default();
+                    // graph.ref_lap = Lap::default();
                 }
             }
         }
@@ -691,10 +702,10 @@ impl TelemetryPage {
                 .collect(),
         ) {
             for layout in &mut self.layouts {
-                for graph in &mut layout.graphs {
-                    graph.cur_lap = vec![];
-                    graph.ref_lap = vec![];
-                }
+                // for graph in &mut layout.graphs {
+                //     graph.cur_lap = Lap::default();
+                //     graph.ref_lap = Lap::default();
+                // }
             }
         }
     }
@@ -705,7 +716,6 @@ impl TelemetryPage {
                 .selectable(false),
         );
 
-        #[expect(clippy::collapsible_if)]
         if button(
             ui,
             vec2(140.0, 32.0),
@@ -717,29 +727,31 @@ impl TelemetryPage {
         )
         .clicked()
         {
-            if let Some(path) = rfd::FileDialog::new()
-                .set_title("Select a reference file")
-                .set_directory(settings.record_save_path.clone())
-                .add_filter("JSON files", &["json"])
-                .pick_file()
-            {
-                self.cur_ref_path = Some(path.display().to_string());
-
-                let contents = fs::read_to_string(path).unwrap_or_default();
-                let save_data: SaveData = serde_json::from_str(&contents).unwrap_or_default();
-
-                for graph in self.layouts[self.cur_layout_index].graphs.iter_mut() {
-                    let gt = graph.graph_type.to_string();
-
-                    graph.ref_lap = save_data
-                        .lap_data
-                        .iter()
-                        .find(|d| d.data_type == gt)
-                        .unwrap()
-                        .values
-                        .clone()
-                }
-            }
+            // TODO: When I reimplement the lap Stores reimplement this
+            //
+            // if let Some(path) = rfd::FileDialog::new()
+            //     .set_title("Select a reference file")
+            //     .set_directory(settings.record_save_path.clone())
+            //     .add_filter("JSON files", &["json"])
+            //     .pick_file()
+            // {
+            //     self.cur_ref_path = Some(path.display().to_string());
+            //
+            //     let contents = fs::read_to_string(path).unwrap_or_default();
+            //     let save_data: SaveData = serde_json::from_str(&contents).unwrap_or_default();
+            //
+            //     for graph in self.layouts[self.cur_layout_index].graphs.iter_mut() {
+            //         let gt = graph.graph_type.to_string();
+            //
+            //         graph.ref_lap = save_data
+            //             .lap_data
+            //             .iter()
+            //             .find(|d| d.data_type == gt)
+            //             .unwrap()
+            //             .values
+            //             .clone()
+            //     }
+            // }
         }
         if button(
             ui,
@@ -753,9 +765,9 @@ impl TelemetryPage {
         .clicked()
         {
             self.cur_ref_path = None;
-            for graph in &mut self.layouts[self.cur_layout_index].graphs {
-                graph.ref_lap = vec![];
-            }
+            // for graph in &mut self.layouts[self.cur_layout_index].graphs {
+            //     graph.ref_lap = Lap::default();
+            // }
         }
     }
 
@@ -921,11 +933,8 @@ impl TelemetryPage {
                             }
                         }
                         GraphChange::Type(i, new_type) => {
-                            self.edit_mode_context.layout.graphs[i].graph_type =
-                                GraphViewDataType::from_string(
-                                    &new_type,
-                                    self.cur_driver.1 as usize,
-                                );
+                            self.edit_mode_context.layout.graphs[i].ref_val_type =
+                                TelemetryValueType::from_string(&new_type);
                         }
                         GraphChange::Color(i, new_color) => {
                             self.edit_mode_context.layout.graphs[i].color = new_color;
@@ -954,7 +963,7 @@ impl TelemetryPage {
         });
     }
 
-    fn draw_graphs_normal(&self, ui: &mut Ui, graphs_rect: Rect) {
+    fn draw_graphs_normal(&self, ui: &mut Ui, graphs_rect: Rect, telemetry: &Telemetry) {
         ui.put(graphs_rect, |ui: &mut Ui| {
             ui.vertical(|ui| {
                 let margins = 64.0;
@@ -963,17 +972,42 @@ impl TelemetryPage {
                     .iter()
                     .enumerate()
                 {
+                    let cur_lap_guard = telemetry.cur_lap.lock().unwrap();
+                    let last_lap_guard = telemetry.last_lap.lock().unwrap();
+
+                    let cur = &cur_lap_guard[self.cur_driver.1 as usize];
+                    let last = &last_lap_guard[self.cur_driver.1 as usize];
+
+                    let dyn_graph_data = DynGraphData {
+                        cur_lap: Lap {
+                            values: &cur.datapoints[graph_info.ref_val_type.clone() as usize].0,
+                            distances: &cur.datapoints
+                                [TelemetryValueType::DistanceIntoLap as usize]
+                                .0,
+                        },
+                        ref_lap: Lap {
+                            values: &last.datapoints[graph_info.ref_val_type.clone() as usize].0,
+                            distances: &last.datapoints
+                                [TelemetryValueType::DistanceIntoLap as usize]
+                                .0,
+                        },
+                        max_val: cur.datapoints[graph_info.ref_val_type.clone() as usize].1,
+                        max_dist: cur.datapoints[TelemetryValueType::DistanceIntoLap as usize].1,
+                    };
+
                     if self.layouts[self.cur_layout_index].graphs.len() == 1 {
                         graph(
                             ui,
                             graph_info,
+                            &dyn_graph_data,
+                            self.cur_driver.1 as usize,
                             vec2(
                                 graphs_rect.width(),
                                 graph_info.size_percent * graphs_rect.height(),
                             ),
                             CornerRadius::same(24),
                             margins,
-                            &self.telemetry.update_telemetry().unwrap(),
+                            &telemetry.get_telemetry_object(),
                         );
                         continue;
                     }
@@ -982,6 +1016,8 @@ impl TelemetryPage {
                         graph(
                             ui,
                             graph_info,
+                            &dyn_graph_data,
+                            self.cur_driver.1 as usize,
                             vec2(
                                 graphs_rect.width(),
                                 graph_info.size_percent * graphs_rect.height() - 3.0, // - 3.0 to
@@ -994,7 +1030,7 @@ impl TelemetryPage {
                                 se: 0,
                             },
                             margins,
-                            &self.telemetry.update_telemetry().unwrap(),
+                            &telemetry.get_telemetry_object(),
                         );
                         continue;
                     }
@@ -1003,6 +1039,8 @@ impl TelemetryPage {
                         graph(
                             ui,
                             graph_info,
+                            &dyn_graph_data,
+                            self.cur_driver.1 as usize,
                             vec2(
                                 graphs_rect.width(),
                                 graph_info.size_percent * graphs_rect.height(),
@@ -1014,7 +1052,7 @@ impl TelemetryPage {
                                 se: 24,
                             },
                             margins,
-                            &self.telemetry.update_telemetry().unwrap(),
+                            &telemetry.get_telemetry_object(),
                         );
                         continue;
                     }
@@ -1022,13 +1060,15 @@ impl TelemetryPage {
                     graph(
                         ui,
                         graph_info,
+                        &dyn_graph_data,
+                        self.cur_driver.1 as usize,
                         vec2(
                             graphs_rect.width(),
                             graph_info.size_percent * graphs_rect.height() - 3.0,
                         ),
                         CornerRadius::same(0),
                         margins,
-                        &self.telemetry.update_telemetry().unwrap(),
+                        &telemetry.get_telemetry_object(),
                     );
                 }
             })

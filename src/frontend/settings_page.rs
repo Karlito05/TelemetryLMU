@@ -1,3 +1,5 @@
+use core::fmt;
+
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
 
@@ -15,6 +17,18 @@ pub struct Settings {
     pfp_bytes: Option<Vec<u8>>,
     #[serde(skip)] // textures can't be serialized, recreate on load
     pub pfp_texture: Option<TextureHandle>,
+}
+
+impl fmt::Debug for Settings {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Settings")
+            .field("name", &self.name)
+            .field("in_game_name", &self.in_game_name)
+            .field("record_laps", &self.record_laps)
+            .field("record_save_path", &self.record_save_path)
+            .field("pfp_bytes", &self.pfp_bytes)
+            .finish()
+    }
 }
 
 impl Default for Settings {

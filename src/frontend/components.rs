@@ -1,7 +1,10 @@
 use eframe::{egui::*, epaint::Hsva};
 use egui_phosphor_icons::icons;
 
-use crate::{backend::telemetry::GraphViewDataType, interface::SharedMemoryObjectOut};
+use crate::{
+    backend::telemetry::GraphViewDataType, interface::SharedMemoryObjectOut,
+    telemetry::TelemetryValueType,
+};
 
 pub struct DropdownItem<T: PartialEq> {
     pub value: T,
@@ -417,8 +420,8 @@ pub fn graph_edit(
     ui.painter()
         .rect_filled(rect, corner_radius, Color32::from_rgb(22, 23, 28));
 
-    let old_graph_type = graph.graph_type.to_string();
-    let mut new_graph_type = graph.graph_type.to_string();
+    let old_graph_type = graph.ref_val_type.to_string();
+    let mut new_graph_type = graph.ref_val_type.to_string();
     let mut change = None;
 
     ui.place(rect, |ui: &mut Ui| {
@@ -658,20 +661,30 @@ pub fn graph_edit(
 #[serde(default)]
 #[derive(Clone, Debug, Default)]
 pub struct GraphInfo {
-    #[serde(skip)]
-    pub cur_lap: Vec<Vec2>,
-    #[serde(skip)]
-    pub ref_lap: Vec<Vec2>,
     pub color: Color32,
     pub show_ref: bool,
     pub n_gridlines: i32,
     pub size_percent: f32,
-    pub graph_type: GraphViewDataType,
+    pub ref_val_type: TelemetryValueType,
+}
+#[derive(Clone, Debug)]
+pub struct Lap<'a> {
+    pub values: &'a Vec<f32>,
+    pub distances: &'a Vec<f32>,
+}
+
+pub struct DynGraphData<'a> {
+    pub cur_lap: Lap<'a>,
+    pub ref_lap: Lap<'a>,
+    pub max_val: f32,
+    pub max_dist: f32,
 }
 
 pub fn graph(
     ui: &mut Ui,
     graph_info: &GraphInfo,
+    dyn_graph_data: &DynGraphData,
+    car_num: usize,
     size: Vec2,
     corner_radius: CornerRadius,
     margins: f32, // Total so val/2 on each side
@@ -684,23 +697,31 @@ pub fn graph(
     ui.painter()
         .rect_filled(rect, corner_radius, Color32::from_rgb(22, 23, 28));
 
-    let labels = graph_info
-        .graph_type
-        .get_unit_labels(telemetry, graph_info.n_gridlines);
+    // TODO: Cache this doesn't need to be refetched every render
+    let labels =
+        graph_info
+            .ref_val_type
+            .get_unit_labels(telemetry, graph_info.n_gridlines, car_num);
 
     draw_gridlines(ui.painter(), rect, graph_info.n_gridlines, margins, &labels);
+
     draw_lap(
         ui.painter(),
         rect,
-        &graph_info.cur_lap,
+        &dyn_graph_data.cur_lap,
+        dyn_graph_data.max_val,
+        dyn_graph_data.max_dist,
         margins,
         Stroke::new(1.5, graph_info.color),
     );
+
     if graph_info.show_ref {
         draw_lap(
             ui.painter(),
             rect,
-            &graph_info.ref_lap,
+            &dyn_graph_data.ref_lap,
+            dyn_graph_data.max_val,
+            dyn_graph_data.max_dist,
             margins,
             Stroke::new(
                 1.0,
@@ -716,7 +737,7 @@ pub fn graph(
     draw_title(
         ui.painter(),
         rect,
-        &capitalize_first(&graph_info.graph_type.to_string()),
+        &capitalize_first(&graph_info.ref_val_type.to_string()),
         margins,
         graph_info.color,
     );
@@ -738,16 +759,24 @@ fn draw_title(painter: &Painter, rect: Rect, text: &str, margins: f32, color: Co
     );
 }
 
-fn draw_lap(painter: &Painter, rect: Rect, lap: &Vec<Vec2>, margins: f32, stroke: Stroke) {
+fn draw_lap(
+    painter: &Painter,
+    rect: Rect,
+    lap: &Lap,
+    max_val: f32,
+    max_dist: f32,
+    margins: f32,
+    stroke: Stroke,
+) {
     let mut size = rect.size();
     size.y -= margins;
     let pos = rect.min;
     let mut points: Vec<Pos2> = vec![];
 
-    for point in lap {
+    for i in 0..lap.values.len().min(lap.distances.len()) {
         points.push(pos2(
-            point.x * size.x + pos.x,
-            (1.0 - point.y) * size.y + pos.y + margins / 2.0,
+            (lap.distances[i] / max_dist) * size.x + pos.x,
+            (1.0 - lap.values[i] / max_val) * size.y + pos.y + margins / 2.0,
         ));
     }
 

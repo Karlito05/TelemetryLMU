@@ -6,6 +6,7 @@ use crate::{
     interface::{IPVehicleClass, Telemetry},
 };
 
+#[derive(Debug)]
 pub struct CarInfo {
     name: String,
     car: String,

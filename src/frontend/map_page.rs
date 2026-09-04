@@ -21,7 +21,7 @@ use crate::{
     },
 };
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
 #[serde(default)]
 pub struct MapPage {
     zoom: f32,
@@ -34,7 +34,7 @@ pub struct MapPage {
     map2: MapData,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[derive(serde::Deserialize, serde::Serialize, Default, Debug)]
 #[serde(default)]
 struct Dp {
     pos: Pos2,
@@ -77,7 +77,7 @@ impl Default for MapPage {
     }
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[derive(serde::Deserialize, serde::Serialize, Default, Debug)]
 #[serde(default)]
 struct MapData {
     inside: Vec<[f64; 2]>,
