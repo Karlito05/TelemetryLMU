@@ -673,11 +673,10 @@ pub struct Lap<'a> {
     pub distances: &'a Vec<f32>,
 }
 
+#[derive(Clone, Debug)]
 pub struct DynGraphData<'a> {
     pub cur_lap: Lap<'a>,
     pub ref_lap: Lap<'a>,
-    pub max_val: f32,
-    pub max_dist: f32,
 }
 
 pub fn graph(
@@ -709,10 +708,11 @@ pub fn graph(
         ui.painter(),
         rect,
         &dyn_graph_data.cur_lap,
-        dyn_graph_data.max_val,
-        dyn_graph_data.max_dist,
+        graph_info,
+        telemetry,
         margins,
         Stroke::new(1.5, graph_info.color),
+        car_num,
     );
 
     if graph_info.show_ref {
@@ -720,8 +720,8 @@ pub fn graph(
             ui.painter(),
             rect,
             &dyn_graph_data.ref_lap,
-            dyn_graph_data.max_val,
-            dyn_graph_data.max_dist,
+            graph_info,
+            telemetry,
             margins,
             Stroke::new(
                 1.0,
@@ -732,6 +732,7 @@ pub fn graph(
                     127,
                 ),
             ),
+            car_num,
         );
     }
     draw_title(
@@ -763,10 +764,11 @@ fn draw_lap(
     painter: &Painter,
     rect: Rect,
     lap: &Lap,
-    max_val: f32,
-    max_dist: f32,
+    graph_info: &GraphInfo,
+    telemetry: &SharedMemoryObjectOut,
     margins: f32,
     stroke: Stroke,
+    car_num: usize,
 ) {
     let mut size = rect.size();
     size.y -= margins;
@@ -775,8 +777,19 @@ fn draw_lap(
 
     for i in 0..lap.values.len().min(lap.distances.len()) {
         points.push(pos2(
-            (lap.distances[i] / max_dist) * size.x + pos.x,
-            (1.0 - lap.values[i] / max_val) * size.y + pos.y + margins / 2.0,
+            TelemetryValueType::DistanceIntoLap.normalize(
+                lap.distances[i] as f64,
+                telemetry,
+                car_num,
+            ) as f32
+                * size.x
+                + pos.x,
+            (1.0 - graph_info
+                .ref_val_type
+                .normalize(lap.values[i] as f64, telemetry, car_num) as f32)
+                * size.y
+                + pos.y
+                + margins / 2.0,
         ));
     }
 

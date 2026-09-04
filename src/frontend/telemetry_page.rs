@@ -980,19 +980,15 @@ impl TelemetryPage {
 
                     let dyn_graph_data = DynGraphData {
                         cur_lap: Lap {
-                            values: &cur.datapoints[graph_info.ref_val_type.clone() as usize].0,
+                            values: &cur.datapoints[graph_info.ref_val_type.clone() as usize],
                             distances: &cur.datapoints
-                                [TelemetryValueType::DistanceIntoLap as usize]
-                                .0,
+                                [TelemetryValueType::DistanceIntoLap as usize],
                         },
                         ref_lap: Lap {
-                            values: &last.datapoints[graph_info.ref_val_type.clone() as usize].0,
+                            values: &last.datapoints[graph_info.ref_val_type.clone() as usize],
                             distances: &last.datapoints
-                                [TelemetryValueType::DistanceIntoLap as usize]
-                                .0,
+                                [TelemetryValueType::DistanceIntoLap as usize],
                         },
-                        max_val: cur.datapoints[graph_info.ref_val_type.clone() as usize].1,
-                        max_dist: cur.datapoints[TelemetryValueType::DistanceIntoLap as usize].1,
                     };
 
                     if self.layouts[self.cur_layout_index].graphs.len() == 1 {

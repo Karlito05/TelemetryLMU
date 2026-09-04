@@ -49,7 +49,7 @@ impl TelemetryValueType {
     pub fn get_value(&self, t: &SharedMemoryObjectOut, driver: usize) -> f64 {
         match self {
             Self::Rpm => t.telemetry.telemetry_info[driver].m_engine_rpm,
-            Self::Speed => t.telemetry.telemetry_info[driver].m_local_vel.z * 3.6,
+            Self::Speed => -t.telemetry.telemetry_info[driver].m_local_vel.z * 3.6,
             Self::Throttle => t.telemetry.telemetry_info[driver].m_unfiltered_throttle,
             Self::Brake => t.telemetry.telemetry_info[driver].m_unfiltered_brake,
             Self::Delta => t.telemetry.telemetry_info[driver].m_delta_best,
@@ -121,6 +121,15 @@ impl TelemetryValueType {
         }
     }
 
+    pub fn normalize(&self, v: f64, t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
+        match self {
+            Self::Delta => v / (self.get_max_value(t, car_num) / 2.0),
+            Self::TimeIntoLap => -1.0,
+            Self::Max => panic!("Can't call get_max_value on TelemetryValueType::Max"),
+            _ => v / self.get_max_value(t, car_num),
+        }
+    }
+
     pub fn get_unit_labels(
         &self,
         telemetry: &SharedMemoryObjectOut,
@@ -186,6 +195,7 @@ impl TelemetryValueType {
 
 // TODO:
 // Add a hard limit on how big the data can get
+// At 21600 (should be good for 6min of data)
 
 #[derive(Debug)]
 pub struct Telemetry {
@@ -199,7 +209,7 @@ pub struct Telemetry {
 
 #[derive(Default, Clone, Debug)]
 pub struct Lap {
-    pub datapoints: [(Vec<f32>, f32); TelemetryValueType::Max as usize], // (Datapoints, Max_val)
+    pub datapoints: [Vec<f32>; TelemetryValueType::Max as usize],
     pub laptime: Option<f32>,
 }
 
@@ -242,12 +252,11 @@ impl Telemetry {
                         thread_last_lap.lock().unwrap()[j] = driver.clone();
                         thread_cur_lap_nums.lock().unwrap()[j] = new_lap;
                         for logged_value in driver.datapoints.iter_mut() {
-                            logged_value.0.clear();
+                            logged_value.clear();
                         }
                     }
                     for (h, dp) in data.0.iter().enumerate() {
-                        driver.datapoints[h].0.push(dp.0 as f32);
-                        driver.datapoints[h].1 = dp.1 as f32;
+                        driver.datapoints[h].push(*dp as f32);
                     }
                 }
                 thread::sleep(Duration::from_millis(16));
@@ -277,11 +286,11 @@ impl Telemetry {
 fn get_telemetry(
     t: &interface::Telemetry,
     cur_laps: [i32; 104],
-) -> [([(f64, f64); TelemetryValueType::Max as usize], Option<i32>); 104] {
+) -> [([f64; TelemetryValueType::Max as usize], Option<i32>); 104] {
     let cur_data = t.update_telemetry().unwrap();
 
-    let mut ret: [([(f64, f64); TelemetryValueType::Max as usize], Option<i32>); 104] =
-        std::array::from_fn(|_| (std::array::from_fn(|_| (0.0, 0.0)), None));
+    let mut ret: [([f64; TelemetryValueType::Max as usize], Option<i32>); 104] =
+        std::array::from_fn(|_| (std::array::from_fn(|_| 0.0), None));
     for j in 0..104 {
         let new_lap_num = cur_data.telemetry.telemetry_info[j].m_lap_number;
         if cur_laps[j] != new_lap_num {
@@ -289,8 +298,7 @@ fn get_telemetry(
         }
         for i in 0..TelemetryValueType::Max as usize {
             let tel_type = TelemetryValueType::try_from(i).unwrap();
-            ret[j].0[i].0 = tel_type.get_value(&cur_data, j);
-            ret[j].0[i].1 = tel_type.get_max_value(&cur_data, j);
+            ret[j].0[i] = tel_type.get_value(&cur_data, j);
         }
     }
     ret
