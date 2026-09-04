@@ -1,4 +1,9 @@
+// TODO:
+// Make it so the it saves to the path declared in settings.
+// Make it so the user can choose if it should log only him or the whole lobby.
+
 use std::{
+    fs,
     path::PathBuf,
     sync::{
         Arc, Mutex,
@@ -8,7 +13,14 @@ use std::{
     time::Duration,
 };
 
-use crate::interface::{self, SharedMemoryObjectOut};
+use chrono::Local;
+
+use crate::{
+    TOKIO,
+    interface::{
+        self, IPVehicleClass, SharedMemoryObjectOut, i8_array32_to_string, i8_array64_to_string,
+    },
+};
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Default, Debug)]
 pub enum TelemetryValueType {
@@ -193,10 +205,6 @@ impl TelemetryValueType {
     }
 }
 
-// TODO:
-// Add a hard limit on how big the data can get
-// At 21600 (should be good for 6min of data)
-
 #[derive(Debug)]
 pub struct Telemetry {
     pub cur_lap: Arc<Mutex<[Lap; 104]>>,
@@ -251,11 +259,24 @@ impl Telemetry {
                     if let Some(new_lap) = data.1 {
                         thread_last_lap.lock().unwrap()[j] = driver.clone();
                         thread_cur_lap_nums.lock().unwrap()[j] = new_lap;
+                        TOKIO.get().expect("tokio runtime not initialised").spawn(
+                            set_laptime_and_save(
+                                Arc::clone(&thread_last_lap),
+                                interface::Telemetry::new("/dev/shm/LMU_Data"), // We
+                                // just make a new interface here because it's inexpensive and would
+                                // cause deadlocks if we didn't
+                                j,
+                                "".to_owned(),
+                            ),
+                        );
                         for logged_value in driver.datapoints.iter_mut() {
                             logged_value.clear();
                         }
                     }
                     for (h, dp) in data.0.iter().enumerate() {
+                        if driver.datapoints[h].len() > 21600 {
+                            driver.datapoints[h].remove(0);
+                        }
                         driver.datapoints[h].push(*dp as f32);
                     }
                 }
@@ -302,4 +323,99 @@ fn get_telemetry(
         }
     }
     ret
+}
+
+async fn set_laptime_and_save(
+    last_lap: Arc<Mutex<[Lap; 104]>>,
+    interface: interface::Telemetry,
+    car_num: usize,
+    path: String,
+) {
+    set_laptime(last_lap.clone(), &interface, car_num).await;
+    save(last_lap, &interface, car_num, path).await;
+}
+
+async fn set_laptime(
+    last_lap: Arc<Mutex<[Lap; 104]>>,
+    interface: &interface::Telemetry,
+    car_num: usize,
+) {
+    tokio::time::sleep(Duration::from_millis(100)).await;
+
+    let laptime = {
+        interface
+            .update_telemetry()
+            .unwrap()
+            .scoring
+            .veh_scoring_info[car_num]
+            .m_last_lap_time as f32
+    };
+
+    last_lap.lock().unwrap()[car_num].laptime = Some(laptime);
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct SaveData {
+    date: String,
+    track: String,
+    driver_name: String,
+    car: String,
+    car_class: IPVehicleClass,
+    lap_time: f32,
+    // Conditions
+    lap_data: [Vec<f32>; TelemetryValueType::Max as usize],
+}
+
+async fn save(
+    lap: Arc<Mutex<[Lap; 104]>>,
+    interface: &interface::Telemetry,
+    car_num: usize,
+    path: String,
+) {
+    let time = Local::now().format("%d-%m-%Y-%H-%M-%S").to_string();
+    let telemetry = interface.update_telemetry().unwrap();
+
+    let track = i8_array64_to_string(&telemetry.scoring.scoring_info.m_track_name);
+    let car = i8_array64_to_string(&telemetry.scoring.veh_scoring_info[car_num].m_vehicle_name);
+    let car_class = telemetry.telemetry.telemetry_info[car_num].m_vehicle_class;
+    let driver_name =
+        i8_array32_to_string(&telemetry.scoring.veh_scoring_info[car_num].m_driver_name);
+
+    let to_save_lap: Lap;
+    {
+        to_save_lap = lap.lock().unwrap()[car_num].clone();
+    }
+    let save_data = SaveData {
+        date: time,
+        track: track.clone(),
+        driver_name: driver_name.clone(),
+        car,
+        car_class,
+        lap_time: to_save_lap.laptime.unwrap_or(-1.0), // -1.0 fails the save check down
+        // the line
+        lap_data: to_save_lap.datapoints,
+    };
+
+    if save_data.lap_time > 0.0
+        && TelemetryValueType::DistanceIntoLap.normalize(
+            (*save_data.lap_data[TelemetryValueType::DistanceIntoLap as usize]
+                .first()
+                .unwrap_or(&1.0)) as f64, // 1.0 so it fails the check
+            &telemetry,
+            car_num,
+        ) < 0.5
+        && save_data.lap_data[0].len() > 60
+    // have recorded at least a second
+    {
+        fs::write(
+            path + &track
+                + "-"
+                + &Local::now().format("%d.%m.%Y %H:%M:%S").to_string()
+                + "-"
+                + &driver_name
+                + ".json",
+            serde_json::to_string(&save_data).unwrap(),
+        )
+        .unwrap();
+    }
 }

@@ -627,7 +627,7 @@ mod tests {
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 #[expect(unused)]
 pub enum IPVehicleClass {
     Hypercar = 0x00,
