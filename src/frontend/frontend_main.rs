@@ -1,22 +1,51 @@
-use std::{path::PathBuf, str::FromStr, time::Duration};
+use core::fmt;
+use std::{
+    sync::{Arc, Mutex, RwLock},
+    time::Duration,
+};
 
-use eframe::egui;
+use eframe::egui::{self, TextureHandle};
 
 use crate::{
     TOKIO,
     backend::lap_stores::{Logger, save},
     frontend::{
-        car_info_page::CarInfo, map_page::MapPage, settings_page::Settings, sidebar::Sidebar,
+        car_info_page::CarInfo, map_page::MapPage, settings_page::SettingsPage, sidebar::Sidebar,
         telemetry_page,
     },
     telemetry::Telemetry,
 };
 
+#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[serde(default)]
+pub struct SettingsProvider {
+    pub name: RwLock<String>,
+    pub in_game_name: RwLock<String>,
+    pub record_laps: RwLock<bool>,
+    pub record_save_path: RwLock<String>,
+    pub pfp_bytes: RwLock<Option<Vec<u8>>>,
+    #[serde(skip)] // textures can't be serialized, recreate on load
+    pub pfp_texture: RwLock<Option<TextureHandle>>,
+}
+
+impl fmt::Debug for SettingsProvider {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SettingsProvider")
+            .field("name", &self.name)
+            .field("in_game_name", &self.in_game_name)
+            .field("record_laps", &self.record_laps)
+            .field("record_save_path", &self.record_save_path)
+            .field("pfp_bytes", &self.pfp_bytes)
+            .finish()
+    }
+}
+
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 #[serde(default)]
 pub struct App {
     sidebar: Sidebar,
-    settings_page: Settings,
+    settings_provider: Arc<SettingsProvider>,
+    settings_page: SettingsPage,
     telemetry_page: telemetry_page::TelemetryPage,
     #[serde(skip)]
     map_page: MapPage,
@@ -54,15 +83,17 @@ impl App {
 
 impl Default for App {
     fn default() -> Self {
+        let settings_provider = Arc::new(SettingsProvider::default());
         Self {
-            sidebar: Sidebar::default(),
-            map_page: MapPage::default(),
+            sidebar: Sidebar::new(settings_provider.clone()),
+            map_page: MapPage::new(settings_provider.clone()),
             telemetry_page: telemetry_page::TelemetryPage::default(),
-            settings_page: Settings::default(),
-            car_info_page: CarInfo::default(),
+            settings_page: SettingsPage::new(settings_provider.clone()),
+            car_info_page: CarInfo::new(settings_provider.clone()),
             logger: Logger::new("/dev/shm/LMU_Data"),
             telemetry: crate::interface::Telemetry::new("/dev/shm/LMU_Data"),
             telemetry_interface: Telemetry::new("/dev/shm/LMU_Data".into()).unwrap(),
+            settings_provider,
         }
     }
 }
@@ -74,15 +105,16 @@ impl eframe::App for App {
     }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         ui.request_repaint_after(Duration::from_millis(16));
-        self.sidebar.draw_sidebar(ui, &self.settings_page);
+        self.sidebar.draw_sidebar(ui);
 
         if self.sidebar.settings_open {
             self.settings_page.draw_settings_page(ui, &mut self.sidebar);
         }
 
-        if self.settings_page.record_laps && self.telemetry.full_mode {
-            self.process_record_laps();
-        }
+        // TODO: Handle this in the main telemetry
+        // if self.settings_page.record_laps && self.telemetry.full_mode {
+        //     self.process_record_laps();
+        // }
 
         // egui::Window::new("Debug").show(ui.ctx(), |ui| {
         //     ui.ctx().clone().inspection_ui(ui);
@@ -98,11 +130,7 @@ impl eframe::App for App {
                 &self.settings_page,
                 &self.telemetry_interface,
             ),
-            Page::Info => self.car_info_page.draw_car_info_page(
-                ui,
-                &mut self.sidebar,
-                &mut self.settings_page,
-            ),
+            Page::Info => self.car_info_page.draw_car_info_page(ui, &mut self.sidebar),
             Page::Map => self
                 .map_page
                 .draw_map_page(ui, &self.sidebar, &self.settings_page),
@@ -110,29 +138,51 @@ impl eframe::App for App {
     }
 }
 
-impl App {
-    fn process_record_laps(&mut self) {
-        if let Some(d) = self
-            .telemetry
-            .find_driver(self.settings_page.in_game_name.clone())
-        {
-            if d.1 as usize == self.logger.car_num {
-                if self.logger.add_datapoints() {
-                    TOKIO
-                        .get()
-                        .expect("tokio runtime not initialised")
-                        .spawn(save(
-                            self.logger.save_data.clone(),
-                            crate::interface::Telemetry::new("/dev/shm/LMU_Data"),
-                            self.logger.car_num,
-                            self.settings_page.record_save_path.clone() + "/",
-                        ));
-                    self.logger.clear();
-                }
-            } else {
-                self.logger.clear();
-                self.logger.car_num = d.1 as usize;
-            }
-        }
+// impl App {
+//     fn process_record_laps(&mut self) {
+//         if let Some(d) = self
+//             .telemetry
+//             .find_driver(self.settings_page.in_game_name.clone())
+//         {
+//             if d.1 as usize == self.logger.car_num {
+//                 if self.logger.add_datapoints() {
+//                     TOKIO
+//                         .get()
+//                         .expect("tokio runtime not initialised")
+//                         .spawn(save(
+//                             self.logger.save_data.clone(),
+//                             crate::interface::Telemetry::new("/dev/shm/LMU_Data"),
+//                             self.logger.car_num,
+//                             self.settings_page.record_save_path.clone() + "/",
+//                         ));
+//                     self.logger.clear();
+//                 }
+//             } else {
+//                 self.logger.clear();
+//                 self.logger.car_num = d.1 as usize;
+//             }
+//         }
+//     }
+// }
+
+mod arc_mutex_serde {
+    use super::*;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    pub fn serialize<S, T>(val: &Arc<Mutex<T>>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+        T: Serialize,
+    {
+        let guard = val.lock().map_err(serde::ser::Error::custom)?;
+        T::serialize(&*guard, serializer)
+    }
+
+    pub fn deserialize<'de, D, T>(deserializer: D) -> Result<Arc<Mutex<T>>, D::Error>
+    where
+        D: Deserializer<'de>,
+        T: Deserialize<'de>,
+    {
+        Ok(Arc::new(Mutex::new(T::deserialize(deserializer)?)))
     }
 }

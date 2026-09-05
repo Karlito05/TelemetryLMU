@@ -1,8 +1,13 @@
+use std::sync::{Arc, Mutex};
+
 use eframe::egui::*;
 
 use crate::{
     backend::car_info::{FuelInfo, TireInfo, get_dyn_driver_info, get_stale_driver_info},
-    frontend::{components::telemetry_not_found, settings_page::Settings, sidebar::Sidebar},
+    frontend::{
+        components::telemetry_not_found, frontend_main::SettingsProvider,
+        settings_page::SettingsPage, sidebar::Sidebar,
+    },
     interface::{IPVehicleClass, Telemetry},
 };
 
@@ -15,10 +20,11 @@ pub struct CarInfo {
     fuel_info: FuelInfo,
     tires: [TireInfo; 4],
     telemetry: Telemetry,
+    settings_provider: Arc<SettingsProvider>,
 }
 
-impl Default for CarInfo {
-    fn default() -> Self {
+impl CarInfo {
+    pub fn new(settings_provider: Arc<SettingsProvider>) -> Self {
         Self {
             telemetry: Telemetry::new("/dev/shm/LMU_Data"),
             driver_index: 0,
@@ -36,24 +42,22 @@ impl Default for CarInfo {
                 TireInfo::default(),
                 TireInfo::default(),
             ],
+            settings_provider,
         }
     }
 }
 
 impl CarInfo {
-    pub fn draw_car_info_page(
-        &mut self,
-        ui: &mut Ui,
-        sidebar: &mut Sidebar,
-        settings: &mut Settings,
-    ) {
+    pub fn draw_car_info_page(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
         if !self.telemetry.full_mode {
             telemetry_not_found(ui);
             return;
         }
         if self.name.is_empty()
-            && let Ok(info) =
-                get_stale_driver_info(&self.telemetry, settings.in_game_name.to_owned())
+            && let Ok(info) = get_stale_driver_info(
+                &self.telemetry,
+                self.settings_provider.in_game_name.read().unwrap().clone(),
+            )
         {
             self.name = info.name;
             self.car = info.car;

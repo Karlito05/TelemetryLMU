@@ -7,7 +7,11 @@
 // - Redisign the pick to include a clear button and some info about the lap (car time)
 // - Make sure user picks a lap in the same class and on the same track
 
-use std::{f32::consts::PI, fs};
+use std::{
+    f32::consts::PI,
+    fs,
+    sync::{Arc, Mutex},
+};
 
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
@@ -16,12 +20,13 @@ use crate::{
     backend::lap_stores::SaveData,
     frontend::{
         components::{button, slider},
-        settings_page::Settings,
+        frontend_main::SettingsProvider,
+        settings_page::SettingsPage,
         sidebar::Sidebar,
     },
 };
 
-#[derive(serde::Deserialize, serde::Serialize, Debug)]
+#[derive(serde::Deserialize, serde::Serialize, Debug, Default)]
 #[serde(default)]
 pub struct MapPage {
     zoom: f32,
@@ -32,6 +37,8 @@ pub struct MapPage {
     car_2: Vec<Dp>,
     map: MapData,
     map2: MapData,
+    #[serde(skip)]
+    settings_provider: Arc<SettingsProvider>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, Debug)]
@@ -46,8 +53,8 @@ struct Dp {
     steering: f32,
 }
 
-impl Default for MapPage {
-    fn default() -> Self {
+impl MapPage {
+    pub fn new(settings_provider: Arc<SettingsProvider>) -> Self {
         let map_data: MapData =
             fs::read_to_string("/home/karlito/Projects/TelemetryLMU/public/spa.json")
                 .map_err(|e| e.to_string())
@@ -73,6 +80,7 @@ impl Default for MapPage {
             car_2: vec![],
             map: map_data,
             map2: map_data2,
+            settings_provider,
         }
     }
 }
@@ -86,7 +94,7 @@ struct MapData {
 }
 
 impl MapPage {
-    pub fn draw_map_page(&mut self, ui: &mut Ui, sidebar: &Sidebar, settings: &Settings) {
+    pub fn draw_map_page(&mut self, ui: &mut Ui, sidebar: &Sidebar, settings: &SettingsPage) {
         let ref_len = self.car_1.len().max(self.car_2.len());
         if ref_len > 0 {
             self.cur_dp_index = Some((self.time * (ref_len - 1) as f32) as usize);
@@ -182,7 +190,7 @@ impl MapPage {
         self.draw_controls(ui, controls_rect, settings);
     }
 
-    fn draw_controls(&mut self, ui: &mut Ui, rect: Rect, settings: &Settings) {
+    fn draw_controls(&mut self, ui: &mut Ui, rect: Rect, settings: &SettingsPage) {
         ui.painter()
             .rect_filled(rect, 16, Color32::from_white_alpha(17));
 
@@ -223,7 +231,13 @@ impl MapPage {
                             {
                                 if let Some(path) = rfd::FileDialog::new()
                                     .set_title("Select a reference file")
-                                    .set_directory(settings.record_save_path.clone())
+                                    .set_directory(
+                                        self.settings_provider
+                                            .record_save_path
+                                            .read()
+                                            .unwrap()
+                                            .clone(),
+                                    )
                                     .add_filter("JSON files", &["json"])
                                     .pick_file()
                                 {
@@ -298,7 +312,13 @@ impl MapPage {
                                 {
                                     if let Some(path) = rfd::FileDialog::new()
                                         .set_title("Select a reference file")
-                                        .set_directory(settings.record_save_path.clone())
+                                        .set_directory(
+                                            self.settings_provider
+                                                .record_save_path
+                                                .read()
+                                                .unwrap()
+                                                .clone(),
+                                        )
                                         .add_filter("JSON files", &["json"])
                                         .pick_file()
                                     {

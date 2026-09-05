@@ -6,7 +6,7 @@ use crate::frontend::components::{
     DropdownItem, DynGraphData, GraphChange, GraphInfo, Lap, button, graph, graph_edit,
 };
 use crate::frontend::components::{dropdown, telemetry_not_found};
-use crate::frontend::settings_page::Settings;
+use crate::frontend::settings_page::SettingsPage;
 use crate::frontend::sidebar::Sidebar;
 use crate::telemetry::{Telemetry, TelemetryValueType};
 use eframe::egui::*;
@@ -101,7 +101,7 @@ impl TelemetryPage {
         &mut self,
         ui: &mut Ui,
         sidebar: &mut Sidebar,
-        settings: &Settings,
+        settings: &SettingsPage,
         telemetry: &Telemetry,
     ) {
         // TODO: Refactor this into frontend_main!
@@ -206,7 +206,7 @@ impl TelemetryPage {
         &mut self,
         ui: &mut Ui,
         sidebar: &mut Sidebar,
-        settings: &Settings,
+        settings: &SettingsPage,
         telemetry: &Telemetry,
     ) {
         let top_bar_rect = Rect::from_min_size(
@@ -563,7 +563,7 @@ impl TelemetryPage {
         ui: &mut Ui,
         top_bar_rect: Rect,
         sidebar: &mut Sidebar,
-        settings: &Settings,
+        settings: &SettingsPage,
         telemetry: &Telemetry,
     ) {
         ui.painter().rect_filled(
@@ -710,7 +710,7 @@ impl TelemetryPage {
         }
     }
 
-    fn draw_reference_controls(&mut self, ui: &mut Ui, settings: &Settings) {
+    fn draw_reference_controls(&mut self, ui: &mut Ui, settings: &SettingsPage) {
         ui.add(
             Label::new(RichText::new("Reference:").size(16.0).color(Color32::WHITE))
                 .selectable(false),

@@ -1,29 +1,36 @@
+use std::sync::{Arc, Mutex};
+
 use eframe::egui::*;
 use egui_phosphor_icons::{Icon, icons};
 
-use crate::frontend::{frontend_main::Page, settings_page::Settings};
+use crate::frontend::{
+    frontend_main::{Page, SettingsProvider},
+    settings_page::SettingsPage,
+};
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
-#[serde(default)]
 pub struct Sidebar {
     pub open: bool,
     pub active_page: Page,
     #[serde(skip)]
     pub settings_open: bool,
+    #[serde(skip)]
+    settings_provider: Arc<SettingsProvider>,
 }
 
-impl Default for Sidebar {
-    fn default() -> Self {
+impl Sidebar {
+    pub fn new(settings_provider: Arc<SettingsProvider>) -> Self {
         Self {
-            open: true,
+            open: false,
             active_page: Page::Telemetry,
             settings_open: false,
+            settings_provider,
         }
     }
 }
 
 impl Sidebar {
-    pub fn draw_sidebar(&mut self, ui: &mut Ui, settings: &Settings) {
+    pub fn draw_sidebar(&mut self, ui: &mut Ui) {
         // let screen_width = ui.ctx().viewport_rect().width();
         let sidebar_width = 300.0;
         let sidebar_height = ui.ctx().viewport_rect().height();
@@ -59,7 +66,7 @@ impl Sidebar {
 
                         ui.add_space(ui.available_height() - 70.0);
 
-                        if self.draw_profile(ui, settings).clicked() {
+                        if self.draw_profile(ui).clicked() {
                             self.settings_open = true;
                         }
                     })
@@ -183,7 +190,7 @@ impl Sidebar {
         response
     }
 
-    fn draw_profile(&self, ui: &mut Ui, settings: &Settings) -> Response {
+    fn draw_profile(&self, ui: &mut Ui) -> Response {
         let desired_size = vec2(ui.available_width() - 16.0, 64.0);
 
         let (rect, response) = ui.allocate_exact_size(desired_size, Sense::click());
@@ -201,7 +208,7 @@ impl Sidebar {
         // Profile image
         let image_rect = Rect::from_min_size(rect.min + vec2(8.0, 8.0), vec2(48.0, 48.0));
 
-        if let Some(img) = &settings.pfp_texture {
+        if let Some(img) = &*self.settings_provider.pfp_texture.read().unwrap() {
             ui.put(
                 image_rect,
                 Image::new(img)
@@ -214,7 +221,7 @@ impl Sidebar {
         ui.painter().text(
             pos2(rect.min.x + 80.0, rect.center().y),
             Align2::LEFT_CENTER,
-            settings.name.clone(),
+            self.settings_provider.name.read().unwrap().clone(),
             FontId::proportional(24.0),
             Color32::WHITE,
         );

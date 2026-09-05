@@ -1,50 +1,26 @@
-use core::fmt;
+use std::sync::{Arc, Mutex};
 
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
+use serde::{Deserialize, Serialize};
 
 use crate::frontend::{
     components::{button, input, switch},
+    frontend_main::SettingsProvider,
     sidebar::Sidebar,
 };
-#[derive(serde::Deserialize, serde::Serialize)]
-#[serde(default)]
-pub struct Settings {
-    pub name: String,
-    pub in_game_name: String,
-    pub record_laps: bool,
-    pub record_save_path: String,
-    pfp_bytes: Option<Vec<u8>>,
-    #[serde(skip)] // textures can't be serialized, recreate on load
-    pub pfp_texture: Option<TextureHandle>,
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SettingsPage {
+    #[serde(skip)]
+    settings_provider: Arc<SettingsProvider>,
 }
 
-impl fmt::Debug for Settings {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Settings")
-            .field("name", &self.name)
-            .field("in_game_name", &self.in_game_name)
-            .field("record_laps", &self.record_laps)
-            .field("record_save_path", &self.record_save_path)
-            .field("pfp_bytes", &self.pfp_bytes)
-            .finish()
+impl SettingsPage {
+    pub fn new(settings_provider: Arc<SettingsProvider>) -> Self {
+        Self { settings_provider }
     }
-}
 
-impl Default for Settings {
-    fn default() -> Self {
-        Self {
-            name: "".to_owned(),
-            in_game_name: "".to_owned(),
-            record_laps: true,
-            record_save_path: "".to_owned(),
-            pfp_bytes: None,
-            pfp_texture: None,
-        }
-    }
-}
-
-impl Settings {
     pub fn draw_settings_page(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
         Window::new("Settings")
             .resizable(false)
@@ -84,7 +60,7 @@ impl Settings {
                             CornerRadius::same(8),
                             Stroke::new(1.0, Color32::from_gray(127)),
                             Color32::from_white_alpha(17),
-                            &mut self.name,
+                            &mut self.settings_provider.name.write().unwrap(),
                             FontSelection::FontId(FontId::proportional(16.0)),
                             32,
                         )
@@ -100,7 +76,7 @@ impl Settings {
                             CornerRadius::same(8),
                             Stroke::new(1.0, Color32::from_gray(127)),
                             Color32::from_white_alpha(17),
-                            &mut self.in_game_name,
+                            &mut self.settings_provider.in_game_name.write().unwrap(),
                             FontSelection::FontId(FontId::proportional(16.0)),
                             32,
                         )
@@ -110,20 +86,25 @@ impl Settings {
                     ui.label(RichText::new("Record Laps").size(20.0));
 
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        self.record_laps = switch(
+                        *self.settings_provider.record_laps.write().unwrap() = switch(
                             ui,
                             vec2(48.0, 24.0),
                             CornerRadius::same(8),
                             Color32::from_white_alpha(25),
                             Color32::from_rgb(19, 141, 241),
-                            self.record_laps,
+                            *self.settings_provider.record_laps.read().unwrap(),
                         )
                     })
                 });
                 ui.horizontal(|ui| {
                     ui.vertical(|ui| {
                         ui.label(RichText::new("Lap Save Path").size(20.0));
-                        ui.label(RichText::new(&self.record_save_path).size(12.0));
+                        ui.label(
+                            RichText::new(
+                                &*self.settings_provider.record_save_path.read().unwrap(),
+                            )
+                            .size(12.0),
+                        );
                     });
 
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -141,12 +122,19 @@ impl Settings {
                         {
                             if let Some(path) = rfd::FileDialog::new()
                                 .set_title("Select folder")
-                                .set_directory(self.record_save_path.clone())
+                                .set_directory(
+                                    self.settings_provider
+                                        .record_save_path
+                                        .read()
+                                        .unwrap()
+                                        .clone(),
+                                )
                                 .add_filter("All files", &["*"])
                                 .set_can_create_directories(true)
                                 .pick_folder()
                             {
-                                self.record_save_path = path.display().to_string()
+                                *self.settings_provider.record_save_path.write().unwrap() =
+                                    path.display().to_string()
                             }
                         }
                     })
@@ -199,21 +187,27 @@ impl Settings {
             eprintln!("Failed to encode pfp");
             return;
         }
-        self.pfp_bytes = Some(png.into_inner());
+        *self.settings_provider.pfp_bytes.write().unwrap() = Some(png.into_inner());
 
         // build gpu texture
         let size = [img.width() as usize, img.height() as usize];
         let color = ColorImage::from_rgba_unmultiplied(size, img.as_raw());
-        self.pfp_texture = Some(ctx.load_texture("pfp", color, TextureOptions::LINEAR));
+        *self.settings_provider.pfp_texture.write().unwrap() =
+            Some(ctx.load_texture("pfp", color, TextureOptions::LINEAR));
     }
 
     /// Rebuild texture from persisted bytes (call once on startup).
     pub fn restore_pfp(&mut self, ctx: &Context) {
         #[expect(clippy::collapsible_if)]
-        if self.pfp_texture.is_none() {
-            if let Some(bytes) = self.pfp_bytes.clone() {
-                self.load_pfp(ctx, &bytes);
-            }
+        if self.settings_provider.pfp_texture.read().unwrap().is_none() {
+            let bytes = self
+                .settings_provider
+                .pfp_bytes
+                .read()
+                .unwrap()
+                .clone()
+                .unwrap();
+            self.load_pfp(ctx, &bytes);
         }
     }
 }
