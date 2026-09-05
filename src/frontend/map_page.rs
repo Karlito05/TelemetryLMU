@@ -10,7 +10,7 @@
 use std::{
     f32::consts::PI,
     fs,
-    sync::{Arc, Mutex},
+    sync::Arc,
 };
 
 use eframe::egui::*;
@@ -190,7 +190,7 @@ impl MapPage {
         self.draw_controls(ui, controls_rect, settings);
     }
 
-    fn draw_controls(&mut self, ui: &mut Ui, rect: Rect, settings: &SettingsPage) {
+    fn draw_controls(&mut self, ui: &mut Ui, rect: Rect, _settings: &SettingsPage) {
         ui.painter()
             .rect_filled(rect, 16, Color32::from_white_alpha(17));
 

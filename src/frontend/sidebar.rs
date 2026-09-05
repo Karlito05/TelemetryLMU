@@ -1,12 +1,9 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use eframe::egui::*;
 use egui_phosphor_icons::{Icon, icons};
 
-use crate::frontend::{
-    frontend_main::{Page, SettingsProvider},
-    settings_page::SettingsPage,
-};
+use crate::frontend::frontend_main::{Page, SettingsProvider};
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct Sidebar {
@@ -21,7 +18,7 @@ pub struct Sidebar {
 impl Sidebar {
     pub fn new(settings_provider: Arc<SettingsProvider>) -> Self {
         Self {
-            open: false,
+            open: true,
             active_page: Page::Telemetry,
             settings_open: false,
             settings_provider,

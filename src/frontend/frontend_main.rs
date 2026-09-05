@@ -1,14 +1,13 @@
 use core::fmt;
 use std::{
-    sync::{Arc, Mutex, RwLock},
+    sync::{Arc, RwLock},
     time::Duration,
 };
 
 use eframe::egui::{self, TextureHandle};
 
 use crate::{
-    TOKIO,
-    backend::lap_stores::{Logger, save},
+    backend::lap_stores::Logger,
     frontend::{
         car_info_page::CarInfo, map_page::MapPage, settings_page::SettingsPage, sidebar::Sidebar,
         telemetry_page,
@@ -43,10 +42,11 @@ impl fmt::Debug for SettingsProvider {
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 #[serde(default)]
 pub struct App {
-    sidebar: Sidebar,
     settings_provider: Arc<SettingsProvider>,
-    settings_page: SettingsPage,
+    sidebar: Sidebar,
     telemetry_page: telemetry_page::TelemetryPage,
+    #[serde(skip)]
+    settings_page: SettingsPage,
     #[serde(skip)]
     map_page: MapPage,
     #[serde(skip)]
@@ -74,9 +74,12 @@ impl App {
             Default::default()
         };
 
-        // rebuild the GPU texture from the persisted bytes
-        app.settings_page.restore_pfp(&cc.egui_ctx);
+        app.sidebar = Sidebar::new(app.settings_provider.clone());
+        app.settings_page = SettingsPage::new(app.settings_provider.clone());
+        app.map_page = MapPage::new(app.settings_provider.clone());
+        app.car_info_page = CarInfo::new(app.settings_provider.clone());
 
+        app.settings_page.restore_pfp(&cc.egui_ctx);
         app
     }
 }
@@ -164,25 +167,3 @@ impl eframe::App for App {
 //         }
 //     }
 // }
-
-mod arc_mutex_serde {
-    use super::*;
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
-    pub fn serialize<S, T>(val: &Arc<Mutex<T>>, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-        T: Serialize,
-    {
-        let guard = val.lock().map_err(serde::ser::Error::custom)?;
-        T::serialize(&*guard, serializer)
-    }
-
-    pub fn deserialize<'de, D, T>(deserializer: D) -> Result<Arc<Mutex<T>>, D::Error>
-    where
-        D: Deserializer<'de>,
-        T: Deserialize<'de>,
-    {
-        Ok(Arc::new(Mutex::new(T::deserialize(deserializer)?)))
-    }
-}

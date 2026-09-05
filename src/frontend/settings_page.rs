@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
@@ -86,14 +86,16 @@ impl SettingsPage {
                     ui.label(RichText::new("Record Laps").size(20.0));
 
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        *self.settings_provider.record_laps.write().unwrap() = switch(
+                        let current = *self.settings_provider.record_laps.read().unwrap();
+                        let new_value = switch(
                             ui,
                             vec2(48.0, 24.0),
                             CornerRadius::same(8),
                             Color32::from_white_alpha(25),
                             Color32::from_rgb(19, 141, 241),
-                            *self.settings_provider.record_laps.read().unwrap(),
-                        )
+                            current,
+                        );
+                        *self.settings_provider.record_laps.write().unwrap() = new_value;
                     })
                 });
                 ui.horizontal(|ui| {
@@ -108,7 +110,6 @@ impl SettingsPage {
                     });
 
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        #[expect(clippy::collapsible_if)]
                         if button(
                             ui,
                             vec2(140.0, 32.0),
@@ -120,21 +121,22 @@ impl SettingsPage {
                         )
                         .clicked()
                         {
+                            let current_path = self
+                                .settings_provider
+                                .record_save_path
+                                .read()
+                                .unwrap()
+                                .clone();
+
                             if let Some(path) = rfd::FileDialog::new()
                                 .set_title("Select folder")
-                                .set_directory(
-                                    self.settings_provider
-                                        .record_save_path
-                                        .read()
-                                        .unwrap()
-                                        .clone(),
-                                )
+                                .set_directory(current_path)
                                 .add_filter("All files", &["*"])
                                 .set_can_create_directories(true)
                                 .pick_folder()
                             {
                                 *self.settings_provider.record_save_path.write().unwrap() =
-                                    path.display().to_string()
+                                    path.display().to_string();
                             }
                         }
                     })
@@ -198,16 +200,12 @@ impl SettingsPage {
 
     /// Rebuild texture from persisted bytes (call once on startup).
     pub fn restore_pfp(&mut self, ctx: &Context) {
-        #[expect(clippy::collapsible_if)]
         if self.settings_provider.pfp_texture.read().unwrap().is_none() {
-            let bytes = self
-                .settings_provider
-                .pfp_bytes
-                .read()
-                .unwrap()
-                .clone()
-                .unwrap();
-            self.load_pfp(ctx, &bytes);
+            let bytes = self.settings_provider.pfp_bytes.read().unwrap().clone();
+
+            if let Some(bytes) = bytes {
+                self.load_pfp(ctx, &bytes);
+            }
         }
     }
 }

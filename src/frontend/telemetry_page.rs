@@ -1,11 +1,7 @@
-use std::fs;
-
-use crate::backend::lap_stores::SaveData;
-use crate::backend::telemetry::GraphViewDataType;
+use crate::frontend::components::dropdown;
 use crate::frontend::components::{
     DropdownItem, DynGraphData, GraphChange, GraphInfo, Lap, button, graph, graph_edit,
 };
-use crate::frontend::components::{dropdown, telemetry_not_found};
 use crate::frontend::settings_page::SettingsPage;
 use crate::frontend::sidebar::Sidebar;
 use crate::telemetry::{Telemetry, TelemetryValueType};
@@ -123,8 +119,6 @@ impl TelemetryPage {
             self.draw_edit_mode(ui, sidebar);
         }
     }
-
-    fn update_graph_data(&mut self) {}
 
     // fn process_telemetry_updates(&mut self, graph_data_types: Vec<GraphViewDataType>) {
     //     let t = self.telemetry.update_telemetry().unwrap();
@@ -661,7 +655,7 @@ impl TelemetryPage {
                 .collect(),
         ) {
             for layout in &mut self.layouts {
-                for graph in &mut layout.graphs {
+                for _graph in &mut layout.graphs {
                     // TODO: Fix this
                     // graph. = GraphViewDataType::from_string(
                     //     &graph.ref_val_type.to_string(),
@@ -701,7 +695,7 @@ impl TelemetryPage {
                 })
                 .collect(),
         ) {
-            for layout in &mut self.layouts {
+            for _layout in &mut self.layouts {
                 // for graph in &mut layout.graphs {
                 //     graph.cur_lap = Lap::default();
                 //     graph.ref_lap = Lap::default();
@@ -710,7 +704,7 @@ impl TelemetryPage {
         }
     }
 
-    fn draw_reference_controls(&mut self, ui: &mut Ui, settings: &SettingsPage) {
+    fn draw_reference_controls(&mut self, ui: &mut Ui, _settings: &SettingsPage) {
         ui.add(
             Label::new(RichText::new("Reference:").size(16.0).color(Color32::WHITE))
                 .selectable(false),

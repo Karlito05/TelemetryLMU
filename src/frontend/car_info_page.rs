@@ -1,12 +1,11 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use eframe::egui::*;
 
 use crate::{
     backend::car_info::{FuelInfo, TireInfo, get_dyn_driver_info, get_stale_driver_info},
     frontend::{
-        components::telemetry_not_found, frontend_main::SettingsProvider,
-        settings_page::SettingsPage, sidebar::Sidebar,
+        components::telemetry_not_found, frontend_main::SettingsProvider, sidebar::Sidebar,
     },
     interface::{IPVehicleClass, Telemetry},
 };
