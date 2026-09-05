@@ -10,8 +10,8 @@ use std::sync::Arc;
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct TelemetryPage {
-    cur_layout_index: usize,
-    layouts: Vec<LayoutInfo>,
+    pub cur_layout_index: usize,
+    pub layouts: Vec<LayoutInfo>,
     #[serde(skip)]
     cur_driver: (String, i32),
     #[serde(skip)]
@@ -55,7 +55,7 @@ struct EditLayoutInfo {
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug, Default)]
 #[serde(default)]
-struct LayoutInfo {
+pub struct LayoutInfo {
     name: String,
     graphs: Vec<GraphInfo>,
 }

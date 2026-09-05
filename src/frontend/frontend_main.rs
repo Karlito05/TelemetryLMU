@@ -18,12 +18,21 @@ use crate::{
     telemetry::Telemetry,
 };
 
-#[derive(serde::Deserialize, serde::Serialize, Default, Debug)]
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
 #[serde(default)]
 pub struct StateProvider {
     pub page: RwLock<Page>,
     pub sidebar_open: RwLock<bool>,
     pub settings_open: RwLock<bool>,
+}
+impl Default for StateProvider {
+    fn default() -> Self {
+        Self {
+            page: RwLock::new(Page::Telemetry),
+            sidebar_open: RwLock::new(true),
+            settings_open: RwLock::new(false),
+        }
+    }
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
@@ -57,8 +66,9 @@ impl fmt::Debug for SettingsProvider {
 pub struct App {
     settings_provider: Arc<SettingsProvider>,
     state_provider: Arc<StateProvider>,
-    sidebar: Sidebar,
     telemetry_page: telemetry_page::TelemetryPage,
+    #[serde(skip)]
+    sidebar: Sidebar,
     #[serde(skip)]
     settings_page: SettingsPage,
     #[serde(skip)]
@@ -94,8 +104,15 @@ impl App {
             SettingsPage::new(app.settings_provider.clone(), app.state_provider.clone());
         app.map_page = MapPage::new(app.settings_provider.clone(), app.state_provider.clone());
         app.car_info_page = CarInfo::new(app.settings_provider.clone(), app.state_provider.clone());
+
+        let cur_layout_index = app.telemetry_page.cur_layout_index;
+        let layouts = app.telemetry_page.layouts;
         app.telemetry_page =
             TelemetryPage::new(app.settings_provider.clone(), app.state_provider.clone());
+
+        app.telemetry_page.layouts = layouts;
+        app.telemetry_page.cur_layout_index = cur_layout_index;
+
         app.telemetry_interface =
             Telemetry::new("/dev/shm/LMU_Data".into(), app.settings_provider.clone()).unwrap();
 

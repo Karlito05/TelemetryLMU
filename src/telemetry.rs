@@ -136,7 +136,7 @@ impl TelemetryValueType {
 
     pub fn normalize(&self, v: f64, t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
         match self {
-            Self::Delta => v / (self.get_max_value(t, car_num) / 2.0),
+            Self::Delta => v / (self.get_max_value(t, car_num) / 2.0) + 0.5,
             Self::TimeIntoLap => -1.0,
             Self::Max => panic!("Can't call get_max_value on TelemetryValueType::Max"),
             _ => v / self.get_max_value(t, car_num),
@@ -262,7 +262,7 @@ impl Telemetry {
                     if let Some(new_lap) = data.1 {
                         thread_last_lap.lock().unwrap()[j] = driver.clone();
                         thread_cur_lap_nums.lock().unwrap()[j] = new_lap;
-                        if *thread_settings_provider.log_all_cars.read().unwrap()
+                        if (*thread_settings_provider.log_all_cars.read().unwrap()
                             || i8_array32_to_string(
                                 &thread_telemetry
                                     .lock()
@@ -272,7 +272,8 @@ impl Telemetry {
                                     .scoring
                                     .veh_scoring_info[j]
                                     .m_driver_name,
-                            ) == *thread_settings_provider.in_game_name.read().unwrap()
+                            ) == *thread_settings_provider.in_game_name.read().unwrap())
+                            && *thread_settings_provider.record_laps.read().unwrap()
                         {
                             TOKIO.get().expect("tokio runtime not initialised").spawn(
                                 set_laptime_and_save(
@@ -281,7 +282,12 @@ impl Telemetry {
                                     // just make a new interface here because it's inexpensive and would
                                     // cause deadlocks if we didn't
                                     j,
-                                    "".to_owned(),
+                                    thread_settings_provider
+                                        .record_save_path
+                                        .read()
+                                        .unwrap()
+                                        .clone()
+                                        + "/",
                                 ),
                             );
                         }
@@ -331,7 +337,9 @@ fn get_telemetry(
         std::array::from_fn(|_| (std::array::from_fn(|_| 0.0), None));
     for j in 0..104 {
         let new_lap_num = cur_data.telemetry.telemetry_info[j].m_lap_number;
-        if cur_laps[j] != new_lap_num {
+        if cur_laps[j] != new_lap_num
+            && TelemetryValueType::DistanceIntoLap.get_value(&cur_data, j) < 100.0
+        {
             ret[j].1 = Some(new_lap_num);
         }
         for i in 0..TelemetryValueType::Max as usize {
