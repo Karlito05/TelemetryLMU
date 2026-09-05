@@ -17,6 +17,7 @@ use chrono::Local;
 
 use crate::{
     TOKIO,
+    frontend::frontend_main::SettingsProvider,
     interface::{
         self, IPVehicleClass, SharedMemoryObjectOut, i8_array32_to_string, i8_array64_to_string,
     },
@@ -213,6 +214,7 @@ pub struct Telemetry {
     telemetry: Arc<Mutex<interface::Telemetry>>,
     running: Arc<AtomicBool>,
     handle: Option<JoinHandle<()>>,
+    settings_provider: Arc<SettingsProvider>,
 }
 
 #[derive(Default, Clone, Debug)]
@@ -222,7 +224,7 @@ pub struct Lap {
 }
 
 impl Telemetry {
-    pub fn new(path: PathBuf) -> Result<Self, String> {
+    pub fn new(path: PathBuf, settings_provider: Arc<SettingsProvider>) -> Result<Self, String> {
         let telemetry = Arc::new(Mutex::new(interface::Telemetry::new(
             &path.to_string_lossy(),
         )));
@@ -236,6 +238,7 @@ impl Telemetry {
         let cur_lap_nums = Arc::new(Mutex::new(std::array::from_fn(|_| 0)));
         let running = Arc::new(AtomicBool::new(true));
 
+        let thread_settings_provider = Arc::clone(&settings_provider);
         let thread_telemetry = Arc::clone(&telemetry);
         let thread_cur_lap = Arc::clone(&cur_lap);
         let thread_last_lap = Arc::clone(&last_lap);
@@ -259,16 +262,29 @@ impl Telemetry {
                     if let Some(new_lap) = data.1 {
                         thread_last_lap.lock().unwrap()[j] = driver.clone();
                         thread_cur_lap_nums.lock().unwrap()[j] = new_lap;
-                        TOKIO.get().expect("tokio runtime not initialised").spawn(
-                            set_laptime_and_save(
-                                Arc::clone(&thread_last_lap),
-                                interface::Telemetry::new("/dev/shm/LMU_Data"), // We
-                                // just make a new interface here because it's inexpensive and would
-                                // cause deadlocks if we didn't
-                                j,
-                                "".to_owned(),
-                            ),
-                        );
+                        if *thread_settings_provider.log_all_cars.read().unwrap()
+                            || i8_array32_to_string(
+                                &thread_telemetry
+                                    .lock()
+                                    .unwrap()
+                                    .update_telemetry()
+                                    .unwrap()
+                                    .scoring
+                                    .veh_scoring_info[j]
+                                    .m_driver_name,
+                            ) == *thread_settings_provider.in_game_name.read().unwrap()
+                        {
+                            TOKIO.get().expect("tokio runtime not initialised").spawn(
+                                set_laptime_and_save(
+                                    Arc::clone(&thread_last_lap),
+                                    interface::Telemetry::new("/dev/shm/LMU_Data"), // We
+                                    // just make a new interface here because it's inexpensive and would
+                                    // cause deadlocks if we didn't
+                                    j,
+                                    "".to_owned(),
+                                ),
+                            );
+                        }
                         for logged_value in driver.datapoints.iter_mut() {
                             logged_value.clear();
                         }
@@ -291,6 +307,7 @@ impl Telemetry {
             handle: Some(handle),
             cur_lap_nums,
             telemetry,
+            settings_provider,
         })
     }
 

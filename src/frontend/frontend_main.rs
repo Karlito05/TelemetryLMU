@@ -36,6 +36,7 @@ pub struct SettingsProvider {
     pub pfp_bytes: RwLock<Option<Vec<u8>>>,
     #[serde(skip)] // textures can't be serialized, recreate on load
     pub pfp_texture: RwLock<Option<TextureHandle>>,
+    pub log_all_cars: RwLock<bool>,
 }
 
 impl fmt::Debug for SettingsProvider {
@@ -46,6 +47,7 @@ impl fmt::Debug for SettingsProvider {
             .field("record_laps", &self.record_laps)
             .field("record_save_path", &self.record_save_path)
             .field("pfp_bytes", &self.pfp_bytes)
+            .field("log_all_cars", &self.log_all_cars)
             .finish()
     }
 }
@@ -94,6 +96,8 @@ impl App {
         app.car_info_page = CarInfo::new(app.settings_provider.clone(), app.state_provider.clone());
         app.telemetry_page =
             TelemetryPage::new(app.settings_provider.clone(), app.state_provider.clone());
+        app.telemetry_interface =
+            Telemetry::new("/dev/shm/LMU_Data".into(), app.settings_provider.clone()).unwrap();
 
         app.settings_page.restore_pfp(&cc.egui_ctx);
         app
@@ -115,7 +119,11 @@ impl Default for App {
             car_info_page: CarInfo::new(settings_provider.clone(), state_provider.clone()),
             logger: Logger::new("/dev/shm/LMU_Data"),
             telemetry: crate::interface::Telemetry::new("/dev/shm/LMU_Data"),
-            telemetry_interface: Telemetry::new("/dev/shm/LMU_Data".into()).unwrap(),
+            telemetry_interface: Telemetry::new(
+                "/dev/shm/LMU_Data".into(),
+                settings_provider.clone(),
+            )
+            .unwrap(),
             state_provider,
             settings_provider,
         }

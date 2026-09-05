@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 use crate::frontend::{
     components::{button, input, switch},
     frontend_main::{SettingsProvider, StateProvider},
-    sidebar::Sidebar,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -104,6 +103,22 @@ impl SettingsPage {
                             current,
                         );
                         *self.settings_provider.record_laps.write().unwrap() = new_value;
+                    })
+                });
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new("Record All Cars").size(20.0));
+
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        let current = *self.settings_provider.log_all_cars.read().unwrap();
+                        let new_value = switch(
+                            ui,
+                            vec2(48.0, 24.0),
+                            CornerRadius::same(8),
+                            Color32::from_white_alpha(25),
+                            Color32::from_rgb(19, 141, 241),
+                            current,
+                        );
+                        *self.settings_provider.log_all_cars.write().unwrap() = new_value;
                     })
                 });
                 ui.horizontal(|ui| {
