@@ -9,11 +9,22 @@ use eframe::egui::{self, TextureHandle};
 use crate::{
     backend::lap_stores::Logger,
     frontend::{
-        car_info_page::CarInfo, map_page::MapPage, settings_page::SettingsPage, sidebar::Sidebar,
-        telemetry_page,
+        car_info_page::CarInfo,
+        map_page::MapPage,
+        settings_page::SettingsPage,
+        sidebar::Sidebar,
+        telemetry_page::{self, TelemetryPage},
     },
     telemetry::Telemetry,
 };
+
+#[derive(serde::Deserialize, serde::Serialize, Default, Debug)]
+#[serde(default)]
+pub struct StateProvider {
+    pub page: RwLock<Page>,
+    pub sidebar_open: RwLock<bool>,
+    pub settings_open: RwLock<bool>,
+}
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(default)]
@@ -43,6 +54,7 @@ impl fmt::Debug for SettingsProvider {
 #[serde(default)]
 pub struct App {
     settings_provider: Arc<SettingsProvider>,
+    state_provider: Arc<StateProvider>,
     sidebar: Sidebar,
     telemetry_page: telemetry_page::TelemetryPage,
     #[serde(skip)]
@@ -59,8 +71,9 @@ pub struct App {
     telemetry_interface: Telemetry,
 }
 
-#[derive(Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, PartialEq, serde::Deserialize, serde::Serialize, Default)]
 pub enum Page {
+    #[default]
     Telemetry,
     Info,
     Map,
@@ -74,10 +87,13 @@ impl App {
             Default::default()
         };
 
-        app.sidebar = Sidebar::new(app.settings_provider.clone());
-        app.settings_page = SettingsPage::new(app.settings_provider.clone());
-        app.map_page = MapPage::new(app.settings_provider.clone());
-        app.car_info_page = CarInfo::new(app.settings_provider.clone());
+        app.sidebar = Sidebar::new(app.settings_provider.clone(), app.state_provider.clone());
+        app.settings_page =
+            SettingsPage::new(app.settings_provider.clone(), app.state_provider.clone());
+        app.map_page = MapPage::new(app.settings_provider.clone(), app.state_provider.clone());
+        app.car_info_page = CarInfo::new(app.settings_provider.clone(), app.state_provider.clone());
+        app.telemetry_page =
+            TelemetryPage::new(app.settings_provider.clone(), app.state_provider.clone());
 
         app.settings_page.restore_pfp(&cc.egui_ctx);
         app
@@ -87,15 +103,20 @@ impl App {
 impl Default for App {
     fn default() -> Self {
         let settings_provider = Arc::new(SettingsProvider::default());
+        let state_provider = Arc::new(StateProvider::default());
         Self {
-            sidebar: Sidebar::new(settings_provider.clone()),
-            map_page: MapPage::new(settings_provider.clone()),
-            telemetry_page: telemetry_page::TelemetryPage::default(),
-            settings_page: SettingsPage::new(settings_provider.clone()),
-            car_info_page: CarInfo::new(settings_provider.clone()),
+            sidebar: Sidebar::new(settings_provider.clone(), state_provider.clone()),
+            map_page: MapPage::new(settings_provider.clone(), state_provider.clone()),
+            telemetry_page: telemetry_page::TelemetryPage::new(
+                settings_provider.clone(),
+                state_provider.clone(),
+            ),
+            settings_page: SettingsPage::new(settings_provider.clone(), state_provider.clone()),
+            car_info_page: CarInfo::new(settings_provider.clone(), state_provider.clone()),
             logger: Logger::new("/dev/shm/LMU_Data"),
             telemetry: crate::interface::Telemetry::new("/dev/shm/LMU_Data"),
             telemetry_interface: Telemetry::new("/dev/shm/LMU_Data".into()).unwrap(),
+            state_provider,
             settings_provider,
         }
     }
@@ -110,8 +131,8 @@ impl eframe::App for App {
         ui.request_repaint_after(Duration::from_millis(16));
         self.sidebar.draw_sidebar(ui);
 
-        if self.sidebar.settings_open {
-            self.settings_page.draw_settings_page(ui, &mut self.sidebar);
+        if *self.state_provider.settings_open.read().unwrap() {
+            self.settings_page.draw_settings_page(ui);
         }
 
         // TODO: Handle this in the main telemetry
@@ -126,17 +147,14 @@ impl eframe::App for App {
         //     ui.ctx().clone().texture_ui(ui);
         // });
 
-        egui::CentralPanel::default().show(ui, |ui| match self.sidebar.active_page {
-            Page::Telemetry => self.telemetry_page.draw_telemetry_page(
-                ui,
-                &mut self.sidebar,
-                &self.settings_page,
-                &self.telemetry_interface,
-            ),
-            Page::Info => self.car_info_page.draw_car_info_page(ui, &mut self.sidebar),
-            Page::Map => self
-                .map_page
-                .draw_map_page(ui, &self.sidebar, &self.settings_page),
+        egui::CentralPanel::default().show(ui, |ui| {
+            match *self.state_provider.page.read().unwrap() {
+                Page::Telemetry => self
+                    .telemetry_page
+                    .draw_telemetry_page(ui, &self.telemetry_interface),
+                Page::Info => self.car_info_page.draw_car_info_page(ui),
+                Page::Map => self.map_page.draw_map_page(ui),
+            }
         });
     }
 }

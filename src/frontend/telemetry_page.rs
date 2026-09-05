@@ -2,14 +2,13 @@ use crate::frontend::components::dropdown;
 use crate::frontend::components::{
     DropdownItem, DynGraphData, GraphChange, GraphInfo, Lap, button, graph, graph_edit,
 };
-use crate::frontend::settings_page::SettingsPage;
-use crate::frontend::sidebar::Sidebar;
+use crate::frontend::frontend_main::{SettingsProvider, StateProvider};
 use crate::telemetry::{Telemetry, TelemetryValueType};
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
+use std::sync::Arc;
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
-#[serde(default)]
 pub struct TelemetryPage {
     cur_layout_index: usize,
     layouts: Vec<LayoutInfo>,
@@ -29,6 +28,10 @@ pub struct TelemetryPage {
     save_as_dialog_info: SaveAsDialogInfo,
     #[serde(skip)]
     cur_lap: i32,
+    #[serde(skip)]
+    settings_provider: Arc<SettingsProvider>,
+    #[serde(skip)]
+    state_provider: Arc<StateProvider>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -57,9 +60,14 @@ struct LayoutInfo {
     graphs: Vec<GraphInfo>,
 }
 
-impl Default for TelemetryPage {
-    fn default() -> Self {
+impl TelemetryPage {
+    pub fn new(
+        settings_provider: Arc<SettingsProvider>,
+        state_provider: Arc<StateProvider>,
+    ) -> Self {
         Self {
+            settings_provider,
+            state_provider,
             cur_driver: ("".to_owned(), 0),
             in_layout_edit_mode: false,
             show_delete_layout_dialog: false,
@@ -93,13 +101,7 @@ impl Default for TelemetryPage {
 }
 
 impl TelemetryPage {
-    pub fn draw_telemetry_page(
-        &mut self,
-        ui: &mut Ui,
-        sidebar: &mut Sidebar,
-        settings: &SettingsPage,
-        telemetry: &Telemetry,
-    ) {
+    pub fn draw_telemetry_page(&mut self, ui: &mut Ui, telemetry: &Telemetry) {
         // TODO: Refactor this into frontend_main!
         // if !self.telemetry.full_mode {
         //     telemetry_not_found(ui);
@@ -114,9 +116,9 @@ impl TelemetryPage {
         //         .collect(),
         // );
         if !self.in_layout_edit_mode {
-            self.draw_normal_mode(ui, sidebar, settings, telemetry);
+            self.draw_normal_mode(ui, telemetry);
         } else {
-            self.draw_edit_mode(ui, sidebar);
+            self.draw_edit_mode(ui);
         }
     }
 
@@ -176,47 +178,89 @@ impl TelemetryPage {
     //         });
     // }
 
-    fn draw_edit_mode(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
+    fn draw_edit_mode(&mut self, ui: &mut Ui) {
         let top_bar_rect = Rect::from_min_size(
-            pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
+            pos2(
+                if *self.state_provider.sidebar_open.read().unwrap() {
+                    300.0
+                } else {
+                    16.0
+                },
+                16.0,
+            ),
             vec2(
-                ui.available_width() - if sidebar.open { 0.0 } else { 16.0 },
+                ui.available_width()
+                    - if *self.state_provider.sidebar_open.read().unwrap() {
+                        0.0
+                    } else {
+                        16.0
+                    },
                 48.0,
             ),
         );
-        self.draw_top_bar_edit(ui, top_bar_rect, sidebar);
+        self.draw_top_bar_edit(ui, top_bar_rect);
 
         let graphs_rect = Rect::from_min_size(
-            pos2(if sidebar.open { 300.0 } else { 16.0 }, 80.0),
+            pos2(
+                if *self.state_provider.sidebar_open.read().unwrap() {
+                    300.0
+                } else {
+                    16.0
+                },
+                80.0,
+            ),
             vec2(
-                ui.available_width() - if sidebar.open { 8.0 } else { 16.0 },
+                ui.available_width()
+                    - if *self.state_provider.sidebar_open.read().unwrap() {
+                        8.0
+                    } else {
+                        16.0
+                    },
                 ui.viewport_rect().size().y - (32.0 + 64.0),
             ),
         );
         self.draw_graphs_edit(ui, graphs_rect);
     }
 
-    fn draw_normal_mode(
-        &mut self,
-        ui: &mut Ui,
-        sidebar: &mut Sidebar,
-        settings: &SettingsPage,
-        telemetry: &Telemetry,
-    ) {
+    fn draw_normal_mode(&mut self, ui: &mut Ui, telemetry: &Telemetry) {
         let top_bar_rect = Rect::from_min_size(
-            pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
+            pos2(
+                if *self.state_provider.sidebar_open.read().unwrap() {
+                    300.0
+                } else {
+                    16.0
+                },
+                16.0,
+            ),
             vec2(
-                ui.available_width() - if sidebar.open { 0.0 } else { 16.0 },
+                ui.available_width()
+                    - if *self.state_provider.sidebar_open.read().unwrap() {
+                        0.0
+                    } else {
+                        16.0
+                    },
                 48.0,
             ),
         );
 
-        self.draw_top_bar_normal(ui, top_bar_rect, sidebar, settings, telemetry);
+        self.draw_top_bar_normal(ui, top_bar_rect, telemetry);
 
         let graphs_rect = Rect::from_min_size(
-            pos2(if sidebar.open { 300.0 } else { 16.0 }, 80.0),
+            pos2(
+                if *self.state_provider.sidebar_open.read().unwrap() {
+                    300.0
+                } else {
+                    16.0
+                },
+                80.0,
+            ),
             vec2(
-                ui.available_width() - if sidebar.open { 8.0 } else { 16.0 },
+                ui.available_width()
+                    - if *self.state_provider.sidebar_open.read().unwrap() {
+                        8.0
+                    } else {
+                        16.0
+                    },
                 ui.viewport_rect().size().y - (32.0 + 64.0),
             ),
         );
@@ -224,7 +268,7 @@ impl TelemetryPage {
         self.draw_graphs_normal(ui, graphs_rect, telemetry);
     }
 
-    fn draw_top_bar_edit(&mut self, ui: &mut Ui, top_bar_rect: Rect, sidebar: &mut Sidebar) {
+    fn draw_top_bar_edit(&mut self, ui: &mut Ui, top_bar_rect: Rect) {
         ui.painter().rect_filled(
             top_bar_rect,
             CornerRadius::same(24),
@@ -235,7 +279,7 @@ impl TelemetryPage {
             ui.horizontal(|ui| {
                 ui.add_space(4.0);
 
-                self.draw_sidebar_button(ui, sidebar);
+                self.draw_sidebar_button(ui);
 
                 ui.separator();
 
@@ -552,14 +596,7 @@ impl TelemetryPage {
         }
     }
 
-    fn draw_top_bar_normal(
-        &mut self,
-        ui: &mut Ui,
-        top_bar_rect: Rect,
-        sidebar: &mut Sidebar,
-        settings: &SettingsPage,
-        telemetry: &Telemetry,
-    ) {
+    fn draw_top_bar_normal(&mut self, ui: &mut Ui, top_bar_rect: Rect, telemetry: &Telemetry) {
         ui.painter().rect_filled(
             top_bar_rect,
             CornerRadius::same(24),
@@ -570,7 +607,7 @@ impl TelemetryPage {
             ui.horizontal(|ui| {
                 ui.add_space(4.0);
 
-                self.draw_sidebar_button(ui, sidebar);
+                self.draw_sidebar_button(ui);
 
                 ui.separator();
 
@@ -582,7 +619,7 @@ impl TelemetryPage {
 
                 ui.separator();
 
-                self.draw_reference_controls(ui, settings);
+                self.draw_reference_controls(ui);
 
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.add_space(4.0);
@@ -594,7 +631,7 @@ impl TelemetryPage {
         });
     }
 
-    fn draw_sidebar_button(&self, ui: &mut Ui, sidebar: &mut Sidebar) {
+    fn draw_sidebar_button(&self, ui: &mut Ui) {
         let (sidebar_icon_rect, response) = ui.allocate_exact_size(
             vec2(ui.available_height() - 8.0, ui.available_height() - 8.0),
             Sense::click(),
@@ -612,7 +649,7 @@ impl TelemetryPage {
                 CornerRadius::same(40),
                 Color32::from_white_alpha(25),
             );
-            sidebar.open = !sidebar.open;
+            self.state_provider.sidebar_open.write().unwrap().toggle();
         }
 
         ui.put(
@@ -704,7 +741,7 @@ impl TelemetryPage {
         }
     }
 
-    fn draw_reference_controls(&mut self, ui: &mut Ui, _settings: &SettingsPage) {
+    fn draw_reference_controls(&mut self, ui: &mut Ui) {
         ui.add(
             Label::new(RichText::new("Reference:").size(16.0).color(Color32::WHITE))
                 .selectable(false),

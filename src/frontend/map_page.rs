@@ -7,11 +7,7 @@
 // - Redisign the pick to include a clear button and some info about the lap (car time)
 // - Make sure user picks a lap in the same class and on the same track
 
-use std::{
-    f32::consts::PI,
-    fs,
-    sync::Arc,
-};
+use std::{f32::consts::PI, fs, sync::Arc};
 
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
@@ -20,7 +16,7 @@ use crate::{
     backend::lap_stores::SaveData,
     frontend::{
         components::{button, slider},
-        frontend_main::SettingsProvider,
+        frontend_main::{SettingsProvider, StateProvider},
         settings_page::SettingsPage,
         sidebar::Sidebar,
     },
@@ -39,6 +35,8 @@ pub struct MapPage {
     map2: MapData,
     #[serde(skip)]
     settings_provider: Arc<SettingsProvider>,
+    #[serde(skip)]
+    state_provider: Arc<StateProvider>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, Debug)]
@@ -54,7 +52,10 @@ struct Dp {
 }
 
 impl MapPage {
-    pub fn new(settings_provider: Arc<SettingsProvider>) -> Self {
+    pub fn new(
+        settings_provider: Arc<SettingsProvider>,
+        state_provider: Arc<StateProvider>,
+    ) -> Self {
         let map_data: MapData =
             fs::read_to_string("/home/karlito/Projects/TelemetryLMU/public/spa.json")
                 .map_err(|e| e.to_string())
@@ -81,6 +82,7 @@ impl MapPage {
             map: map_data,
             map2: map_data2,
             settings_provider,
+            state_provider,
         }
     }
 }
@@ -94,16 +96,28 @@ struct MapData {
 }
 
 impl MapPage {
-    pub fn draw_map_page(&mut self, ui: &mut Ui, sidebar: &Sidebar, settings: &SettingsPage) {
+    pub fn draw_map_page(&mut self, ui: &mut Ui) {
         let ref_len = self.car_1.len().max(self.car_2.len());
         if ref_len > 0 {
             self.cur_dp_index = Some((self.time * (ref_len - 1) as f32) as usize);
         }
 
         let map_rect = Rect::from_min_size(
-            pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
+            pos2(
+                if *self.state_provider.sidebar_open.read().unwrap() {
+                    300.0
+                } else {
+                    16.0
+                },
+                16.0,
+            ),
             vec2(
-                ui.available_width() - if sidebar.open { 8.0 } else { 16.0 },
+                ui.available_width()
+                    - if *self.state_provider.sidebar_open.read().unwrap() {
+                        8.0
+                    } else {
+                        16.0
+                    },
                 ui.available_height() - 16.0,
             ),
         );
@@ -187,10 +201,10 @@ impl MapPage {
             pos2(map_rect.min.x + 8.0, map_rect.max.y - 200.0),
             map_rect.max - vec2(8.0, 8.0),
         );
-        self.draw_controls(ui, controls_rect, settings);
+        self.draw_controls(ui, controls_rect);
     }
 
-    fn draw_controls(&mut self, ui: &mut Ui, rect: Rect, _settings: &SettingsPage) {
+    fn draw_controls(&mut self, ui: &mut Ui, rect: Rect) {
         ui.painter()
             .rect_filled(rect, 16, Color32::from_white_alpha(17));
 

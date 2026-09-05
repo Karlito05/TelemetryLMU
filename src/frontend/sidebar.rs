@@ -3,24 +3,23 @@ use std::sync::Arc;
 use eframe::egui::*;
 use egui_phosphor_icons::{Icon, icons};
 
-use crate::frontend::frontend_main::{Page, SettingsProvider};
+use crate::frontend::frontend_main::{Page, SettingsProvider, StateProvider};
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct Sidebar {
-    pub open: bool,
-    pub active_page: Page,
     #[serde(skip)]
-    pub settings_open: bool,
+    state_provider: Arc<StateProvider>,
     #[serde(skip)]
     settings_provider: Arc<SettingsProvider>,
 }
 
 impl Sidebar {
-    pub fn new(settings_provider: Arc<SettingsProvider>) -> Self {
+    pub fn new(
+        settings_provider: Arc<SettingsProvider>,
+        state_provider: Arc<StateProvider>,
+    ) -> Self {
         Self {
-            open: true,
-            active_page: Page::Telemetry,
-            settings_open: false,
+            state_provider,
             settings_provider,
         }
     }
@@ -32,7 +31,7 @@ impl Sidebar {
         let sidebar_width = 300.0;
         let sidebar_height = ui.ctx().viewport_rect().height();
 
-        if !self.open {
+        if !*self.state_provider.sidebar_open.read().unwrap() {
             return;
         }
 
@@ -64,7 +63,7 @@ impl Sidebar {
                         ui.add_space(ui.available_height() - 70.0);
 
                         if self.draw_profile(ui).clicked() {
-                            self.settings_open = true;
+                            *self.state_provider.settings_open.write().unwrap() = true;
                         }
                     })
                     .response
@@ -112,11 +111,11 @@ impl Sidebar {
                         ui,
                         "Telemetry".to_owned(),
                         icons::CHART_LINE,
-                        self.active_page == Page::Telemetry,
+                        *self.state_provider.page.read().unwrap() == Page::Telemetry,
                     )
                     .clicked()
                 {
-                    self.active_page = Page::Telemetry;
+                    *self.state_provider.page.write().unwrap() = Page::Telemetry;
                 };
 
                 if self
@@ -124,11 +123,11 @@ impl Sidebar {
                         ui,
                         "Car Info".to_owned(),
                         icons::INFO,
-                        self.active_page == Page::Info,
+                        *self.state_provider.page.read().unwrap() == Page::Info,
                     )
                     .clicked()
                 {
-                    self.active_page = Page::Info;
+                    *self.state_provider.page.write().unwrap() = Page::Info;
                 };
 
                 ui.add_space(32.0);
@@ -147,11 +146,11 @@ impl Sidebar {
                         ui,
                         "Map".to_owned(),
                         icons::MAP_TRIFOLD,
-                        self.active_page == Page::Map,
+                        *self.state_provider.page.read().unwrap() == Page::Map,
                     )
                     .clicked()
                 {
-                    self.active_page = Page::Map;
+                    *self.state_provider.page.write().unwrap() = Page::Map;
                 };
             });
         });

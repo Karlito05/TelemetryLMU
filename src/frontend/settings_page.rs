@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::frontend::{
     components::{button, input, switch},
-    frontend_main::SettingsProvider,
+    frontend_main::{SettingsProvider, StateProvider},
     sidebar::Sidebar,
 };
 
@@ -14,14 +14,22 @@ use crate::frontend::{
 pub struct SettingsPage {
     #[serde(skip)]
     settings_provider: Arc<SettingsProvider>,
+    #[serde(skip)]
+    state_provider: Arc<StateProvider>,
 }
 
 impl SettingsPage {
-    pub fn new(settings_provider: Arc<SettingsProvider>) -> Self {
-        Self { settings_provider }
+    pub fn new(
+        settings_provider: Arc<SettingsProvider>,
+        state_provider: Arc<StateProvider>,
+    ) -> Self {
+        Self {
+            settings_provider,
+            state_provider,
+        }
     }
 
-    pub fn draw_settings_page(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
+    pub fn draw_settings_page(&mut self, ui: &mut Ui) {
         Window::new("Settings")
             .resizable(false)
             .collapsible(false)
@@ -45,7 +53,7 @@ impl SettingsPage {
                             )
                             .clicked()
                         {
-                            sidebar.settings_open = false
+                            *self.state_provider.settings_open.write().unwrap() = false
                         }
                     });
                 });

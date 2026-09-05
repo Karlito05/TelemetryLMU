@@ -1,11 +1,13 @@
 use std::sync::Arc;
 
-use eframe::egui::*;
+use eframe::egui::{scroll_area::State, *};
 
 use crate::{
     backend::car_info::{FuelInfo, TireInfo, get_dyn_driver_info, get_stale_driver_info},
     frontend::{
-        components::telemetry_not_found, frontend_main::SettingsProvider, sidebar::Sidebar,
+        components::telemetry_not_found,
+        frontend_main::{SettingsProvider, StateProvider},
+        sidebar::Sidebar,
     },
     interface::{IPVehicleClass, Telemetry},
 };
@@ -20,10 +22,14 @@ pub struct CarInfo {
     tires: [TireInfo; 4],
     telemetry: Telemetry,
     settings_provider: Arc<SettingsProvider>,
+    state_provider: Arc<StateProvider>,
 }
 
 impl CarInfo {
-    pub fn new(settings_provider: Arc<SettingsProvider>) -> Self {
+    pub fn new(
+        settings_provider: Arc<SettingsProvider>,
+        state_provider: Arc<StateProvider>,
+    ) -> Self {
         Self {
             telemetry: Telemetry::new("/dev/shm/LMU_Data"),
             driver_index: 0,
@@ -41,13 +47,14 @@ impl CarInfo {
                 TireInfo::default(),
                 TireInfo::default(),
             ],
+            state_provider,
             settings_provider,
         }
     }
 }
 
 impl CarInfo {
-    pub fn draw_car_info_page(&mut self, ui: &mut Ui, sidebar: &mut Sidebar) {
+    pub fn draw_car_info_page(&mut self, ui: &mut Ui) {
         if !self.telemetry.full_mode {
             telemetry_not_found(ui);
             return;
@@ -71,9 +78,21 @@ impl CarInfo {
         }
 
         let rect = Rect::from_min_size(
-            pos2(if sidebar.open { 300.0 } else { 16.0 }, 16.0),
+            pos2(
+                if *self.state_provider.sidebar_open.read().unwrap() {
+                    300.0
+                } else {
+                    16.0
+                },
+                16.0,
+            ),
             vec2(
-                ui.available_width() - if sidebar.open { 8.0 } else { 16.0 },
+                ui.available_width()
+                    - if *self.state_provider.sidebar_open.read().unwrap() {
+                        8.0
+                    } else {
+                        16.0
+                    },
                 ui.available_height() - 16.0,
             ),
         );
