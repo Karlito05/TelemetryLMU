@@ -1,13 +1,12 @@
 use std::sync::Arc;
 
-use eframe::egui::{scroll_area::State, *};
+use eframe::egui::*;
 
 use crate::{
     backend::car_info::{FuelInfo, TireInfo, get_dyn_driver_info, get_stale_driver_info},
     frontend::{
         components::telemetry_not_found,
         frontend_main::{SettingsProvider, StateProvider},
-        sidebar::Sidebar,
     },
     interface::{IPVehicleClass, Interface},
 };

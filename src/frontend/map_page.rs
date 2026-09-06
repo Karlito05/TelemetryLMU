@@ -16,10 +16,8 @@ use crate::{
     frontend::{
         components::{button, slider},
         frontend_main::{SettingsProvider, StateProvider},
-        settings_page::SettingsPage,
-        sidebar::Sidebar,
     },
-    telemetry::{Lap, SaveData, TelemetryGraphValueType},
+    telemetry::{SaveData, TelemetryGraphValueType},
 };
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, Default)]

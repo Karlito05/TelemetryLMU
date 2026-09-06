@@ -686,6 +686,7 @@ impl TelemetryPage {
                 .selectable(false),
         );
 
+        #[expect(clippy::collapsible_if)]
         if button(
             ui,
             vec2(140.0, 32.0),

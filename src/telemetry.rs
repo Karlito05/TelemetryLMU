@@ -1,7 +1,3 @@
-// TODO:
-// Make it so the it saves to the path declared in settings.
-// Make it so the user can choose if it should log only him or the whole lobby.
-
 use std::{
     fs,
     path::PathBuf,
@@ -226,6 +222,7 @@ impl TelemetryGraphValueType {
 }
 
 #[derive(Debug)]
+#[expect(unused)]
 pub struct Telemetry {
     pub cur_lap: Arc<Mutex<[Lap; 104]>>,
     pub last_lap: Arc<Mutex<[Lap; 104]>>,

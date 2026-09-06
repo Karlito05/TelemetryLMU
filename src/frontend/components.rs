@@ -676,6 +676,7 @@ pub struct DynGraphData<'a> {
     pub ref_lap: Lap<'a>,
 }
 
+#[expect(clippy::too_many_arguments)]
 pub fn graph(
     ui: &mut Ui,
     graph_info: &GraphInfo,
@@ -757,6 +758,7 @@ fn draw_title(painter: &Painter, rect: Rect, text: &str, margins: f32, color: Co
     );
 }
 
+#[expect(clippy::too_many_arguments)]
 fn draw_lap(
     painter: &Painter,
     rect: Rect,

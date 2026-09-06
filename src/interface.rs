@@ -162,6 +162,7 @@ impl Interface {
         result
     }
 
+    #[expect(unused)]
     pub fn find_driver(&self, name: String) -> Option<(String, i32)> {
         let drivers = self.get_drivers();
 
