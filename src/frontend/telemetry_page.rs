@@ -3,17 +3,21 @@ use crate::frontend::components::{
     DropdownItem, DynGraphData, GraphChange, GraphInfo, Lap, button, graph, graph_edit,
 };
 use crate::frontend::frontend_main::{SettingsProvider, StateProvider};
-use crate::telemetry::{Telemetry, TelemetryGraphValueType};
+use crate::telemetry::{self, SaveData, Telemetry, TelemetryGraphValueType};
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
+use std::fs;
 use std::sync::Arc;
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct TelemetryPage {
     pub cur_layout_index: usize,
     pub layouts: Vec<LayoutInfo>,
+
     #[serde(skip)]
     cur_driver: (String, i32),
+    #[serde(skip)]
+    ref_lap_override: Option<telemetry::Lap>,
     #[serde(skip)]
     in_layout_edit_mode: bool,
     #[serde(skip)]
@@ -23,17 +27,13 @@ pub struct TelemetryPage {
     #[serde(skip)]
     show_add_limit_dialog: bool,
     #[serde(skip)]
-    cur_ref_path: Option<String>,
-    #[serde(skip)]
     save_as_dialog_info: SaveAsDialogInfo,
-    #[serde(skip)]
-    cur_lap: i32,
     #[serde(skip)]
     settings_provider: Arc<SettingsProvider>,
     #[serde(skip)]
     state_provider: Arc<StateProvider>,
     #[serde(skip, default = "TelemetryPage::default_telemetry_provider")] // bandaid fix
-    telemetry_provider: Arc<Telemetry>,
+    telemetry_provider: Arc<Telemetry>, // TODO:  This should be option in the future
 }
 impl TelemetryPage {
     fn default_telemetry_provider() -> Arc<Telemetry> {
@@ -83,13 +83,12 @@ impl TelemetryPage {
             settings_provider,
             state_provider,
             telemetry_provider,
+            ref_lap_override: None,
             cur_driver: ("".to_owned(), 0),
             in_layout_edit_mode: false,
             show_delete_layout_dialog: false,
             show_add_limit_dialog: false,
-            cur_ref_path: None,
             cur_layout_index: 0,
-            cur_lap: 0,
             save_as_dialog_info: SaveAsDialogInfo {
                 name: "".to_owned(),
                 show: false,
@@ -136,62 +135,6 @@ impl TelemetryPage {
             self.draw_edit_mode(ui);
         }
     }
-
-    // fn process_telemetry_updates(&mut self, graph_data_types: Vec<GraphViewDataType>) {
-    //     let t = self.telemetry.update_telemetry().unwrap();
-    //
-    //     if self.cur_lap != graph_data_types[0].get_lap(&t) {
-    //         if graph_data_types[0].is_last_best(&t) && self.cur_ref_path.is_none() {
-    //             graph_data_types.iter().enumerate().for_each(|(i, _)| {
-    //                 self.layouts[self.cur_layout_index].graphs[i].ref_lap =
-    //                     self.layouts[self.cur_layout_index].graphs[i]
-    //                         .cur_lap
-    //                         .clone();
-    //             });
-    //         }
-    //         graph_data_types.iter().enumerate().for_each(|(i, _)| {
-    //             self.layouts[self.cur_layout_index].graphs[i].cur_lap = vec![];
-    //         });
-    //         self.cur_lap = graph_data_types[0].get_lap(&t);
-    //     }
-    //
-    //     graph_data_types
-    //         .iter()
-    //         .enumerate()
-    //         .for_each(|(i, graph_data_type)| {
-    //             if !self.layouts[self.cur_layout_index].graphs[i]
-    //                 .cur_lap
-    //                 .is_empty()
-    //                 || graph_data_type.get_normalized_distance(&t) < 0.9
-    //             {
-    //                 let new_y = graph_data_type.get_normalized_values(&t) as f32;
-    //                 // match self.layouts[self.cur_layout_index].graphs[i].cur_lap.last() {
-    //                 //     Some(last) => {
-    //                 //         if (last.y - new_y).abs() > 0.005 {
-    //                 //             self.layouts[self.cur_layout_index].graphs[i]
-    //                 //                 .cur_lap
-    //                 //                 .push(vec2(
-    //                 //                     graph_data_type.get_normalized_distance(&t) as f32,
-    //                 //                     new_y,
-    //                 //                 ))
-    //                 //         }
-    //                 //     }
-    //                 //     None => self.layouts[self.cur_layout_index].graphs[i]
-    //                 //         .cur_lap
-    //                 //         .push(vec2(
-    //                 //             graph_data_type.get_normalized_distance(&t) as f32,
-    //                 //             new_y,
-    //                 //         )),
-    //                 // }
-    //                 self.layouts[self.cur_layout_index].graphs[i]
-    //                     .cur_lap
-    //                     .push(vec2(
-    //                         graph_data_type.get_normalized_distance(&t) as f32,
-    //                         new_y,
-    //                     ));
-    //             }
-    //         });
-    // }
 
     fn draw_edit_mode(&mut self, ui: &mut Ui) {
         let top_bar_rect = Rect::from_min_size(
@@ -754,31 +697,29 @@ impl TelemetryPage {
         )
         .clicked()
         {
-            // TODO: When I reimplement the lap Stores reimplement this
-            //
-            // if let Some(path) = rfd::FileDialog::new()
-            //     .set_title("Select a reference file")
-            //     .set_directory(settings.record_save_path.clone())
-            //     .add_filter("JSON files", &["json"])
-            //     .pick_file()
-            // {
-            //     self.cur_ref_path = Some(path.display().to_string());
-            //
-            //     let contents = fs::read_to_string(path).unwrap_or_default();
-            //     let save_data: SaveData = serde_json::from_str(&contents).unwrap_or_default();
-            //
-            //     for graph in self.layouts[self.cur_layout_index].graphs.iter_mut() {
-            //         let gt = graph.graph_type.to_string();
-            //
-            //         graph.ref_lap = save_data
-            //             .lap_data
-            //             .iter()
-            //             .find(|d| d.data_type == gt)
-            //             .unwrap()
-            //             .values
-            //             .clone()
-            //     }
-            // }
+            if let Some(path) = rfd::FileDialog::new()
+                .set_title("Select a reference file")
+                .set_directory(
+                    self.settings_provider
+                        .record_save_path
+                        .read()
+                        .unwrap()
+                        .clone(),
+                )
+                .add_filter("JSON files", &["json"])
+                .pick_file()
+            {
+                let contents = fs::read_to_string(path).unwrap_or_default();
+                let save_data: SaveData = serde_json::from_str(&contents).unwrap_or_default();
+
+                self.ref_lap_override = Some(telemetry::Lap {
+                    datapoints: save_data.lap_data,
+                    distances: save_data.distances,
+                    positions: save_data.positions,
+                    times: save_data.times,
+                    laptime: Some(save_data.lap_time),
+                });
+            }
         }
         if button(
             ui,
@@ -791,10 +732,7 @@ impl TelemetryPage {
         )
         .clicked()
         {
-            self.cur_ref_path = None;
-            // for graph in &mut self.layouts[self.cur_layout_index].graphs {
-            //     graph.ref_lap = Lap::default();
-            // }
+            self.ref_lap_override = None;
         }
     }
 
@@ -1001,9 +939,14 @@ impl TelemetryPage {
                 {
                     let cur_lap_guard = self.telemetry_provider.cur_lap.lock().unwrap();
                     let best_lap_guard = self.telemetry_provider.best_lap.lock().unwrap();
-
                     let cur = &cur_lap_guard[self.cur_driver.1 as usize];
-                    let best = &best_lap_guard[self.cur_driver.1 as usize];
+
+                    let best: &telemetry::Lap;
+                    if let Some(best_lap) = &self.ref_lap_override {
+                        best = best_lap;
+                    } else {
+                        best = &best_lap_guard[self.cur_driver.1 as usize];
+                    }
 
                     let dyn_graph_data = DynGraphData {
                         cur_lap: Lap {
