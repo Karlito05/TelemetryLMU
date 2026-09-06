@@ -529,7 +529,10 @@ async fn save(
     };
 
     if save_data.lap_time > 0.0
-        && TelemetryGraphValueType::get_normalized_distance_into_lap(&telemetry, car_num) < 0.5
+        && TelemetryGraphValueType::normalize_distance_into_lap(
+            &telemetry,
+            *save_data.distances.first().unwrap() as f64,
+        ) < 0.5
         && save_data.lap_data[0].len() > 60
     // have recorded at least a second
     {

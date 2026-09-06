@@ -19,7 +19,7 @@ use crate::{
         settings_page::SettingsPage,
         sidebar::Sidebar,
     },
-    telemetry::{Lap, SaveData},
+    telemetry::{Lap, SaveData, TelemetryGraphValueType},
 };
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, Default)]
@@ -255,60 +255,33 @@ impl MapPage {
                                     .add_filter("JSON files", &["json"])
                                     .pick_file()
                                 {
-                                    // FIXME:
-                                    // let contents = fs::read_to_string(path).unwrap_or_default();
-                                    // let save_data: SaveData =
-                                    //     serde_json::from_str(&contents).unwrap_or_default();
-                                    //
-                                    // self.cur_dp_index = None;
-                                    // self.car_1.clear();
-                                    // self.car_1 = save_data
-                                    //     .pos_data
-                                    //     .iter()
-                                    //     .enumerate()
-                                    //     .map(|(i, pd)| Dp {
-                                    //         pos: pos2(pd.pos.x as f32, -pd.pos.z as f32),
-                                    //         time_since_lap_start: pd.time_since_lap_start,
-                                    //         speed: save_data
-                                    //             .lap_data
-                                    //             .iter()
-                                    //             .find(|ld| ld.data_type == "speed")
-                                    //             .unwrap()
-                                    //             .values[i]
-                                    //             .y
-                                    //             * 350.0, // 350 is hardcoded max speed on the backend
-                                    //         gear: (save_data
-                                    //             .lap_data
-                                    //             .iter()
-                                    //             .find(|ld| ld.data_type == "gear")
-                                    //             .unwrap()
-                                    //             .values[i]
-                                    //             .y
-                                    //             * 6.0) // Do this based on car class
-                                    //             as i32,
-                                    //         throttle: save_data
-                                    //             .lap_data
-                                    //             .iter()
-                                    //             .find(|ld| ld.data_type == "throttle")
-                                    //             .unwrap()
-                                    //             .values[i]
-                                    //             .y,
-                                    //         brake: save_data
-                                    //             .lap_data
-                                    //             .iter()
-                                    //             .find(|ld| ld.data_type == "brake")
-                                    //             .unwrap()
-                                    //             .values[i]
-                                    //             .y,
-                                    //         steering: save_data
-                                    //             .lap_data
-                                    //             .iter()
-                                    //             .find(|ld| ld.data_type == "steering")
-                                    //             .unwrap()
-                                    //             .values[i]
-                                    //             .y,
-                                    //     })
-                                    //     .collect();
+                                    let contents = fs::read_to_string(path).unwrap_or_default();
+                                    let save_data: SaveData =
+                                        serde_json::from_str(&contents).unwrap_or_default();
+
+                                    self.cur_dp_index = None;
+                                    self.car_1.clear();
+                                    self.car_1 = save_data
+                                        .positions
+                                        .iter()
+                                        .enumerate()
+                                        .map(|(i, pd)| Dp {
+                                            pos: pos2(pd.x as f32, -pd.z as f32),
+                                            time_since_lap_start: save_data.times[i] as f64,
+                                            speed: save_data.lap_data
+                                                [TelemetryGraphValueType::Speed as usize][i],
+                                            gear: save_data.lap_data
+                                                [TelemetryGraphValueType::Gear as usize][i]
+                                                as i32,
+                                            throttle: save_data.lap_data
+                                                [TelemetryGraphValueType::Throttle as usize][i],
+                                            brake: save_data.lap_data
+                                                [TelemetryGraphValueType::Brake as usize][i],
+                                            steering: save_data.lap_data
+                                                [TelemetryGraphValueType::Steering as usize][i]
+                                                + 0.5,
+                                        })
+                                        .collect();
                                 }
                             }
 
@@ -337,61 +310,33 @@ impl MapPage {
                                         .add_filter("JSON files", &["json"])
                                         .pick_file()
                                     {
-                                        // FIXME:
-
                                         let contents = fs::read_to_string(path).unwrap_or_default();
                                         let save_data: SaveData =
                                             serde_json::from_str(&contents).unwrap_or_default();
 
                                         self.cur_dp_index = None;
                                         self.car_2.clear();
-                                        // self.car_2 = save_data
-                                        //     .pos_data
-                                        //     .iter()
-                                        //     .enumerate()
-                                        //     .map(|(i, pd)| Dp {
-                                        //         pos: pos2(pd.pos.x as f32, -pd.pos.z as f32),
-                                        //         time_since_lap_start: pd.time_since_lap_start,
-                                        //         speed: save_data
-                                        //             .lap_data
-                                        //             .iter()
-                                        //             .find(|ld| ld.data_type == "speed")
-                                        //             .unwrap()
-                                        //             .values[i]
-                                        //             .y
-                                        //             * 350.0, // 350 is hardcoded max speed on the backend
-                                        //         gear: (save_data
-                                        //             .lap_data
-                                        //             .iter()
-                                        //             .find(|ld| ld.data_type == "gear")
-                                        //             .unwrap()
-                                        //             .values[i]
-                                        //             .y
-                                        //             * 6.0) // Do this based on car class
-                                        //             as i32,
-                                        //         throttle: save_data
-                                        //             .lap_data
-                                        //             .iter()
-                                        //             .find(|ld| ld.data_type == "throttle")
-                                        //             .unwrap()
-                                        //             .values[i]
-                                        //             .y,
-                                        //         brake: save_data
-                                        //             .lap_data
-                                        //             .iter()
-                                        //             .find(|ld| ld.data_type == "brake")
-                                        //             .unwrap()
-                                        //             .values[i]
-                                        //             .y,
-                                        //         steering: save_data
-                                        //             .lap_data
-                                        //             .iter()
-                                        //             .find(|ld| ld.data_type == "steering")
-                                        //             .unwrap()
-                                        //             .values[i]
-                                        //             .y,
-                                        //     })
-                                        //     .collect();
+                                        self.car_2 = save_data
+                                            .positions
+                                            .iter()
+                                            .enumerate()
+                                            .map(|(i, pd)| Dp {
+                                                pos: pos2(pd.x as f32, -pd.z as f32),
+                                                time_since_lap_start: save_data.times[i] as f64,
+                                                speed: save_data.lap_data
+                                                    [TelemetryGraphValueType::Speed as usize][i],
+                                                gear: save_data.lap_data
+                                                    [TelemetryGraphValueType::Gear as usize][i]
+                                                    as i32,
+                                                throttle: save_data.lap_data
+                                                    [TelemetryGraphValueType::Throttle as usize][i],
+                                                brake: save_data.lap_data
+                                                    [TelemetryGraphValueType::Brake as usize][i],
+                                                steering: save_data.lap_data
+                                                    [TelemetryGraphValueType::Steering as usize][i]
+                                                    + 0.5,
+                                            })
+                                            .collect();
                                     }
                                 }
                                 ui.label(
