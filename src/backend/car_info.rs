@@ -1,4 +1,4 @@
-use crate::interface::{IPVehicleClass, Telemetry, i8_array32_to_string, i8_array64_to_string};
+use crate::interface::{IPVehicleClass, Interface, i8_array32_to_string, i8_array64_to_string};
 
 #[derive(Debug)]
 pub struct FuelInfo {
@@ -22,7 +22,7 @@ pub struct StaleDriverInfo {
 }
 
 pub fn get_stale_driver_info(
-    telemetry: &Telemetry,
+    telemetry: &Interface,
     desired_name: String,
 ) -> Result<StaleDriverInfo, String> {
     let telemetry = telemetry.update_telemetry().unwrap();
@@ -62,7 +62,7 @@ pub struct DynDriverInfo {
     pub fuel: FuelInfo,
 }
 
-pub fn get_dyn_driver_info(telemetry: &Telemetry, cur_driver_id: usize) -> DynDriverInfo {
+pub fn get_dyn_driver_info(telemetry: &Interface, cur_driver_id: usize) -> DynDriverInfo {
     let telemetry = telemetry.update_telemetry().unwrap();
 
     let wheels = &telemetry.telemetry.telemetry_info[cur_driver_id].m_wheel;

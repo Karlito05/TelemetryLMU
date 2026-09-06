@@ -78,9 +78,9 @@ pub struct App {
     #[serde(skip)]
     logger: Logger,
     #[serde(skip)]
-    telemetry: crate::interface::Telemetry,
+    interface: crate::interface::Interface,
     #[serde(skip)]
-    telemetry_interface: Telemetry,
+    telemetry: Telemetry,
 }
 
 #[derive(Debug, PartialEq, serde::Deserialize, serde::Serialize, Default)]
@@ -113,7 +113,7 @@ impl App {
         app.telemetry_page.layouts = layouts;
         app.telemetry_page.cur_layout_index = cur_layout_index;
 
-        app.telemetry_interface =
+        app.telemetry =
             Telemetry::new("/dev/shm/LMU_Data".into(), app.settings_provider.clone()).unwrap();
 
         app.settings_page.restore_pfp(&cc.egui_ctx);
@@ -135,12 +135,9 @@ impl Default for App {
             settings_page: SettingsPage::new(settings_provider.clone(), state_provider.clone()),
             car_info_page: CarInfo::new(settings_provider.clone(), state_provider.clone()),
             logger: Logger::new("/dev/shm/LMU_Data"),
-            telemetry: crate::interface::Telemetry::new("/dev/shm/LMU_Data"),
-            telemetry_interface: Telemetry::new(
-                "/dev/shm/LMU_Data".into(),
-                settings_provider.clone(),
-            )
-            .unwrap(),
+            interface: crate::interface::Interface::new("/dev/shm/LMU_Data"),
+            telemetry: Telemetry::new("/dev/shm/LMU_Data".into(), settings_provider.clone())
+                .unwrap(),
             state_provider,
             settings_provider,
         }
@@ -174,9 +171,7 @@ impl eframe::App for App {
 
         egui::CentralPanel::default().show(ui, |ui| {
             match *self.state_provider.page.read().unwrap() {
-                Page::Telemetry => self
-                    .telemetry_page
-                    .draw_telemetry_page(ui, &self.telemetry_interface),
+                Page::Telemetry => self.telemetry_page.draw_telemetry_page(ui, &self.telemetry),
                 Page::Info => self.car_info_page.draw_car_info_page(ui),
                 Page::Map => self.map_page.draw_map_page(ui),
             }

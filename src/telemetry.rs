@@ -211,7 +211,7 @@ pub struct Telemetry {
     pub cur_lap: Arc<Mutex<[Lap; 104]>>,
     pub last_lap: Arc<Mutex<[Lap; 104]>>,
     pub cur_lap_nums: Arc<Mutex<[i32; 104]>>,
-    telemetry: Arc<Mutex<interface::Telemetry>>,
+    telemetry: Arc<Mutex<interface::Interface>>,
     running: Arc<AtomicBool>,
     handle: Option<JoinHandle<()>>,
     settings_provider: Arc<SettingsProvider>,
@@ -225,7 +225,7 @@ pub struct Lap {
 
 impl Telemetry {
     pub fn new(path: PathBuf, settings_provider: Arc<SettingsProvider>) -> Result<Self, String> {
-        let telemetry = Arc::new(Mutex::new(interface::Telemetry::new(
+        let telemetry = Arc::new(Mutex::new(interface::Interface::new(
             &path.to_string_lossy(),
         )));
 
@@ -278,7 +278,7 @@ impl Telemetry {
                             TOKIO.get().expect("tokio runtime not initialised").spawn(
                                 set_laptime_and_save(
                                     Arc::clone(&thread_last_lap),
-                                    interface::Telemetry::new("/dev/shm/LMU_Data"), // We
+                                    interface::Interface::new("/dev/shm/LMU_Data"), // We
                                     // just make a new interface here because it's inexpensive and would
                                     // cause deadlocks if we didn't
                                     j,
@@ -328,7 +328,7 @@ impl Telemetry {
 
 /// Returns A new DP for each of the arrays and an optional lap number if it has changed
 fn get_telemetry(
-    t: &interface::Telemetry,
+    t: &interface::Interface,
     cur_laps: [i32; 104],
 ) -> [([f64; TelemetryValueType::Max as usize], Option<i32>); 104] {
     let cur_data = t.update_telemetry().unwrap();
@@ -352,7 +352,7 @@ fn get_telemetry(
 
 async fn set_laptime_and_save(
     last_lap: Arc<Mutex<[Lap; 104]>>,
-    interface: interface::Telemetry,
+    interface: interface::Interface,
     car_num: usize,
     path: String,
 ) {
@@ -362,7 +362,7 @@ async fn set_laptime_and_save(
 
 async fn set_laptime(
     last_lap: Arc<Mutex<[Lap; 104]>>,
-    interface: &interface::Telemetry,
+    interface: &interface::Interface,
     car_num: usize,
 ) {
     tokio::time::sleep(Duration::from_millis(100)).await;
@@ -393,7 +393,7 @@ struct SaveData {
 
 async fn save(
     lap: Arc<Mutex<[Lap; 104]>>,
-    interface: &interface::Telemetry,
+    interface: &interface::Interface,
     car_num: usize,
     path: String,
 ) {

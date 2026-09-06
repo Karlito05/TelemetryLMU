@@ -17,14 +17,14 @@ use windows_sys::Win32::System::Memory::{
 const MAX_PATH: usize = 260;
 
 #[derive(Debug)]
-pub struct Telemetry {
+pub struct Interface {
     pub full_mode: bool,
     pub mmap: Mmap,
 }
 
-impl Telemetry {
-    pub fn new(path: &str) -> Telemetry {
-        let mmap = Telemetry::get_mmap(path);
+impl Interface {
+    pub fn new(path: &str) -> Interface {
+        let mmap = Interface::get_mmap(path);
 
         match mmap {
             Some(mmap) => Self {
@@ -33,7 +33,7 @@ impl Telemetry {
             },
             None => Self {
                 full_mode: false,
-                mmap: Telemetry::mmap_fallback(),
+                mmap: Interface::mmap_fallback(),
             },
         }
     }

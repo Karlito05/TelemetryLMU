@@ -9,7 +9,7 @@ use crate::{
         frontend_main::{SettingsProvider, StateProvider},
         sidebar::Sidebar,
     },
-    interface::{IPVehicleClass, Telemetry},
+    interface::{IPVehicleClass, Interface},
 };
 
 #[derive(Debug)]
@@ -20,7 +20,7 @@ pub struct CarInfo {
     driver_index: usize,
     fuel_info: FuelInfo,
     tires: [TireInfo; 4],
-    telemetry: Telemetry,
+    interface: Interface,
     settings_provider: Arc<SettingsProvider>,
     state_provider: Arc<StateProvider>,
 }
@@ -31,7 +31,7 @@ impl CarInfo {
         state_provider: Arc<StateProvider>,
     ) -> Self {
         Self {
-            telemetry: Telemetry::new("/dev/shm/LMU_Data"),
+            interface: Interface::new("/dev/shm/LMU_Data"),
             driver_index: 0,
             name: "".to_string(),
             car: "".to_string(),
@@ -55,13 +55,13 @@ impl CarInfo {
 
 impl CarInfo {
     pub fn draw_car_info_page(&mut self, ui: &mut Ui) {
-        if !self.telemetry.full_mode {
+        if !self.interface.full_mode {
             telemetry_not_found(ui);
             return;
         }
         if self.name.is_empty()
             && let Ok(info) = get_stale_driver_info(
-                &self.telemetry,
+                &self.interface,
                 self.settings_provider.in_game_name.read().unwrap().clone(),
             )
         {
@@ -72,7 +72,7 @@ impl CarInfo {
         }
 
         if !self.name.is_empty() {
-            let dyn_driver_inf = get_dyn_driver_info(&self.telemetry, self.driver_index);
+            let dyn_driver_inf = get_dyn_driver_info(&self.interface, self.driver_index);
             self.tires = dyn_driver_inf.tires;
             self.fuel_info = dyn_driver_inf.fuel;
         }

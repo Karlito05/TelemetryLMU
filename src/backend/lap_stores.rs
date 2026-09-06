@@ -5,7 +5,7 @@ use eframe::egui::{Vec2, vec2};
 
 use crate::{
     backend::telemetry::{GRAPH_VIEW_DATA_TYPE_COUNT, GraphViewDataType},
-    interface::{TelemVect3, Telemetry},
+    interface::{Interface, TelemVect3},
 };
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Clone, Debug)]
@@ -41,12 +41,12 @@ pub struct Logger {
     pub car_num: usize,
     cur_lap: i32,
     pub save_data: SaveData,
-    telemetry: Telemetry,
+    telemetry: Interface,
 }
 
 impl Logger {
     pub fn new(path: &str) -> Self {
-        let telemetry = Telemetry::new(path);
+        let telemetry = Interface::new(path);
 
         let cur_lap = 0;
 
@@ -105,7 +105,7 @@ impl Logger {
         self.save_data.pos_data = vec![];
     }
 }
-pub async fn save(mut save_data: SaveData, telemetry: Telemetry, car_num: usize, path: String) {
+pub async fn save(mut save_data: SaveData, telemetry: Interface, car_num: usize, path: String) {
     // Saves the save data passed in after 100ms of delay due to telemetry refreshing. If the
     // lap was invalid it discards the data.
     tokio::time::sleep(Duration::from_millis(100)).await;
