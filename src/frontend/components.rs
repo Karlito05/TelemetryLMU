@@ -1,10 +1,7 @@
 use eframe::{egui::*, epaint::Hsva};
 use egui_phosphor_icons::icons;
 
-use crate::{
-    backend::telemetry::GraphViewDataType, interface::SharedMemoryObjectOut,
-    telemetry::TelemetryValueType,
-};
+use crate::{interface::SharedMemoryObjectOut, telemetry::TelemetryGraphValueType};
 
 pub struct DropdownItem<T: PartialEq> {
     pub value: T,
@@ -447,7 +444,7 @@ pub fn graph_edit(
                             &mut new_graph_type,
                             "Select a type",
                             FontId::new(14.0, FontFamily::Proportional),
-                            GraphViewDataType::get_all_string()
+                            TelemetryGraphValueType::get_all_string()
                                 .iter()
                                 .map(|s| DropdownItem {
                                     value: s.clone(),
@@ -558,7 +555,7 @@ pub fn graph_edit(
                     &mut new_graph_type,
                     "Select a type",
                     FontId::new(14.0, FontFamily::Proportional),
-                    GraphViewDataType::get_all_string()
+                    TelemetryGraphValueType::get_all_string()
                         .iter()
                         .map(|s| DropdownItem {
                             value: s.clone(),
@@ -665,7 +662,7 @@ pub struct GraphInfo {
     pub show_ref: bool,
     pub n_gridlines: i32,
     pub size_percent: f32,
-    pub ref_val_type: TelemetryValueType,
+    pub ref_val_type: TelemetryGraphValueType,
 }
 #[derive(Clone, Debug)]
 pub struct Lap<'a> {
@@ -777,11 +774,8 @@ fn draw_lap(
 
     for i in 0..lap.values.len().min(lap.distances.len()) {
         points.push(pos2(
-            TelemetryValueType::DistanceIntoLap.normalize(
-                lap.distances[i] as f64,
-                telemetry,
-                car_num,
-            ) as f32
+            TelemetryGraphValueType::normalize_distance_into_lap(telemetry, lap.distances[i] as f64)
+                as f32
                 * size.x
                 + pos.x,
             (1.0 - graph_info

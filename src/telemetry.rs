@@ -19,13 +19,13 @@ use crate::{
     TOKIO,
     frontend::frontend_main::SettingsProvider,
     interface::{
-        self, IPVehicleClass, Interface, SharedMemoryObjectOut, i8_array32_to_string,
+        self, IPVehicleClass, Interface, SharedMemoryObjectOut, TelemVect3, i8_array32_to_string,
         i8_array64_to_string,
     },
 };
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Default, Debug)]
-pub enum TelemetryValueType {
+pub enum TelemetryGraphValueType {
     #[default]
     Rpm,
     Speed,
@@ -34,13 +34,11 @@ pub enum TelemetryValueType {
     Delta,
     Gear,
     Steering,
-    DistanceIntoLap,
-    TimeIntoLap,
 
     Max,
 }
 
-impl TryFrom<usize> for TelemetryValueType {
+impl TryFrom<usize> for TelemetryGraphValueType {
     type Error = ();
 
     fn try_from(value: usize) -> Result<Self, Self::Error> {
@@ -52,14 +50,13 @@ impl TryFrom<usize> for TelemetryValueType {
             4 => Ok(Self::Delta),
             5 => Ok(Self::Gear),
             6 => Ok(Self::Steering),
-            7 => Ok(Self::DistanceIntoLap),
-            8 => Ok(Self::TimeIntoLap),
+
             _ => Err(()),
         }
     }
 }
 
-impl TelemetryValueType {
+impl TelemetryGraphValueType {
     pub fn get_value(&self, t: &SharedMemoryObjectOut, driver: usize) -> f64 {
         match self {
             Self::Rpm => t.telemetry.telemetry_info[driver].m_engine_rpm,
@@ -69,8 +66,7 @@ impl TelemetryValueType {
             Self::Delta => t.telemetry.telemetry_info[driver].m_delta_best,
             Self::Gear => t.telemetry.telemetry_info[driver].m_gear as f64,
             Self::Steering => t.telemetry.telemetry_info[driver].m_unfiltered_steering,
-            Self::DistanceIntoLap => t.scoring.veh_scoring_info[driver].m_lap_dist,
-            Self::TimeIntoLap => t.scoring.veh_scoring_info[driver].m_time_into_lap,
+
             Self::Max => panic!("Can't call get value on TelemetryValueType::Max"),
         }
     }
@@ -84,8 +80,7 @@ impl TelemetryValueType {
             Self::Delta => "delta".to_owned(),
             Self::Gear => "gear".to_owned(),
             Self::Steering => "steering".to_owned(),
-            Self::DistanceIntoLap => "distance_into_lap".to_owned(),
-            Self::TimeIntoLap => "time_into_lap".to_owned(),
+
             Self::Max => panic!("Can't call to_string on TelemetryValueType::Max"),
         }
     }
@@ -99,8 +94,7 @@ impl TelemetryValueType {
             "delta" => Self::Delta,
             "gear" => Self::Gear,
             "steering" => Self::Steering,
-            "distance_into_lap" => Self::DistanceIntoLap,
-            "time_into_lap" => Self::TimeIntoLap,
+
             other => panic!("Unknown TelemetryValueType: {other}"),
         }
     }
@@ -114,8 +108,7 @@ impl TelemetryValueType {
             Self::Delta => "s".to_owned(),
             Self::Gear => "".to_owned(),
             Self::Steering => "deg".to_owned(),
-            Self::DistanceIntoLap => "m".to_owned(),
-            Self::TimeIntoLap => "s".to_owned(),
+
             Self::Max => panic!("Can't call get_unit on TelemetryValueType::Max"),
         }
     }
@@ -129,8 +122,7 @@ impl TelemetryValueType {
             Self::Delta => 10.0,
             Self::Gear => t.telemetry.telemetry_info[car_num].m_max_gears as f64,
             Self::Steering => 1.0,
-            Self::DistanceIntoLap => t.scoring.scoring_info.m_lap_dist,
-            Self::TimeIntoLap => 0.0,
+
             Self::Max => panic!("Can't call get_max_value on TelemetryValueType::Max"),
         }
     }
@@ -138,7 +130,7 @@ impl TelemetryValueType {
     pub fn normalize(&self, v: f64, t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
         match self {
             Self::Delta => v / (self.get_max_value(t, car_num) / 2.0) + 0.5,
-            Self::TimeIntoLap => -1.0,
+
             Self::Max => panic!("Can't call get_max_value on TelemetryValueType::Max"),
             _ => v / self.get_max_value(t, car_num),
         }
@@ -205,6 +197,32 @@ impl TelemetryValueType {
         }
         ret
     }
+
+    pub fn get_all_string() -> Vec<String> {
+        (0..TelemetryGraphValueType::Max as usize)
+            .map(|i| TelemetryGraphValueType::try_from(i).unwrap().to_string())
+            .collect()
+    }
+
+    pub fn get_time_into_lap(t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
+        t.scoring.veh_scoring_info[car_num].m_time_into_lap
+    }
+
+    pub fn get_distance_into_lap(t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
+        t.scoring.veh_scoring_info[car_num].m_lap_dist
+    }
+
+    pub fn get_normalized_distance_into_lap(t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
+        t.scoring.veh_scoring_info[car_num].m_lap_dist / t.scoring.scoring_info.m_lap_dist
+    }
+
+    pub fn normalize_distance_into_lap(t: &SharedMemoryObjectOut, v: f64) -> f64 {
+        v / t.scoring.scoring_info.m_lap_dist
+    }
+
+    pub fn get_pos(t: &SharedMemoryObjectOut, car_num: usize) -> TelemVect3 {
+        t.telemetry.telemetry_info[car_num].m_pos
+    }
 }
 
 #[derive(Debug)]
@@ -221,7 +239,10 @@ pub struct Telemetry {
 
 #[derive(Default, Clone, Debug)]
 pub struct Lap {
-    pub datapoints: [Vec<f32>; TelemetryValueType::Max as usize],
+    pub datapoints: [Vec<f32>; TelemetryGraphValueType::Max as usize],
+    pub distances: Vec<f32>,
+    pub positions: Vec<TelemVect3>,
+    pub times: Vec<f32>,
     pub laptime: Option<f32>,
 }
 
@@ -266,7 +287,6 @@ impl Telemetry {
                     if let Some(new_lap) = data.1 {
                         thread_last_lap.lock().unwrap()[j] = driver.clone();
                         thread_cur_lap_nums.lock().unwrap()[j] = new_lap;
-                        let interface = Interface::new("/dev/shm/LMU_Data");
                         if (*thread_settings_provider.log_all_cars.read().unwrap()
                             || i8_array32_to_string(
                                 &thread_telemetry
@@ -309,6 +329,10 @@ impl Telemetry {
                         for logged_value in driver.datapoints.iter_mut() {
                             logged_value.clear();
                         }
+                        driver.positions.clear();
+                        driver.distances.clear();
+                        driver.times.clear();
+                        driver.laptime = None;
                     }
                     for (h, dp) in data.0.iter().enumerate() {
                         if driver.datapoints[h].len() > 21600 {
@@ -316,6 +340,9 @@ impl Telemetry {
                         }
                         driver.datapoints[h].push(*dp as f32);
                     }
+                    driver.distances.push(data.2 as f32);
+                    driver.positions.push(data.3);
+                    driver.times.push(data.4 as f32);
                 }
                 thread::sleep(Duration::from_millis(16));
             }
@@ -346,22 +373,44 @@ impl Telemetry {
 fn get_telemetry(
     t: &interface::Interface,
     cur_laps: [i32; 104],
-) -> [([f64; TelemetryValueType::Max as usize], Option<i32>); 104] {
+) -> [(
+    [f64; TelemetryGraphValueType::Max as usize],
+    Option<i32>,
+    f64,
+    TelemVect3,
+    f64,
+); 104] {
     let cur_data = t.update_telemetry().unwrap();
 
-    let mut ret: [([f64; TelemetryValueType::Max as usize], Option<i32>); 104] =
-        std::array::from_fn(|_| (std::array::from_fn(|_| 0.0), None));
+    let mut ret: [(
+        [f64; TelemetryGraphValueType::Max as usize],
+        Option<i32>,
+        f64,
+        TelemVect3,
+        f64,
+    ); 104] = std::array::from_fn(|_| {
+        (
+            std::array::from_fn(|_| 0.0),
+            None,
+            0.0,
+            TelemVect3::default(),
+            0.0,
+        )
+    });
     for j in 0..104 {
         let new_lap_num = cur_data.telemetry.telemetry_info[j].m_lap_number;
         if cur_laps[j] != new_lap_num
-            && TelemetryValueType::DistanceIntoLap.get_value(&cur_data, j) < 100.0
+            && TelemetryGraphValueType::get_distance_into_lap(&cur_data, j) < 100.0
         {
             ret[j].1 = Some(new_lap_num);
         }
-        for i in 0..TelemetryValueType::Max as usize {
-            let tel_type = TelemetryValueType::try_from(i).unwrap();
+        for i in 0..TelemetryGraphValueType::Max as usize {
+            let tel_type = TelemetryGraphValueType::try_from(i).unwrap();
             ret[j].0[i] = tel_type.get_value(&cur_data, j);
         }
+        ret[j].2 = TelemetryGraphValueType::get_distance_into_lap(&cur_data, j);
+        ret[j].3 = TelemetryGraphValueType::get_pos(&cur_data, j);
+        ret[j].4 = TelemetryGraphValueType::get_time_into_lap(&cur_data, j);
     }
     ret
 }
@@ -431,16 +480,19 @@ async fn set_laptime(
     last_lap.lock().unwrap()[car_num].laptime = Some(laptime);
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
-struct SaveData {
-    date: String,
-    track: String,
-    driver_name: String,
-    car: String,
-    car_class: IPVehicleClass,
-    lap_time: f32,
+#[derive(serde::Serialize, serde::Deserialize, Default)]
+pub struct SaveData {
+    pub date: String,
+    pub track: String,
+    pub driver_name: String,
+    pub car: String,
+    pub car_class: IPVehicleClass,
+    pub distances: Vec<f32>,
+    pub positions: Vec<TelemVect3>,
+    pub times: Vec<f32>,
+    pub lap_time: f32,
     // Conditions
-    lap_data: [Vec<f32>; TelemetryValueType::Max as usize],
+    pub lap_data: [Vec<f32>; TelemetryGraphValueType::Max as usize],
 }
 
 async fn save(
@@ -463,6 +515,9 @@ async fn save(
         to_save_lap = lap.lock().unwrap()[car_num].clone();
     }
     let save_data = SaveData {
+        distances: to_save_lap.distances,
+        positions: to_save_lap.positions,
+        times: to_save_lap.times,
         date: time,
         track: track.clone(),
         driver_name: driver_name.clone(),
@@ -474,13 +529,7 @@ async fn save(
     };
 
     if save_data.lap_time > 0.0
-        && TelemetryValueType::DistanceIntoLap.normalize(
-            (*save_data.lap_data[TelemetryValueType::DistanceIntoLap as usize]
-                .first()
-                .unwrap_or(&1.0)) as f64, // 1.0 so it fails the check
-            &telemetry,
-            car_num,
-        ) < 0.5
+        && TelemetryGraphValueType::get_normalized_distance_into_lap(&telemetry, car_num) < 0.5
         && save_data.lap_data[0].len() > 60
     // have recorded at least a second
     {

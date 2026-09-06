@@ -3,7 +3,7 @@ use crate::frontend::components::{
     DropdownItem, DynGraphData, GraphChange, GraphInfo, Lap, button, graph, graph_edit,
 };
 use crate::frontend::frontend_main::{SettingsProvider, StateProvider};
-use crate::telemetry::{Telemetry, TelemetryValueType};
+use crate::telemetry::{Telemetry, TelemetryGraphValueType};
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
 use std::sync::Arc;
@@ -105,7 +105,7 @@ impl TelemetryPage {
                 name: "Main".to_owned(),
                 graphs: vec![GraphInfo {
                     show_ref: false,
-                    ref_val_type: TelemetryValueType::Rpm,
+                    ref_val_type: TelemetryGraphValueType::Rpm,
                     color: Color32::WHITE,
                     n_gridlines: 3,
                     size_percent: 1.0,
@@ -477,7 +477,7 @@ impl TelemetryPage {
                     show_ref: true,
                     n_gridlines: 3,
                     size_percent: 0.0,
-                    ref_val_type: TelemetryValueType::Rpm,
+                    ref_val_type: TelemetryGraphValueType::Rpm,
                 });
 
                 let new_num_graphs = self.edit_mode_context.layout.graphs.len();
@@ -961,7 +961,7 @@ impl TelemetryPage {
                         }
                         GraphChange::Type(i, new_type) => {
                             self.edit_mode_context.layout.graphs[i].ref_val_type =
-                                TelemetryValueType::from_string(&new_type);
+                                TelemetryGraphValueType::from_string(&new_type);
                         }
                         GraphChange::Color(i, new_color) => {
                             self.edit_mode_context.layout.graphs[i].color = new_color;
@@ -1008,13 +1008,11 @@ impl TelemetryPage {
                     let dyn_graph_data = DynGraphData {
                         cur_lap: Lap {
                             values: &cur.datapoints[graph_info.ref_val_type.clone() as usize],
-                            distances: &cur.datapoints
-                                [TelemetryValueType::DistanceIntoLap as usize],
+                            distances: &cur.distances,
                         },
                         ref_lap: Lap {
                             values: &best.datapoints[graph_info.ref_val_type.clone() as usize],
-                            distances: &best.datapoints
-                                [TelemetryValueType::DistanceIntoLap as usize],
+                            distances: &best.distances,
                         },
                     };
 

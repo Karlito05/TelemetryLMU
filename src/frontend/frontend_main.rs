@@ -7,7 +7,6 @@ use std::{
 use eframe::egui::{self, TextureHandle};
 
 use crate::{
-    backend::lap_stores::Logger,
     frontend::{
         car_info_page::CarInfo,
         map_page::MapPage,
@@ -76,8 +75,6 @@ pub struct App {
     #[serde(skip)]
     car_info_page: CarInfo,
     #[serde(skip)]
-    logger: Logger,
-    #[serde(skip)]
     interface: crate::interface::Interface,
     #[serde(skip)]
     telemetry_provider: Arc<Telemetry>,
@@ -141,7 +138,6 @@ impl Default for App {
             ),
             settings_page: SettingsPage::new(settings_provider.clone(), state_provider.clone()),
             car_info_page: CarInfo::new(settings_provider.clone(), state_provider.clone()),
-            logger: Logger::new("/dev/shm/LMU_Data"),
             interface: crate::interface::Interface::new("/dev/shm/LMU_Data"),
             telemetry_provider,
             state_provider,
@@ -163,18 +159,6 @@ impl eframe::App for App {
             self.settings_page.draw_settings_page(ui);
         }
 
-        // TODO: Handle this in the main telemetry
-        // if self.settings_page.record_laps && self.telemetry.full_mode {
-        //     self.process_record_laps();
-        // }
-
-        // egui::Window::new("Debug").show(ui.ctx(), |ui| {
-        //     ui.ctx().clone().inspection_ui(ui);
-        //     ui.ctx().clone().memory_ui(ui);
-        //     ui.ctx().clone().settings_ui(ui);
-        //     ui.ctx().clone().texture_ui(ui);
-        // });
-
         egui::CentralPanel::default().show(ui, |ui| {
             match *self.state_provider.page.read().unwrap() {
                 Page::Telemetry => self.telemetry_page.draw_telemetry_page(ui),
@@ -184,30 +168,3 @@ impl eframe::App for App {
         });
     }
 }
-
-// impl App {
-//     fn process_record_laps(&mut self) {
-//         if let Some(d) = self
-//             .telemetry
-//             .find_driver(self.settings_page.in_game_name.clone())
-//         {
-//             if d.1 as usize == self.logger.car_num {
-//                 if self.logger.add_datapoints() {
-//                     TOKIO
-//                         .get()
-//                         .expect("tokio runtime not initialised")
-//                         .spawn(save(
-//                             self.logger.save_data.clone(),
-//                             crate::interface::Telemetry::new("/dev/shm/LMU_Data"),
-//                             self.logger.car_num,
-//                             self.settings_page.record_save_path.clone() + "/",
-//                         ));
-//                     self.logger.clear();
-//                 }
-//             } else {
-//                 self.logger.clear();
-//                 self.logger.car_num = d.1 as usize;
-//             }
-//         }
-//     }
-// }

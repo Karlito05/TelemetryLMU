@@ -627,8 +627,7 @@ mod tests {
 }
 
 #[repr(u8)]
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
-#[expect(unused)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum IPVehicleClass {
     Hypercar = 0x00,
     Lmp2Elms = 0x02,
@@ -637,6 +636,7 @@ pub enum IPVehicleClass {
     Gte = 0x05,
     Gt3 = 0x06,
     PaceCar = 0x08,
+    #[default]
     Unknown = 0xFF,
 }
 
