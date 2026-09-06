@@ -32,6 +32,19 @@ pub struct TelemetryPage {
     settings_provider: Arc<SettingsProvider>,
     #[serde(skip)]
     state_provider: Arc<StateProvider>,
+    #[serde(skip, default = "TelemetryPage::default_telemetry_provider")] // bandaid fix
+    telemetry_provider: Arc<Telemetry>,
+}
+impl TelemetryPage {
+    fn default_telemetry_provider() -> Arc<Telemetry> {
+        Arc::new(
+            Telemetry::new(
+                "/dev/shm/LMU_Data".into(),
+                Arc::new(SettingsProvider::default()),
+            )
+            .expect("telemetry init failed"),
+        )
+    }
 }
 
 #[derive(Clone, Debug, Default)]
@@ -64,10 +77,12 @@ impl TelemetryPage {
     pub fn new(
         settings_provider: Arc<SettingsProvider>,
         state_provider: Arc<StateProvider>,
+        telemetry_provider: Arc<Telemetry>,
     ) -> Self {
         Self {
             settings_provider,
             state_provider,
+            telemetry_provider,
             cur_driver: ("".to_owned(), 0),
             in_layout_edit_mode: false,
             show_delete_layout_dialog: false,
@@ -101,7 +116,7 @@ impl TelemetryPage {
 }
 
 impl TelemetryPage {
-    pub fn draw_telemetry_page(&mut self, ui: &mut Ui, telemetry: &Telemetry) {
+    pub fn draw_telemetry_page(&mut self, ui: &mut Ui) {
         // TODO: Refactor this into frontend_main!
         // if !self.telemetry.full_mode {
         //     telemetry_not_found(ui);
@@ -116,7 +131,7 @@ impl TelemetryPage {
         //         .collect(),
         // );
         if !self.in_layout_edit_mode {
-            self.draw_normal_mode(ui, telemetry);
+            self.draw_normal_mode(ui);
         } else {
             self.draw_edit_mode(ui);
         }
@@ -222,7 +237,7 @@ impl TelemetryPage {
         self.draw_graphs_edit(ui, graphs_rect);
     }
 
-    fn draw_normal_mode(&mut self, ui: &mut Ui, telemetry: &Telemetry) {
+    fn draw_normal_mode(&mut self, ui: &mut Ui) {
         let top_bar_rect = Rect::from_min_size(
             pos2(
                 if *self.state_provider.sidebar_open.read().unwrap() {
@@ -243,7 +258,7 @@ impl TelemetryPage {
             ),
         );
 
-        self.draw_top_bar_normal(ui, top_bar_rect, telemetry);
+        self.draw_top_bar_normal(ui, top_bar_rect);
 
         let graphs_rect = Rect::from_min_size(
             pos2(
@@ -265,7 +280,7 @@ impl TelemetryPage {
             ),
         );
 
-        self.draw_graphs_normal(ui, graphs_rect, telemetry);
+        self.draw_graphs_normal(ui, graphs_rect);
     }
 
     fn draw_top_bar_edit(&mut self, ui: &mut Ui, top_bar_rect: Rect) {
@@ -596,7 +611,7 @@ impl TelemetryPage {
         }
     }
 
-    fn draw_top_bar_normal(&mut self, ui: &mut Ui, top_bar_rect: Rect, telemetry: &Telemetry) {
+    fn draw_top_bar_normal(&mut self, ui: &mut Ui, top_bar_rect: Rect) {
         ui.painter().rect_filled(
             top_bar_rect,
             CornerRadius::same(24),
@@ -611,7 +626,7 @@ impl TelemetryPage {
 
                 ui.separator();
 
-                self.draw_driver_select(ui, telemetry);
+                self.draw_driver_select(ui);
 
                 ui.separator();
 
@@ -664,7 +679,7 @@ impl TelemetryPage {
         );
     }
 
-    fn draw_driver_select(&mut self, ui: &mut Ui, telemetry: &Telemetry) {
+    fn draw_driver_select(&mut self, ui: &mut Ui) {
         ui.add(
             Label::new(RichText::new("Driver:").size(16.0).color(Color32::WHITE)).selectable(false),
         );
@@ -682,7 +697,7 @@ impl TelemetryPage {
                 size: 14.0,
                 family: FontFamily::Proportional,
             },
-            telemetry
+            self.telemetry_provider
                 .get_drivers()
                 .iter()
                 .map(|driver| DropdownItem {
@@ -975,7 +990,7 @@ impl TelemetryPage {
         });
     }
 
-    fn draw_graphs_normal(&self, ui: &mut Ui, graphs_rect: Rect, telemetry: &Telemetry) {
+    fn draw_graphs_normal(&self, ui: &mut Ui, graphs_rect: Rect) {
         ui.put(graphs_rect, |ui: &mut Ui| {
             ui.vertical(|ui| {
                 let margins = 64.0;
@@ -984,8 +999,8 @@ impl TelemetryPage {
                     .iter()
                     .enumerate()
                 {
-                    let cur_lap_guard = telemetry.cur_lap.lock().unwrap();
-                    let best_lap_guard = telemetry.best_lap.lock().unwrap();
+                    let cur_lap_guard = self.telemetry_provider.cur_lap.lock().unwrap();
+                    let best_lap_guard = self.telemetry_provider.best_lap.lock().unwrap();
 
                     let cur = &cur_lap_guard[self.cur_driver.1 as usize];
                     let best = &best_lap_guard[self.cur_driver.1 as usize];
@@ -1015,7 +1030,7 @@ impl TelemetryPage {
                             ),
                             CornerRadius::same(24),
                             margins,
-                            &telemetry.get_telemetry_object(),
+                            &self.telemetry_provider.get_telemetry_object(),
                         );
                         continue;
                     }
@@ -1038,7 +1053,7 @@ impl TelemetryPage {
                                 se: 0,
                             },
                             margins,
-                            &telemetry.get_telemetry_object(),
+                            &self.telemetry_provider.get_telemetry_object(),
                         );
                         continue;
                     }
@@ -1060,7 +1075,7 @@ impl TelemetryPage {
                                 se: 24,
                             },
                             margins,
-                            &telemetry.get_telemetry_object(),
+                            &self.telemetry_provider.get_telemetry_object(),
                         );
                         continue;
                     }
@@ -1076,7 +1091,7 @@ impl TelemetryPage {
                         ),
                         CornerRadius::same(0),
                         margins,
-                        &telemetry.get_telemetry_object(),
+                        &self.telemetry_provider.get_telemetry_object(),
                     );
                 }
             })

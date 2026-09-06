@@ -80,7 +80,7 @@ pub struct App {
     #[serde(skip)]
     interface: crate::interface::Interface,
     #[serde(skip)]
-    telemetry: Telemetry,
+    telemetry_provider: Arc<Telemetry>,
 }
 
 #[derive(Debug, PartialEq, serde::Deserialize, serde::Serialize, Default)]
@@ -98,6 +98,9 @@ impl App {
         } else {
             Default::default()
         };
+        app.telemetry_provider = Arc::new(
+            Telemetry::new("/dev/shm/LMU_Data".into(), app.settings_provider.clone()).unwrap(),
+        );
 
         app.sidebar = Sidebar::new(app.settings_provider.clone(), app.state_provider.clone());
         app.settings_page =
@@ -107,14 +110,14 @@ impl App {
 
         let cur_layout_index = app.telemetry_page.cur_layout_index;
         let layouts = app.telemetry_page.layouts;
-        app.telemetry_page =
-            TelemetryPage::new(app.settings_provider.clone(), app.state_provider.clone());
+        app.telemetry_page = TelemetryPage::new(
+            app.settings_provider.clone(),
+            app.state_provider.clone(),
+            app.telemetry_provider.clone(),
+        );
 
         app.telemetry_page.layouts = layouts;
         app.telemetry_page.cur_layout_index = cur_layout_index;
-
-        app.telemetry =
-            Telemetry::new("/dev/shm/LMU_Data".into(), app.settings_provider.clone()).unwrap();
 
         app.settings_page.restore_pfp(&cc.egui_ctx);
         app
@@ -125,19 +128,22 @@ impl Default for App {
     fn default() -> Self {
         let settings_provider = Arc::new(SettingsProvider::default());
         let state_provider = Arc::new(StateProvider::default());
+        let telemetry_provider = Arc::new(
+            Telemetry::new("/dev/shm/LMU_Data".into(), settings_provider.clone()).unwrap(),
+        );
         Self {
             sidebar: Sidebar::new(settings_provider.clone(), state_provider.clone()),
             map_page: MapPage::new(settings_provider.clone(), state_provider.clone()),
             telemetry_page: telemetry_page::TelemetryPage::new(
                 settings_provider.clone(),
                 state_provider.clone(),
+                telemetry_provider.clone(),
             ),
             settings_page: SettingsPage::new(settings_provider.clone(), state_provider.clone()),
             car_info_page: CarInfo::new(settings_provider.clone(), state_provider.clone()),
             logger: Logger::new("/dev/shm/LMU_Data"),
             interface: crate::interface::Interface::new("/dev/shm/LMU_Data"),
-            telemetry: Telemetry::new("/dev/shm/LMU_Data".into(), settings_provider.clone())
-                .unwrap(),
+            telemetry_provider,
             state_provider,
             settings_provider,
         }
@@ -171,7 +177,7 @@ impl eframe::App for App {
 
         egui::CentralPanel::default().show(ui, |ui| {
             match *self.state_provider.page.read().unwrap() {
-                Page::Telemetry => self.telemetry_page.draw_telemetry_page(ui, &self.telemetry),
+                Page::Telemetry => self.telemetry_page.draw_telemetry_page(ui),
                 Page::Info => self.car_info_page.draw_car_info_page(ui),
                 Page::Map => self.map_page.draw_map_page(ui),
             }
