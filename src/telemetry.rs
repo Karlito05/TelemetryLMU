@@ -19,7 +19,8 @@ use crate::{
     TOKIO,
     frontend::frontend_main::SettingsProvider,
     interface::{
-        self, IPVehicleClass, SharedMemoryObjectOut, i8_array32_to_string, i8_array64_to_string,
+        self, IPVehicleClass, Interface, SharedMemoryObjectOut, i8_array32_to_string,
+        i8_array64_to_string,
     },
 };
 
@@ -210,6 +211,7 @@ impl TelemetryValueType {
 pub struct Telemetry {
     pub cur_lap: Arc<Mutex<[Lap; 104]>>,
     pub last_lap: Arc<Mutex<[Lap; 104]>>,
+    pub best_lap: Arc<Mutex<[Lap; 104]>>,
     pub cur_lap_nums: Arc<Mutex<[i32; 104]>>,
     telemetry: Arc<Mutex<interface::Interface>>,
     running: Arc<AtomicBool>,
@@ -235,9 +237,11 @@ impl Telemetry {
 
         let cur_lap = Arc::new(Mutex::new(std::array::from_fn(|_| Lap::default())));
         let last_lap = Arc::new(Mutex::new(std::array::from_fn(|_| Lap::default())));
+        let best_lap = Arc::new(Mutex::new(std::array::from_fn(|_| Lap::default())));
         let cur_lap_nums = Arc::new(Mutex::new(std::array::from_fn(|_| 0)));
         let running = Arc::new(AtomicBool::new(true));
 
+        let thread_best_lap = Arc::clone(&best_lap);
         let thread_settings_provider = Arc::clone(&settings_provider);
         let thread_telemetry = Arc::clone(&telemetry);
         let thread_cur_lap = Arc::clone(&cur_lap);
@@ -262,6 +266,7 @@ impl Telemetry {
                     if let Some(new_lap) = data.1 {
                         thread_last_lap.lock().unwrap()[j] = driver.clone();
                         thread_cur_lap_nums.lock().unwrap()[j] = new_lap;
+                        let interface = Interface::new("/dev/shm/LMU_Data");
                         if (*thread_settings_provider.log_all_cars.read().unwrap()
                             || i8_array32_to_string(
                                 &thread_telemetry
@@ -276,9 +281,10 @@ impl Telemetry {
                             && *thread_settings_provider.record_laps.read().unwrap()
                         {
                             TOKIO.get().expect("tokio runtime not initialised").spawn(
-                                set_laptime_and_save(
+                                set_laptime_best_and_save(
                                     Arc::clone(&thread_last_lap),
-                                    interface::Interface::new("/dev/shm/LMU_Data"), // We
+                                    Arc::clone(&thread_best_lap),
+                                    "/dev/shm/LMU_Data", // We
                                     // just make a new interface here because it's inexpensive and would
                                     // cause deadlocks if we didn't
                                     j,
@@ -288,6 +294,15 @@ impl Telemetry {
                                         .unwrap()
                                         .clone()
                                         + "/",
+                                ),
+                            );
+                        } else {
+                            TOKIO.get().expect("tokio runtime not initialised").spawn(
+                                set_laptime_and_best(
+                                    Arc::clone(&thread_last_lap),
+                                    Arc::clone(&thread_best_lap),
+                                    "/dev/shm/LMU_Data",
+                                    j,
                                 ),
                             );
                         }
@@ -309,6 +324,7 @@ impl Telemetry {
         Ok(Self {
             cur_lap,
             last_lap,
+            best_lap,
             running,
             handle: Some(handle),
             cur_lap_nums,
@@ -350,14 +366,44 @@ fn get_telemetry(
     ret
 }
 
-async fn set_laptime_and_save(
+async fn set_laptime_best_and_save(
     last_lap: Arc<Mutex<[Lap; 104]>>,
-    interface: interface::Interface,
+    best_lap: Arc<Mutex<[Lap; 104]>>,
+    interface_path: &str,
     car_num: usize,
-    path: String,
+    save_path: String,
 ) {
+    let interface = Interface::new(interface_path);
     set_laptime(last_lap.clone(), &interface, car_num).await;
-    save(last_lap, &interface, car_num, path).await;
+    set_best(best_lap, last_lap.clone(), car_num).await;
+    save(last_lap, &interface, car_num, save_path).await;
+}
+
+async fn set_laptime_and_best(
+    last_lap: Arc<Mutex<[Lap; 104]>>,
+    best_lap: Arc<Mutex<[Lap; 104]>>,
+    interface_path: &str,
+    car_num: usize,
+) {
+    let interface = Interface::new(interface_path);
+    set_laptime(last_lap.clone(), &interface, car_num).await;
+    set_best(best_lap, last_lap, car_num).await;
+}
+
+async fn set_best(
+    best_lap: Arc<Mutex<[Lap; 104]>>,
+    last_lap: Arc<Mutex<[Lap; 104]>>,
+    car_num: usize,
+) {
+    let mut best_lap_guard = best_lap.lock().unwrap();
+    let last_lap_guard = last_lap.lock().unwrap();
+    if let Some(best_laptime) = best_lap_guard[car_num].laptime {
+        if let Some(last_laptime) = last_lap_guard[car_num].laptime {
+            if best_laptime > last_laptime {
+                best_lap_guard[car_num] = last_lap_guard[car_num].clone();
+            }
+        }
+    }
 }
 
 async fn set_laptime(
