@@ -671,7 +671,7 @@ impl TelemetryPage {
 
         ui.add_space(2.0);
 
-        if dropdown(
+        dropdown(
             ui,
             vec2(140.0, 32.0),
             CornerRadius::same(8),
@@ -690,19 +690,7 @@ impl TelemetryPage {
                     display_value: driver.0.clone(),
                 })
                 .collect(),
-        ) {
-            for layout in &mut self.layouts {
-                for _graph in &mut layout.graphs {
-                    // TODO: Fix this
-                    // graph. = GraphViewDataType::from_string(
-                    //     &graph.ref_val_type.to_string(),
-                    //     self.cur_driver.1 as usize,
-                    // );
-                    // graph.cur_lap = Lap::default();
-                    // graph.ref_lap = Lap::default();
-                }
-            }
-        }
+        );
     }
 
     fn draw_layout_select(&mut self, ui: &mut Ui) {
@@ -712,7 +700,7 @@ impl TelemetryPage {
 
         ui.add_space(2.0);
 
-        if dropdown(
+        dropdown(
             ui,
             vec2(140.0, 32.0),
             CornerRadius::same(8),
@@ -731,14 +719,7 @@ impl TelemetryPage {
                     display_value: l.name.clone(),
                 })
                 .collect(),
-        ) {
-            for _layout in &mut self.layouts {
-                // for graph in &mut layout.graphs {
-                //     graph.cur_lap = Lap::default();
-                //     graph.ref_lap = Lap::default();
-                // }
-            }
-        }
+        );
     }
 
     fn draw_reference_controls(&mut self, ui: &mut Ui) {
@@ -1004,10 +985,10 @@ impl TelemetryPage {
                     .enumerate()
                 {
                     let cur_lap_guard = telemetry.cur_lap.lock().unwrap();
-                    let last_lap_guard = telemetry.last_lap.lock().unwrap();
+                    let best_lap_guard = telemetry.best_lap.lock().unwrap();
 
                     let cur = &cur_lap_guard[self.cur_driver.1 as usize];
-                    let last = &last_lap_guard[self.cur_driver.1 as usize];
+                    let best = &best_lap_guard[self.cur_driver.1 as usize];
 
                     let dyn_graph_data = DynGraphData {
                         cur_lap: Lap {
@@ -1016,8 +997,8 @@ impl TelemetryPage {
                                 [TelemetryValueType::DistanceIntoLap as usize],
                         },
                         ref_lap: Lap {
-                            values: &last.datapoints[graph_info.ref_val_type.clone() as usize],
-                            distances: &last.datapoints
+                            values: &best.datapoints[graph_info.ref_val_type.clone() as usize],
+                            distances: &best.datapoints
                                 [TelemetryValueType::DistanceIntoLap as usize],
                         },
                     };

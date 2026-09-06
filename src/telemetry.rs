@@ -403,6 +403,12 @@ async fn set_best(
                 best_lap_guard[car_num] = last_lap_guard[car_num].clone();
             }
         }
+    } else {
+        if let Some(last_laptime) = last_lap_guard[car_num].laptime
+            && last_laptime > 0.0
+        {
+            best_lap_guard[car_num] = last_lap_guard[car_num].clone();
+        }
     }
 }
 
