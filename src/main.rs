@@ -45,27 +45,27 @@ fn main() -> eframe::Result {
             add_font(
                 &mut fonts,
                 "RacingSansOne",
-                include_bytes!("../public/RacingSansOne-Regular.ttf"),
+                include_bytes!("../public/fonts/RacingSansOne-Regular.ttf"),
             );
             add_font(
                 &mut fonts,
                 "JetBrainsMono",
-                include_bytes!("../public/JetBrainsMono-VariableFont_wght.ttf"),
+                include_bytes!("../public/fonts/JetBrainsMono-VariableFont_wght.ttf"),
             );
             add_font(
                 &mut fonts,
                 "RethinkSans",
-                include_bytes!("../public/RethinkSans-Bold.ttf"),
+                include_bytes!("../public/fonts/RethinkSans-Bold.ttf"),
             );
             add_font(
                 &mut fonts,
                 "BarlowCondensed",
-                include_bytes!("../public/BarlowCondensed-SemiBold.ttf"),
+                include_bytes!("../public/fonts/BarlowCondensed-SemiBold.ttf"),
             );
             add_font(
                 &mut fonts,
                 "DaysOne",
-                include_bytes!("../public/DaysOne-Regular.ttf"),
+                include_bytes!("../public/fonts/DaysOne-Regular.ttf"),
             );
 
             //Icon fonts

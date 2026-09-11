@@ -263,21 +263,26 @@ impl MapPage {
                                         .positions
                                         .iter()
                                         .enumerate()
-                                        .map(|(i, pd)| Dp {
-                                            pos: pos2(pd.x as f32, -pd.z as f32),
-                                            time_since_lap_start: save_data.times[i] as f64,
-                                            speed: save_data.lap_data
-                                                [TelemetryGraphValueType::Speed as usize][i],
-                                            gear: save_data.lap_data
-                                                [TelemetryGraphValueType::Gear as usize][i]
-                                                as i32,
-                                            throttle: save_data.lap_data
-                                                [TelemetryGraphValueType::Throttle as usize][i],
-                                            brake: save_data.lap_data
-                                                [TelemetryGraphValueType::Brake as usize][i],
-                                            steering: save_data.lap_data
-                                                [TelemetryGraphValueType::Steering as usize][i]
-                                                + 0.5,
+                                        .map(|(mut i, pd)| {
+                                            if i > 21600 {
+                                                i = 21600;
+                                            }
+                                            Dp {
+                                                pos: pos2(pd.x as f32, -pd.z as f32),
+                                                time_since_lap_start: save_data.times[i] as f64,
+                                                speed: save_data.lap_data
+                                                    [TelemetryGraphValueType::Speed as usize][i],
+                                                gear: save_data.lap_data
+                                                    [TelemetryGraphValueType::Gear as usize][i]
+                                                    as i32,
+                                                throttle: save_data.lap_data
+                                                    [TelemetryGraphValueType::Throttle as usize][i],
+                                                brake: save_data.lap_data
+                                                    [TelemetryGraphValueType::Brake as usize][i],
+                                                steering: save_data.lap_data
+                                                    [TelemetryGraphValueType::Steering as usize][i]
+                                                    + 0.5,
+                                            }
                                         })
                                         .collect();
                                 }
@@ -482,7 +487,7 @@ impl MapPage {
 
                                 ui.add(
                                     Image::new(include_image!(
-                                        "../../public/steering-wheel-blue.svg"
+                                        "../../public/icons/steering-wheel-blue.svg"
                                     ))
                                     .rotate(
                                         if let Some(i) = self.cur_dp_index {
@@ -641,7 +646,7 @@ impl MapPage {
 
                                     ui.add(
                                         Image::new(include_image!(
-                                            "../../public/steering-wheel-orange.svg"
+                                            "../../public/icons/steering-wheel-orange.svg"
                                         ))
                                         .rotate(
                                             if let Some(i) = self.cur_dp_index {

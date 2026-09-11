@@ -78,7 +78,7 @@ impl Sidebar {
             ui.add_space(16.0);
 
             ui.add(
-                Image::new(include_image!("../../public/Logo.svg"))
+                Image::new(include_image!("../../public/icons/Logo.svg"))
                     .fit_to_exact_size(vec2(48.0, 48.0)),
             );
             ui.add(
