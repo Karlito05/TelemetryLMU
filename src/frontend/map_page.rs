@@ -1,13 +1,11 @@
 // NOTE: Problems:
-// - Gears are wrong for hypers
-// - No track
 // - Crashes on load of incorrect data
 // - Playback controls not working
 // - Time delta not working
 // - Redisign the pick to include a clear button and some info about the lap (car time)
 // - Make sure user picks a lap in the same class and on the same track
 
-use std::{f32::consts::PI, fs, sync::Arc};
+use std::{f32::consts::PI, fs, sync::Arc, time::Duration};
 
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
@@ -31,6 +29,7 @@ pub struct MapPage {
     car_1: Vec<Dp>,
     car_2: Vec<Dp>,
     track_reference: Option<Track>,
+    replayer_state: ReplayerState,
     #[serde(skip)]
     settings_provider: Arc<SettingsProvider>,
     #[serde(skip)]
@@ -43,7 +42,15 @@ struct Track {
     line2: Vec<TelemVect3>,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Default, Debug)]
+#[derive(serde::Deserialize, serde::Serialize, Debug, Default, Clone)]
+enum ReplayerState {
+    #[default]
+    Paused,
+    Forwards,
+    Backwards,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Default, Copy, Clone, Debug)]
 #[serde(default)]
 struct Dp {
     pos: Pos2,
@@ -61,6 +68,7 @@ impl MapPage {
         state_provider: Arc<StateProvider>,
     ) -> Self {
         Self {
+            replayer_state: ReplayerState::default(),
             time: 0.0,
             offset: Vec2::ZERO,
             zoom: 1.0,
@@ -74,14 +82,6 @@ impl MapPage {
     }
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Default, Debug)]
-#[serde(default)]
-struct MapData {
-    inside: Vec<[f64; 2]>,
-    outside: Vec<[f64; 2]>,
-    // average: Vec<[f64; 2]>,
-}
-
 impl MapPage {
     pub fn draw_map_page(&mut self, ui: &mut Ui) {
         let ref_len = self.car_1.len().max(self.car_2.len());
@@ -89,6 +89,37 @@ impl MapPage {
             self.cur_dp_index = Some((self.time * (ref_len - 1) as f32) as usize);
         }
 
+        if let Some(i) = self.cur_dp_index.as_mut() {
+            match self.replayer_state {
+                ReplayerState::Paused => {}
+                ReplayerState::Forwards => {
+                    ui.request_repaint_after(Duration::from_millis(16));
+                    let dt = ui.input(|inp| inp.stable_dt); // actual elapsed seconds since last frame
+                    let total_duration_secs = self
+                        .car_1
+                        .last()
+                        .copied()
+                        .unwrap_or_default()
+                        .time_since_lap_start
+                        .max(
+                            self.car_2
+                                .last()
+                                .copied()
+                                .unwrap_or_default()
+                                .time_since_lap_start,
+                        ) as f32;
+                    self.time = (self.time + dt / total_duration_secs).min(1.0);
+                    *i = (self.time * (ref_len - 1) as f32) as usize;
+                }
+                ReplayerState::Backwards => {
+                    ui.request_repaint_after(Duration::from_millis(16));
+                    if *i > 0 {
+                        *i -= 1;
+                    }
+                    self.time = *i as f32 / (ref_len - 1).max(1) as f32;
+                }
+            }
+        }
         let map_rect = Rect::from_min_size(
             pos2(
                 if *self.state_provider.sidebar_open.read().unwrap() {
@@ -143,6 +174,7 @@ impl MapPage {
                 ),
             ],
         );
+
         if let Some(i) = self.cur_dp_index {
             let car_1_pos = if i < self.car_1.len() {
                 self.car_1[i].pos
@@ -361,7 +393,9 @@ impl MapPage {
                             ui.painter()
                                 .rect_filled(resp.rect, 24, Color32::from_white_alpha(25));
                         }
-                        if resp.clicked() {}
+                        if resp.clicked() {
+                            self.replayer_state = ReplayerState::Backwards;
+                        }
 
                         let resp = ui.add_sized(
                             vec2(48.0, 48.0),
@@ -379,7 +413,9 @@ impl MapPage {
                             ui.painter()
                                 .rect_filled(resp.rect, 24, Color32::from_white_alpha(25));
                         }
-                        if resp.clicked() {}
+                        if resp.clicked() {
+                            self.replayer_state = ReplayerState::Paused;
+                        }
 
                         let resp = ui.add_sized(
                             vec2(48.0, 48.0),
@@ -397,7 +433,9 @@ impl MapPage {
                             ui.painter()
                                 .rect_filled(resp.rect, 24, Color32::from_white_alpha(25));
                         }
-                        if resp.clicked() {}
+                        if resp.clicked() {
+                            self.replayer_state = ReplayerState::Forwards;
+                        }
                     })
                     .response
                 });

@@ -152,7 +152,7 @@ impl eframe::App for App {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        ui.request_repaint_after(Duration::from_millis(16));
+        // ui.request_repaint_after(Duration::from_millis(16));
         self.sidebar.draw_sidebar(ui);
 
         if *self.state_provider.settings_open.read().unwrap() {
