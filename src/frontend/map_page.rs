@@ -28,7 +28,7 @@ pub struct MapPage {
     cur_dp_index: Option<usize>,
     car_1: Vec<Dp>,
     car_2: Vec<Dp>,
-    track_reference: Option<Track>,
+    track_reference: Option<(Vec<Pos2>, Vec<Pos2>)>,
     replayer_state: ReplayerState,
     #[serde(skip)]
     settings_provider: Arc<SettingsProvider>,
@@ -140,41 +140,24 @@ impl MapPage {
             ),
         );
 
-        self.draw_map(
-            ui,
-            map_rect,
-            &[
-                (
-                    self.car_1.iter().map(|dp| dp.pos).collect(),
-                    Color32::from_rgb(19, 141, 241),
-                ),
-                (
-                    self.car_2.iter().map(|dp| dp.pos).collect(),
-                    Color32::from_rgb(255, 107, 53),
-                ),
-                (
-                    self.track_reference
-                        .clone()
-                        .unwrap_or_default()
-                        .line1
-                        .iter()
-                        .map(|vec| pos2(vec.x as f32, -vec.z as f32))
-                        .collect(),
-                    Color32::WHITE,
-                ),
-                (
-                    self.track_reference
-                        .clone()
-                        .unwrap_or_default()
-                        .line2
-                        .iter()
-                        .map(|vec| pos2(vec.x as f32, -vec.z as f32))
-                        .collect(),
-                    Color32::WHITE,
-                ),
-            ],
-        );
-
+        if let Some(tr) = self.track_reference.clone() {
+            self.draw_map(
+                ui,
+                map_rect,
+                &[
+                    (
+                        &self.car_1.iter().map(|dp| dp.pos).collect(),
+                        Color32::from_rgb(19, 141, 241),
+                    ),
+                    (
+                        &self.car_2.iter().map(|dp| dp.pos).collect(),
+                        Color32::from_rgb(255, 107, 53),
+                    ),
+                    (&tr.0, Color32::WHITE),
+                    (&tr.1, Color32::WHITE),
+                ],
+            );
+        }
         if let Some(i) = self.cur_dp_index {
             let car_1_pos = if i < self.car_1.len() {
                 self.car_1[i].pos
@@ -266,10 +249,24 @@ impl MapPage {
                                     let save_data: SaveData =
                                         serde_json::from_str(&contents).unwrap_or_default();
 
-                                    set_track_reference(
-                                        &mut self.track_reference,
-                                        save_data.track.as_str(),
-                                    );
+                                    let mut track: Option<Track> = None;
+                                    set_track_reference(&mut track, save_data.track.as_str());
+
+                                    self.track_reference = Some((
+                                        track
+                                            .as_ref()
+                                            .unwrap()
+                                            .line1
+                                            .iter()
+                                            .map(|tv| pos2(tv.x as f32, -tv.z as f32))
+                                            .collect(),
+                                        track
+                                            .unwrap()
+                                            .line2
+                                            .iter()
+                                            .map(|tv| pos2(tv.x as f32, -tv.z as f32))
+                                            .collect(),
+                                    ));
 
                                     self.cur_dp_index = None;
                                     self.car_1.clear();
@@ -331,10 +328,25 @@ impl MapPage {
                                         let save_data: SaveData =
                                             serde_json::from_str(&contents).unwrap_or_default();
 
-                                        set_track_reference(
-                                            &mut self.track_reference,
-                                            save_data.track.as_str(),
-                                        );
+                                        let mut track: Option<Track> = None;
+                                        set_track_reference(&mut track, save_data.track.as_str());
+
+                                        self.track_reference = Some((
+                                            track
+                                                .as_ref()
+                                                .unwrap()
+                                                .line1
+                                                .iter()
+                                                .map(|tv| pos2(tv.x as f32, -tv.z as f32))
+                                                .collect(),
+                                            track
+                                                .unwrap()
+                                                .line2
+                                                .iter()
+                                                .map(|tv| pos2(tv.x as f32, -tv.z as f32))
+                                                .collect(),
+                                        ));
+
                                         self.cur_dp_index = None;
                                         self.car_2.clear();
                                         self.car_2 = save_data
@@ -787,7 +799,7 @@ impl MapPage {
         (p - rect.center() - self.offset) / self.zoom
     }
 
-    fn draw_map(&mut self, ui: &mut Ui, rect: Rect, lines: &[(Vec<Pos2>, Color32)]) {
+    fn draw_map(&mut self, ui: &mut Ui, rect: Rect, lines: &[(&Vec<Pos2>, Color32)]) {
         ui.painter()
             .rect_filled(rect, CornerRadius::same(24), Color32::from_rgb(22, 23, 28));
         let response = ui.allocate_rect(rect, Sense::click_and_drag());
