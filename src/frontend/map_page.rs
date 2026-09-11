@@ -17,6 +17,7 @@ use crate::{
         components::{button, slider},
         frontend_main::{SettingsProvider, StateProvider},
     },
+    interface::TelemVect3,
     telemetry::{SaveData, TelemetryGraphValueType},
 };
 
@@ -29,12 +30,17 @@ pub struct MapPage {
     cur_dp_index: Option<usize>,
     car_1: Vec<Dp>,
     car_2: Vec<Dp>,
-    map: MapData,
-    map2: MapData,
+    track_reference: Option<Track>,
     #[serde(skip)]
     settings_provider: Arc<SettingsProvider>,
     #[serde(skip)]
     state_provider: Arc<StateProvider>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Debug, Default, Clone)]
+struct Track {
+    line1: Vec<TelemVect3>,
+    line2: Vec<TelemVect3>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, Debug)]
@@ -54,22 +60,6 @@ impl MapPage {
         settings_provider: Arc<SettingsProvider>,
         state_provider: Arc<StateProvider>,
     ) -> Self {
-        let map_data: MapData =
-            fs::read_to_string("/home/karlito/Projects/TelemetryLMU/public/spa.json")
-                .map_err(|e| e.to_string())
-                .and_then(|contents| serde_json::from_str(&contents).map_err(|e| e.to_string()))
-                .unwrap_or_else(|e| {
-                    eprintln!("Failed to load map data: {e}");
-                    MapData::default()
-                });
-        let map_data2: MapData =
-            fs::read_to_string("/home/karlito/Projects/TelemetryLMU/public/spa2.json")
-                .map_err(|e| e.to_string())
-                .and_then(|contents| serde_json::from_str(&contents).map_err(|e| e.to_string()))
-                .unwrap_or_else(|e| {
-                    eprintln!("Failed to load map data: {e}");
-                    MapData::default()
-                });
         Self {
             time: 0.0,
             offset: Vec2::ZERO,
@@ -77,8 +67,7 @@ impl MapPage {
             cur_dp_index: None,
             car_1: vec![],
             car_2: vec![],
-            map: map_data,
-            map2: map_data2,
+            track_reference: None,
             settings_provider,
             state_provider,
         }
@@ -133,36 +122,24 @@ impl MapPage {
                     Color32::from_rgb(255, 107, 53),
                 ),
                 (
-                    self.map
-                        .inside
+                    self.track_reference
+                        .clone()
+                        .unwrap_or_default()
+                        .line1
                         .iter()
-                        .map(|vec| pos2(vec[0] as f32, vec[1] as f32))
+                        .map(|vec| pos2(vec.x as f32, -vec.z as f32))
                         .collect(),
                     Color32::WHITE,
                 ),
                 (
-                    self.map
-                        .outside
+                    self.track_reference
+                        .clone()
+                        .unwrap_or_default()
+                        .line2
                         .iter()
-                        .map(|vec| pos2(vec[0] as f32, vec[1] as f32))
+                        .map(|vec| pos2(vec.x as f32, -vec.z as f32))
                         .collect(),
                     Color32::WHITE,
-                ),
-                (
-                    self.map2
-                        .inside
-                        .iter()
-                        .map(|vec| pos2(vec[0] as f32, vec[1] as f32))
-                        .collect(),
-                    Color32::RED,
-                ),
-                (
-                    self.map2
-                        .outside
-                        .iter()
-                        .map(|vec| pos2(vec[0] as f32, vec[1] as f32))
-                        .collect(),
-                    Color32::RED,
                 ),
             ],
         );
@@ -257,6 +234,11 @@ impl MapPage {
                                     let save_data: SaveData =
                                         serde_json::from_str(&contents).unwrap_or_default();
 
+                                    set_track_reference(
+                                        &mut self.track_reference,
+                                        save_data.track.as_str(),
+                                    );
+
                                     self.cur_dp_index = None;
                                     self.car_1.clear();
                                     self.car_1 = save_data
@@ -317,6 +299,10 @@ impl MapPage {
                                         let save_data: SaveData =
                                             serde_json::from_str(&contents).unwrap_or_default();
 
+                                        set_track_reference(
+                                            &mut self.track_reference,
+                                            save_data.track.as_str(),
+                                        );
                                         self.cur_dp_index = None;
                                         self.car_2.clear();
                                         self.car_2 = save_data
@@ -797,5 +783,252 @@ impl MapPage {
                 .collect();
             painter.add(Shape::line(points, Stroke::new(0.5 * self.zoom, line.1)));
         }
+    }
+}
+fn set_track_reference(track_reference: &mut Option<Track>, track: &str) {
+    match track {
+        "Algrave International Circuit" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Algarve International Circuit.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Autodromo Enzo e Dino Ferrari" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Autodromo Enzo e Dino Ferrari.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Autodromo Nazionale Monza" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Autodromo Nazionale Monza.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Autodrómo José Carlos Pace" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Autódromo José Carlos Pace.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Bahrain Endurance Circuit" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Bahrain Endurance Circuit.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Bahrain International Circuit" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Bahrain International Circuit.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Bahrain Outer Circuit" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Bahrain Outer Circuit.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Bahrain Paddock Circuit" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Bahrain Paddock Circuit.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "COTA National Circuit" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/COTA National Circuit.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Circuit de Barcelona" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Circuit de Barcelona.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Circuit de Spa-Francorchamps" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Circuit de Spa-Francorchamps.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Circuit de la Sarthe Mulsanne" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Circuit de la Sarthe Mulsanne.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Circuit de la Sarthe" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Circuit de la Sarthe.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Circuit of the Americas" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Circuit of the Americas.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Daytona International Speedway Road Course" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Daytona International Speedway Road Course.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Fuji Speedway" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!("../../public/tracks/Fuji Speedway.json"))
+                    .unwrap_or_default(),
+            )
+        }
+        "Fuji Speedway Classic" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Fuji Speedway Classic.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Lusail International Circuit" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Lusail International Circuit.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Lusail Short Circuit" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Lusail Short Circuit.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Monza Curva Grande Circuit" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Monza Curva Grande Circuit.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Paul Ricard - 1A-V2-Short" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Paul Ricard - 1A-V2-Short.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Paul Ricard - 1A-V2" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Paul Ricard - 1A-V2.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Paul Ricard - 1A" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!("../../public/tracks/Paul Ricard - 1A.json"))
+                    .unwrap_or_default(),
+            )
+        }
+        "Paul Ricard - 3A" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!("../../public/tracks/Paul Ricard - 3A.json"))
+                    .unwrap_or_default(),
+            )
+        }
+        "Paul Ricard - ELMS" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Paul Ricard - ELMS.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Sebring International Raceway" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Sebring International Raceway.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Sebring School Circuit" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Sebring School Circuit.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Silverstone Grand Prix Circuit - WEC" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Silverstone Grand Prix Circuit - WEC.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Silverstone International Circuit" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Silverstone International Circuit.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "Silverstone National Circuit" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/Silverstone National Circuit.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        "WeatherTech Raceway Laguna Seca" => {
+            *track_reference = Some(
+                serde_json::from_slice(include_bytes!(
+                    "../../public/tracks/WeatherTech Raceway Laguna Seca.json"
+                ))
+                .unwrap_or_default(),
+            )
+        }
+        &_ => println!("Unknown track"),
     }
 }
