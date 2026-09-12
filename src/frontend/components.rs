@@ -688,11 +688,14 @@ pub fn graph(
     telemetry: &SharedMemoryObjectOut,
 ) {
     // Allocate the rect
-    let rect = ui.allocate_space(size).1;
+    let painter = ui.allocate_painter(size, Sense::empty()).1;
 
     // Background
-    ui.painter()
-        .rect_filled(rect, corner_radius, Color32::from_rgb(22, 23, 28));
+    painter.rect_filled(
+        painter.clip_rect(),
+        corner_radius,
+        Color32::from_rgb(22, 23, 28),
+    );
 
     // TODO: Cache this doesn't need to be refetched every render
     let labels =
@@ -700,11 +703,17 @@ pub fn graph(
             .ref_val_type
             .get_unit_labels(telemetry, graph_info.n_gridlines, car_num);
 
-    draw_gridlines(ui.painter(), rect, graph_info.n_gridlines, margins, &labels);
+    draw_gridlines(
+        &painter,
+        painter.clip_rect(),
+        graph_info.n_gridlines,
+        margins,
+        &labels,
+    );
 
     draw_lap(
-        ui.painter(),
-        rect,
+        &painter,
+        painter.clip_rect(),
         &dyn_graph_data.cur_lap,
         graph_info,
         telemetry,
@@ -715,8 +724,8 @@ pub fn graph(
 
     if graph_info.show_ref {
         draw_lap(
-            ui.painter(),
-            rect,
+            &painter,
+            painter.clip_rect(),
             &dyn_graph_data.ref_lap,
             graph_info,
             telemetry,
@@ -734,8 +743,8 @@ pub fn graph(
         );
     }
     draw_title(
-        ui.painter(),
-        rect,
+        &painter,
+        painter.clip_rect(),
         &capitalize_first(&graph_info.ref_val_type.to_string()),
         margins,
         graph_info.color,
