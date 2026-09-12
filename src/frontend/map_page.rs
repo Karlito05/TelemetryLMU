@@ -4,7 +4,7 @@
 // - Redisign the pick to include a clear button and some info about the lap (car time)
 // - Make sure user picks a lap in the same class and on the same track
 
-use std::{f32::consts::PI, fs, sync::Arc, time::Duration};
+use std::{f32::consts::PI, fs, ops::Add, sync::Arc, time::Duration};
 
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
@@ -52,8 +52,9 @@ enum ReplayerState {
 #[derive(serde::Deserialize, serde::Serialize, Default, Copy, Clone, Debug)]
 #[serde(default)]
 struct Dp {
+    distance: f32,
     pos: Pos2,
-    time_since_lap_start: f64,
+    time_since_lap_start: f32,
     speed: f32,
     gear: i32,
     throttle: f32,
@@ -106,7 +107,7 @@ impl MapPage {
                                 .copied()
                                 .unwrap_or_default()
                                 .time_since_lap_start,
-                        ) as f32;
+                        );
                     self.time = (self.time + dt / total_duration_secs).min(1.0);
                     *i = (self.time * (ref_len - 1) as f32) as usize;
                 }
@@ -279,7 +280,8 @@ impl MapPage {
                                             }
                                             Dp {
                                                 pos: pos2(pd.x as f32, -pd.z as f32),
-                                                time_since_lap_start: save_data.times[i] as f64,
+                                                distance: save_data.distances[i],
+                                                time_since_lap_start: save_data.times[i],
                                                 speed: save_data.lap_data
                                                     [TelemetryGraphValueType::Speed as usize][i],
                                                 gear: save_data.lap_data
@@ -354,7 +356,8 @@ impl MapPage {
                                             .enumerate()
                                             .map(|(i, pd)| Dp {
                                                 pos: pos2(pd.x as f32, -pd.z as f32),
-                                                time_since_lap_start: save_data.times[i] as f64,
+                                                distance: save_data.distances[i],
+                                                time_since_lap_start: save_data.times[i],
                                                 speed: save_data.lap_data
                                                     [TelemetryGraphValueType::Speed as usize][i],
                                                 gear: save_data.lap_data
@@ -783,7 +786,7 @@ impl MapPage {
                     row3_rect.center(),
                     Align2::CENTER_CENTER,
                     if let Some(time) = self.get_time_delta() {
-                        format!("{}", time)
+                        format!("{:.3}", time)
                     } else {
                         "N/A".to_owned()
                     },
@@ -838,29 +841,45 @@ impl MapPage {
         }
     }
     fn get_time_delta(&self) -> Option<f32> {
-        // if let Some(i) = self.cur_dp_index {
-        //     if let Some(car1) = self.car_1.get(i) {
-        //         if let Some(car2) = self.car_2.iter().min_by(|a, b| {
-        //             let a_dist = a.pos.distance_sq(car1.pos);
-        //             let b_dist = b.pos.distance_sq(car1.pos);
-        //
-        //             a_dist
-        //                 .partial_cmp(&b_dist)
-        //                 .unwrap_or(std::cmp::Ordering::Equal)
-        //         }) {
-        //             Some(car1.time_since_lap_start as f32 - car2.time_since_lap_start as f32)
-        //         } else {
-        //             None
-        //         }
-        //     } else {
-        //         None
-        //     }
-        // } else {
-        //     None
-        // }
+        let i = self.cur_dp_index?;
+        let car1_cur = self.car_1.get(i)?.distance;
+        let car2_cur = self.car_2.get(i)?.distance;
+
+        if car1_cur > car2_cur {
+            let mut last_diff = car1_cur - car2_cur;
+            let mut closest_index = i;
+            for j in i..self.car_2.len() {
+                if (self.car_2[j].distance - car1_cur).abs() < last_diff {
+                    last_diff = self.car_2[j].distance - car1_cur;
+                    closest_index = j;
+                } else {
+                    break;
+                }
+            }
+            return Some(
+                self.car_1[i].time_since_lap_start - self.car_2[closest_index].time_since_lap_start,
+            );
+        }
+        if car1_cur <= car2_cur {
+            let mut last_diff = car1_cur - car2_cur;
+            let mut closest_index = i;
+            for j in (0..i).rev() {
+                if (self.car_2[j].distance - car1_cur).abs() < last_diff {
+                    last_diff = self.car_2[j].distance - car1_cur;
+                    closest_index = j;
+                } else {
+                    break;
+                }
+            }
+            return Some(
+                self.car_1[i].time_since_lap_start - self.car_2[closest_index].time_since_lap_start,
+            );
+        }
+
         None
-    } // FIXME: Doesn't work well implement with distance along the track should be also saved :)
+    }
 }
+
 fn set_track_reference(track_reference: &mut Option<Track>, track: &str) {
     match track {
         "Algrave International Circuit" => {
