@@ -219,7 +219,7 @@ impl Sidebar {
             Align2::LEFT_CENTER,
             self.settings_provider.name.read().unwrap().clone(),
             FontId::proportional(24.0),
-            Color32::WHITE,
+            Color32::from_white_alpha(200),
         );
 
         // More icon
@@ -228,7 +228,13 @@ impl Sidebar {
                 pos2(rect.max.x - 40.0, rect.center().y - 16.0),
                 vec2(24.0, 32.0),
             ),
-            Label::new(icons::GEAR_SIX.light().size(32.0).color(Color32::WHITE)).selectable(false),
+            Label::new(
+                icons::GEAR_SIX
+                    .light()
+                    .size(32.0)
+                    .color(Color32::from_rgb(19, 141, 241)),
+            )
+            .selectable(false),
         );
 
         response
