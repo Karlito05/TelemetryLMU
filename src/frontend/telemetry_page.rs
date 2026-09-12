@@ -1,7 +1,7 @@
-use crate::frontend::components::dropdown;
 use crate::frontend::components::{
     DropdownItem, DynGraphData, GraphChange, GraphInfo, Lap, button, graph, graph_edit,
 };
+use crate::frontend::components::{dropdown, telemetry_not_found};
 use crate::frontend::frontend_main::{SettingsProvider, StateProvider};
 use crate::telemetry::{self, SaveData, Telemetry, TelemetryGraphValueType};
 use eframe::egui::*;
@@ -32,19 +32,8 @@ pub struct TelemetryPage {
     settings_provider: Arc<SettingsProvider>,
     #[serde(skip)]
     state_provider: Arc<StateProvider>,
-    #[serde(skip, default = "TelemetryPage::default_telemetry_provider")] // bandaid fix
-    telemetry_provider: Arc<Telemetry>, // TODO:  This should be option in the future
-}
-impl TelemetryPage {
-    fn default_telemetry_provider() -> Arc<Telemetry> {
-        Arc::new(
-            Telemetry::new(
-                "/dev/shm/LMU_Data".into(),
-                Arc::new(SettingsProvider::default()),
-            )
-            .expect("telemetry init failed"),
-        )
-    }
+    #[serde(skip)]
+    telemetry_provider: Arc<Option<Telemetry>>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -77,7 +66,7 @@ impl TelemetryPage {
     pub fn new(
         settings_provider: Arc<SettingsProvider>,
         state_provider: Arc<StateProvider>,
-        telemetry_provider: Arc<Telemetry>,
+        telemetry_provider: Arc<Option<Telemetry>>,
     ) -> Self {
         Self {
             settings_provider,
@@ -116,19 +105,11 @@ impl TelemetryPage {
 
 impl TelemetryPage {
     pub fn draw_telemetry_page(&mut self, ui: &mut Ui) {
-        // TODO: Refactor this into frontend_main!
-        // if !self.telemetry.full_mode {
-        //     telemetry_not_found(ui);
-        //     return;
-        // }
-        //
-        // self.process_telemetry_updates(
-        //     self.layouts[self.cur_layout_index]
-        //         .graphs
-        //         .iter()
-        //         .map(|g| g.graph_type)
-        //         .collect(),
-        // );
+        if self.telemetry_provider.is_none() {
+            telemetry_not_found(ui);
+            return;
+        }
+
         if !self.in_layout_edit_mode {
             self.draw_normal_mode(ui);
         } else {
@@ -641,6 +622,9 @@ impl TelemetryPage {
                 family: FontFamily::Proportional,
             },
             self.telemetry_provider
+                .as_ref()
+                .as_ref()
+                .unwrap()
                 .get_drivers()
                 .iter()
                 .map(|driver| DropdownItem {
@@ -938,8 +922,22 @@ impl TelemetryPage {
                     .iter()
                     .enumerate()
                 {
-                    let cur_lap_guard = self.telemetry_provider.cur_lap.lock().unwrap();
-                    let best_lap_guard = self.telemetry_provider.best_lap.lock().unwrap();
+                    let cur_lap_guard = self
+                        .telemetry_provider
+                        .as_ref()
+                        .as_ref()
+                        .unwrap()
+                        .cur_lap
+                        .lock()
+                        .unwrap();
+                    let best_lap_guard = self
+                        .telemetry_provider
+                        .as_ref()
+                        .as_ref()
+                        .unwrap()
+                        .best_lap
+                        .lock()
+                        .unwrap();
                     let cur = &cur_lap_guard[self.cur_driver.1 as usize];
 
                     let best: &telemetry::Lap;
@@ -972,7 +970,12 @@ impl TelemetryPage {
                             ),
                             CornerRadius::same(24),
                             margins,
-                            &self.telemetry_provider.get_telemetry_object(),
+                            &self
+                                .telemetry_provider
+                                .as_ref()
+                                .as_ref()
+                                .unwrap()
+                                .get_telemetry_object(),
                         );
                         continue;
                     }
@@ -995,7 +998,12 @@ impl TelemetryPage {
                                 se: 0,
                             },
                             margins,
-                            &self.telemetry_provider.get_telemetry_object(),
+                            &self
+                                .telemetry_provider
+                                .as_ref()
+                                .as_ref()
+                                .unwrap()
+                                .get_telemetry_object(),
                         );
                         continue;
                     }
@@ -1017,7 +1025,12 @@ impl TelemetryPage {
                                 se: 24,
                             },
                             margins,
-                            &self.telemetry_provider.get_telemetry_object(),
+                            &self
+                                .telemetry_provider
+                                .as_ref()
+                                .as_ref()
+                                .unwrap()
+                                .get_telemetry_object(),
                         );
                         continue;
                     }
@@ -1033,7 +1046,12 @@ impl TelemetryPage {
                         ),
                         CornerRadius::same(0),
                         margins,
-                        &self.telemetry_provider.get_telemetry_object(),
+                        &self
+                            .telemetry_provider
+                            .as_ref()
+                            .as_ref()
+                            .unwrap()
+                            .get_telemetry_object(),
                     );
                 }
             })

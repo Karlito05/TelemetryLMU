@@ -1,6 +1,5 @@
 // NOTE: Problems:
 // - Crashes on load of incorrect data
-// - Playback controls not working
 // - Time delta not working
 // - Redisign the pick to include a clear button and some info about the lap (car time)
 // - Make sure user picks a lap in the same class and on the same track
@@ -783,7 +782,11 @@ impl MapPage {
                 ui.painter().text(
                     row3_rect.center(),
                     Align2::CENTER_CENTER,
-                    "+0.345",
+                    if let Some(time) = self.get_time_delta() {
+                        format!("{}", time)
+                    } else {
+                        "N/A".to_owned()
+                    },
                     FontId::new(32.0, FontFamily::Name("JetBrainsMono".into())),
                     Color32::RED,
                 )
@@ -834,6 +837,29 @@ impl MapPage {
             painter.add(Shape::line(points, Stroke::new(0.5 * self.zoom, line.1)));
         }
     }
+    fn get_time_delta(&self) -> Option<f32> {
+        // if let Some(i) = self.cur_dp_index {
+        //     if let Some(car1) = self.car_1.get(i) {
+        //         if let Some(car2) = self.car_2.iter().min_by(|a, b| {
+        //             let a_dist = a.pos.distance_sq(car1.pos);
+        //             let b_dist = b.pos.distance_sq(car1.pos);
+        //
+        //             a_dist
+        //                 .partial_cmp(&b_dist)
+        //                 .unwrap_or(std::cmp::Ordering::Equal)
+        //         }) {
+        //             Some(car1.time_since_lap_start as f32 - car2.time_since_lap_start as f32)
+        //         } else {
+        //             None
+        //         }
+        //     } else {
+        //         None
+        //     }
+        // } else {
+        //     None
+        // }
+        None
+    } // FIXME: Doesn't work well implement with distance along the track should be also saved :)
 }
 fn set_track_reference(track_reference: &mut Option<Track>, track: &str) {
     match track {

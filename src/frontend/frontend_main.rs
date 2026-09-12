@@ -1,8 +1,5 @@
 use core::fmt;
-use std::{
-    sync::{Arc, RwLock},
-    time::Duration,
-};
+use std::sync::{Arc, RwLock};
 
 use eframe::egui::{self, TextureHandle};
 
@@ -77,7 +74,7 @@ pub struct App {
     #[serde(skip)]
     interface: crate::interface::Interface,
     #[serde(skip)]
-    telemetry_provider: Arc<Telemetry>,
+    telemetry_provider: Arc<Option<Telemetry>>,
 }
 
 #[derive(Debug, PartialEq, serde::Deserialize, serde::Serialize, Default)]
@@ -96,7 +93,7 @@ impl App {
             Default::default()
         };
         app.telemetry_provider = Arc::new(
-            Telemetry::new("/dev/shm/LMU_Data".into(), app.settings_provider.clone()).unwrap(),
+            Telemetry::new("/dev/shm/LMU_Data".into(), app.settings_provider.clone()).ok(),
         );
 
         app.sidebar = Sidebar::new(app.settings_provider.clone(), app.state_provider.clone());
@@ -125,9 +122,8 @@ impl Default for App {
     fn default() -> Self {
         let settings_provider = Arc::new(SettingsProvider::default());
         let state_provider = Arc::new(StateProvider::default());
-        let telemetry_provider = Arc::new(
-            Telemetry::new("/dev/shm/LMU_Data".into(), settings_provider.clone()).unwrap(),
-        );
+        let telemetry_provider =
+            Arc::new(Telemetry::new("/dev/shm/LMU_Data".into(), settings_provider.clone()).ok());
         Self {
             sidebar: Sidebar::new(settings_provider.clone(), state_provider.clone()),
             map_page: MapPage::new(settings_provider.clone(), state_provider.clone()),
