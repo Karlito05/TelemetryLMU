@@ -230,7 +230,7 @@ impl CarInfo {
                                 Color32::from_rgb(0, 255, 0),
                             )
                             .gamma_multiply(0.1),
-                        ); // TODO: Lerp based on health
+                        );
 
                         ui.painter().text(
                             rect.center(),
@@ -246,7 +246,7 @@ impl CarInfo {
                                 Color32::from_rgb(127, 127, 0),
                                 Color32::from_rgb(0, 255, 0),
                             ),
-                        ); // TODO: Lerp based on health
+                        );
                     });
                 });
                 ui.horizontal_centered(|ui| {
@@ -281,7 +281,7 @@ impl CarInfo {
                             Color32::from_rgb(255, 0, 0),
                         ),
                     );
-                    // TODO: LERP the colors based on temps :)
+
                     ui.vertical(|ui| {
                         ui.horizontal(|ui| {
                             ui.label(
@@ -530,17 +530,30 @@ impl CarInfo {
     }
 
     fn draw_title(&self, ui: &mut Ui, rect: Rect) -> Rect {
+        let str: String;
         let name_text_rect = ui.painter().text(
             rect.min + vec2(16.0, 16.0),
             Align2::LEFT_TOP,
-            &self.name,
+            if !self.name.is_empty() {
+                &self.name
+            } else {
+                str = format!(
+                    "Driver {} couldn't be found in the lobby",
+                    self.settings_provider.in_game_name.read().unwrap()
+                );
+                &str
+            },
             FontId::new(32.0, FontFamily::Name("RacingSansOne".into())),
             Color32::WHITE,
         );
         let car_text_rect = ui.painter().text(
             pos2(rect.min.x + 16.0, name_text_rect.max.y),
             Align2::LEFT_TOP,
-            &self.car,
+            if !self.name.is_empty() {
+                &self.car
+            } else {
+                "You might want to change the \"in game name\" field in the settings"
+            },
             FontId::new(16.0, FontFamily::Proportional),
             Color32::WHITE,
         );
