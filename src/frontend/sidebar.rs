@@ -215,7 +215,7 @@ impl Sidebar {
 
         // Name
         ui.painter().text(
-            pos2(rect.min.x + 80.0, rect.center().y),
+            pos2(rect.min.x + 68.0, rect.center().y),
             Align2::LEFT_CENTER,
             self.settings_provider.name.read().unwrap().clone(),
             FontId::proportional(24.0),
@@ -229,10 +229,10 @@ impl Sidebar {
                 vec2(24.0, 32.0),
             ),
             Label::new(
-                icons::DOTS_THREE_VERTICAL
-                    .bold()
-                    .size(24.0)
-                    .color(Color32::WHITE),
+                icons::GEAR_SIX
+                    .light()
+                    .size(32.0)
+                    .color(Color32::from_rgb(19, 141, 241)),
             )
             .selectable(false),
         );
