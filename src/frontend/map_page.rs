@@ -1,6 +1,5 @@
 // NOTE: Problems:
 // - Crashes on load of incorrect data
-// - Redisign the pick to include a clear button and some info about the lap (car time)
 // - Make sure user picks a lap in the same class and on the same track
 
 use std::{f32::consts::PI, fs, sync::Arc, time::Duration};
@@ -187,36 +186,41 @@ impl MapPage {
             );
         }
         if let Some(i) = self.cur_dp_index {
-            let car_1_pos = if i < self.car_1.len() {
-                self.car_1[i].pos
-            } else {
-                if let Some(v) = self.car_1.last() {
-                    v.pos
+            if !self.car_1.is_empty() {
+                let car_1_pos = if i < self.car_1.len() {
+                    self.car_1[i].pos
                 } else {
-                    pos2(0.0, 0.0)
-                }
-            };
+                    if let Some(v) = self.car_1.last() {
+                        v.pos
+                    } else {
+                        pos2(0.0, 0.0)
+                    }
+                };
 
-            let car_2_pos = if i < self.car_2.len() {
-                self.car_2[i].pos
-            } else {
-                if let Some(v) = self.car_2.last() {
-                    v.pos
+                ui.painter().circle_filled(
+                    self.to_screen(map_rect, car_1_pos.to_vec2()),
+                    2.0 * self.zoom,
+                    Color32::from_rgb(19, 141, 241),
+                );
+            }
+
+            if !self.car_2.is_empty() {
+                let car_2_pos = if i < self.car_2.len() {
+                    self.car_2[i].pos
                 } else {
-                    pos2(0.0, 0.0)
-                }
-            };
+                    if let Some(v) = self.car_2.last() {
+                        v.pos
+                    } else {
+                        pos2(0.0, 0.0)
+                    }
+                };
 
-            ui.painter().circle_filled(
-                self.to_screen(map_rect, car_1_pos.to_vec2()),
-                2.0 * self.zoom,
-                Color32::from_rgb(19, 141, 241),
-            );
-            ui.painter().circle_filled(
-                self.to_screen(map_rect, car_2_pos.to_vec2()),
-                2.0 * self.zoom,
-                Color32::from_rgb(255, 107, 53),
-            );
+                ui.painter().circle_filled(
+                    self.to_screen(map_rect, car_2_pos.to_vec2()),
+                    2.0 * self.zoom,
+                    Color32::from_rgb(255, 107, 53),
+                );
+            }
         }
 
         let controls_rect = Rect::from_min_max(
