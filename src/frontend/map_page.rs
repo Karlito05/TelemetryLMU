@@ -856,7 +856,7 @@ impl MapPage {
                                     let rect =
                                         ui.allocate_exact_size(vec2(100.0, 55.0), Sense::empty()).0;
                                     ui.put(rect, |ui: &mut Ui| {
-                                        ui.vertical(|ui| {
+                                        ui.with_layout(Layout::top_down(Align::Max), |ui| {
                                             ui.label(
                                                 RichText::new("Speed")
                                                     .size(12.0)
