@@ -1,10 +1,9 @@
 // NOTE: Problems:
 // - Crashes on load of incorrect data
-// - Time delta not working
 // - Redisign the pick to include a clear button and some info about the lap (car time)
 // - Make sure user picks a lap in the same class and on the same track
 
-use std::{f32::consts::PI, fs, ops::Add, sync::Arc, time::Duration};
+use std::{f32::consts::PI, fs, sync::Arc, time::Duration};
 
 use eframe::egui::*;
 use egui_phosphor_icons::icons;
@@ -84,6 +83,8 @@ impl MapPage {
 
 impl MapPage {
     pub fn draw_map_page(&mut self, ui: &mut Ui) {
+        *self.state_provider.sidebar_open.write().unwrap() = ui.viewport_rect().width() > 1500.0;
+
         let ref_len = self.car_1.len().max(self.car_2.len());
         if ref_len > 0 {
             self.cur_dp_index = Some((self.time * (ref_len - 1) as f32) as usize);
@@ -155,6 +156,21 @@ impl MapPage {
                     ),
                     (&tr.0, Color32::WHITE),
                     (&tr.1, Color32::WHITE),
+                ],
+            );
+        } else {
+            self.draw_map(
+                ui,
+                map_rect,
+                &[
+                    (
+                        &self.car_1.iter().map(|dp| dp.pos).collect(),
+                        Color32::from_rgb(19, 141, 241),
+                    ),
+                    (
+                        &self.car_2.iter().map(|dp| dp.pos).collect(),
+                        Color32::from_rgb(255, 107, 53),
+                    ),
                 ],
             );
         }
@@ -580,7 +596,7 @@ impl MapPage {
                                 ui.separator();
 
                                 let rect =
-                                    ui.allocate_exact_size(vec2(30.0, 55.0), Sense::empty()).0;
+                                    ui.allocate_exact_size(vec2(50.0, 55.0), Sense::empty()).0;
                                 ui.put(rect, |ui: &mut Ui| {
                                     ui.vertical_centered(|ui| {
                                         ui.label(
@@ -743,7 +759,7 @@ impl MapPage {
                                     ui.separator();
 
                                     let rect =
-                                        ui.allocate_exact_size(vec2(30.0, 55.0), Sense::empty()).0;
+                                        ui.allocate_exact_size(vec2(50.0, 55.0), Sense::empty()).0;
                                     ui.put(rect, |ui: &mut Ui| {
                                         ui.vertical_centered(|ui| {
                                             ui.label(
@@ -795,7 +811,7 @@ impl MapPage {
                         ui.painter().text(
                             row3_rect.center(),
                             Align2::CENTER_CENTER,
-                            format!("{:.3}", delta),
+                            format!("+{:.3}", delta),
                             FontId::new(32.0, FontFamily::Name("JetBrainsMono".into())),
                             Color32::RED,
                         )
@@ -873,7 +889,7 @@ impl MapPage {
                 }
             }
             return Some(
-                self.car_1[i].time_since_lap_start - self.car_2[closest_index].time_since_lap_start,
+                self.car_2[closest_index].time_since_lap_start - self.car_1[i].time_since_lap_start,
             );
         }
         if car1_cur <= car2_cur {
@@ -888,7 +904,7 @@ impl MapPage {
                 }
             }
             return Some(
-                self.car_1[i].time_since_lap_start - self.car_2[closest_index].time_since_lap_start,
+                self.car_2[closest_index].time_since_lap_start - self.car_1[i].time_since_lap_start,
             );
         }
 
