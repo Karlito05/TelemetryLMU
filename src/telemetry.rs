@@ -126,6 +126,7 @@ impl TelemetryGraphValueType {
     pub fn normalize(&self, v: f64, t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
         match self {
             Self::Delta => v / (self.get_max_value(t, car_num) / 2.0) + 0.5,
+            Self::Steering => v / self.get_max_value(t, car_num) + 0.5,
 
             Self::Max => panic!("Can't call get_max_value on TelemetryValueType::Max"),
             _ => v / self.get_max_value(t, car_num),
@@ -171,6 +172,19 @@ impl TelemetryGraphValueType {
                         self.get_max_value(telemetry, car_num) * (n_gridlines - 1 - i) as f64
                             / (n_gridlines - 1) as f64
                             - 5.0,
+                        self.get_unit()
+                    );
+                    ret.push(str);
+                }
+            }
+            Self::Steering => {
+                for i in 0..n_gridlines {
+                    let str = format!(
+                        "{} {}",
+                        (self.get_max_value(telemetry, car_num) * (n_gridlines - 1 - i) as f64
+                            / (n_gridlines - 1) as f64
+                            - 0.5)
+                            * 180.0,
                         self.get_unit()
                     );
                     ret.push(str);
