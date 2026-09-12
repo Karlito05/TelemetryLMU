@@ -228,13 +228,7 @@ impl Sidebar {
                 pos2(rect.max.x - 40.0, rect.center().y - 16.0),
                 vec2(24.0, 32.0),
             ),
-            Label::new(
-                icons::GEAR_SIX
-                    .light()
-                    .size(32.0)
-                    .color(Color32::from_rgb(19, 141, 241)),
-            )
-            .selectable(false),
+            Label::new(icons::GEAR_SIX.light().size(32.0).color(Color32::WHITE)).selectable(false),
         );
 
         response
