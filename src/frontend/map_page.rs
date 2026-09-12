@@ -782,17 +782,33 @@ impl MapPage {
                     )
                     .rect;
 
-                ui.painter().text(
-                    row3_rect.center(),
-                    Align2::CENTER_CENTER,
-                    if let Some(time) = self.get_time_delta() {
-                        format!("{:.3}", time)
+                if let Some(delta) = self.get_time_delta() {
+                    if delta < 0.0 {
+                        ui.painter().text(
+                            row3_rect.center(),
+                            Align2::CENTER_CENTER,
+                            format!("{:.3}", delta),
+                            FontId::new(32.0, FontFamily::Name("JetBrainsMono".into())),
+                            Color32::GREEN,
+                        )
                     } else {
-                        "N/A".to_owned()
-                    },
-                    FontId::new(32.0, FontFamily::Name("JetBrainsMono".into())),
-                    Color32::RED,
-                )
+                        ui.painter().text(
+                            row3_rect.center(),
+                            Align2::CENTER_CENTER,
+                            format!("{:.3}", delta),
+                            FontId::new(32.0, FontFamily::Name("JetBrainsMono".into())),
+                            Color32::RED,
+                        )
+                    }
+                } else {
+                    ui.painter().text(
+                        row3_rect.center(),
+                        Align2::CENTER_CENTER,
+                        "N/A",
+                        FontId::new(32.0, FontFamily::Name("JetBrainsMono".into())),
+                        Color32::RED,
+                    )
+                }
             })
             .response
         });
