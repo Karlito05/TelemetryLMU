@@ -13,7 +13,7 @@ use crate::{
         components::{button, slider},
         frontend_main::{SettingsProvider, StateProvider},
     },
-    interface::TelemVect3,
+    interface::{IPVehicleClass, TelemVect3},
     telemetry::{SaveData, TelemetryGraphValueType},
 };
 
@@ -25,13 +25,23 @@ pub struct MapPage {
     time: f32,
     cur_dp_index: Option<usize>,
     car_1: Vec<Dp>,
+    car_1_info: Option<CarInfo>,
     car_2: Vec<Dp>,
+    car_2_info: Option<CarInfo>,
     track_reference: Option<(Vec<Pos2>, Vec<Pos2>)>,
     replayer_state: ReplayerState,
     #[serde(skip)]
     settings_provider: Arc<SettingsProvider>,
     #[serde(skip)]
     state_provider: Arc<StateProvider>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Debug, Default, Clone)]
+struct CarInfo {
+    class: IPVehicleClass,
+    car: String,
+    driver: String,
+    laptime: f32,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, Default, Clone)]
@@ -73,7 +83,9 @@ impl MapPage {
             zoom: 1.0,
             cur_dp_index: None,
             car_1: vec![],
+            car_1_info: None,
             car_2: vec![],
+            car_2_info: None,
             track_reference: None,
             settings_provider,
             state_provider,
@@ -242,7 +254,7 @@ impl MapPage {
                                 vec2(140.0, 32.0),
                                 CornerRadius::same(8),
                                 Color32::from_rgb(19, 141, 241),
-                                "Select ref from file",
+                                "Select Reference",
                                 FontId::new(14.0, FontFamily::Proportional),
                                 Color32::WHITE,
                             )
@@ -285,6 +297,12 @@ impl MapPage {
 
                                     self.cur_dp_index = None;
                                     self.car_1.clear();
+                                    self.car_1_info = Some(CarInfo {
+                                        class: save_data.car_class,
+                                        car: save_data.car,
+                                        driver: save_data.driver_name,
+                                        laptime: save_data.lap_time,
+                                    });
                                     self.car_1 = save_data
                                         .positions
                                         .iter()
@@ -325,7 +343,37 @@ impl MapPage {
                             )
                             .clicked()
                             {
+                                self.car_1_info = None;
                                 self.car_1 = vec![];
+                            }
+
+                            if let Some(info) = self.car_1_info.clone() {
+                                let driver_info_rect =
+                                    ui.allocate_exact_size(vec2(140.0, 36.0), Sense::empty()).0;
+                                ui.put(driver_info_rect, |ui: &mut Ui| {
+                                    ui.vertical(|ui| {
+                                        ui.horizontal(|ui| {
+                                            ui.label(
+                                                RichText::new(info.driver.clone())
+                                                    .size(16.0)
+                                                    .color(Color32::WHITE),
+                                            );
+                                            let badge_rect = ui
+                                                .allocate_exact_size(
+                                                    vec2(40.0, 16.0),
+                                                    Sense::empty(),
+                                                )
+                                                .0;
+                                            draw_badge(info.class, ui, badge_rect);
+                                        });
+                                        ui.label(format!(
+                                            "{}:{:.3}",
+                                            (info.laptime / 60.0).trunc(),
+                                            info.laptime % 60.0
+                                        ));
+                                    })
+                                    .response
+                                });
                             }
 
                             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -335,7 +383,7 @@ impl MapPage {
                                     vec2(140.0, 32.0),
                                     CornerRadius::same(8),
                                     Color32::from_rgb(255, 107, 53),
-                                    "Select ref from file",
+                                    "Select Reference",
                                     FontId::new(14.0, FontFamily::Proportional),
                                     Color32::WHITE,
                                 )
@@ -377,6 +425,12 @@ impl MapPage {
                                         ));
 
                                         self.cur_dp_index = None;
+                                        self.car_2_info = Some(CarInfo {
+                                            class: save_data.car_class,
+                                            car: save_data.car,
+                                            driver: save_data.driver_name,
+                                            laptime: save_data.lap_time,
+                                        });
                                         self.car_2.clear();
                                         self.car_2 = save_data
                                             .positions
@@ -414,7 +468,39 @@ impl MapPage {
                                 )
                                 .clicked()
                                 {
+                                    self.car_2_info = None;
                                     self.car_2 = vec![];
+                                }
+                                if let Some(info) = self.car_2_info.clone() {
+                                    let driver_info_rect =
+                                        ui.allocate_exact_size(vec2(140.0, 36.0), Sense::empty()).0;
+                                    ui.put(driver_info_rect, |ui: &mut Ui| {
+                                        ui.with_layout(Layout::top_down(Align::Max), |ui| {
+                                            ui.with_layout(
+                                                Layout::right_to_left(Align::Min),
+                                                |ui| {
+                                                    ui.label(
+                                                        RichText::new(info.driver.clone())
+                                                            .size(16.0)
+                                                            .color(Color32::WHITE),
+                                                    );
+                                                    let badge_rect = ui
+                                                        .allocate_exact_size(
+                                                            vec2(40.0, 16.0),
+                                                            Sense::empty(),
+                                                        )
+                                                        .0;
+                                                    draw_badge(info.class, ui, badge_rect);
+                                                },
+                                            );
+                                            ui.label(format!(
+                                                "{}:{:.3}",
+                                                (info.laptime / 60.0).trunc(),
+                                                info.laptime % 60.0
+                                            ));
+                                        })
+                                        .response
+                                    });
                                 }
                             });
                         })
@@ -951,6 +1037,54 @@ impl MapPage {
 
         None
     }
+}
+fn draw_badge(class: IPVehicleClass, ui: &mut Ui, badge_rect: Rect) {
+    let draw_badge = |badge_rect: Rect, color: Color32, name: &str| {
+        ui.painter().rect(
+            badge_rect,
+            CornerRadius::same(4),
+            color,
+            Stroke::new(2.0, color.to_opaque()),
+            StrokeKind::Inside,
+        );
+        ui.painter().text(
+            badge_rect.center(),
+            Align2::CENTER_CENTER,
+            name,
+            FontId::new(14.0, FontFamily::Name("RethinkSans".into())),
+            color.to_opaque(),
+        );
+    };
+
+    match class {
+        IPVehicleClass::Gt3 => draw_badge(
+            badge_rect,
+            Color32::from_rgba_unmultiplied(13, 157, 0, 64),
+            "GT3",
+        ),
+
+        IPVehicleClass::Gte => draw_badge(
+            badge_rect,
+            Color32::from_rgba_unmultiplied(255, 204, 0, 64),
+            "GTE",
+        ),
+        IPVehicleClass::Lmp3 => draw_badge(
+            badge_rect,
+            Color32::from_rgba_unmultiplied(123, 0, 255, 64),
+            "LMP3",
+        ),
+        IPVehicleClass::Lmp2 | IPVehicleClass::Lmp2Elms => draw_badge(
+            badge_rect,
+            Color32::from_rgba_unmultiplied(0, 127, 221, 64),
+            "LMP2",
+        ),
+        IPVehicleClass::Hypercar => draw_badge(
+            badge_rect,
+            Color32::from_rgba_unmultiplied(223, 39, 28, 64),
+            "HY",
+        ),
+        _ => {}
+    };
 }
 
 fn set_track_reference(track_reference: &mut Option<Track>, track: &str) {

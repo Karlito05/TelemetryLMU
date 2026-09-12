@@ -1,4 +1,3 @@
-#[cfg(not(target_os = "windows"))]
 use memmap2::Mmap;
 #[cfg(not(target_os = "windows"))]
 use std::fs::File;
@@ -80,10 +79,9 @@ impl Interface {
     }
 
     #[cfg(target_os = "windows")]
-    fn get_mmap(_path: &str, state: &Mutex<TelemetryState>) -> Option<Mmap> {
+    fn get_mmap(_path: &str) -> Option<Mmap> {
         // Windows telemetry is read from the named mapping object directly in update_telemetry.
-        state.lock().unwrap().full_mode = true;
-        Some(mmap_fallback())
+        Some(Self::mmap_fallback())
     }
 
     #[cfg(not(target_os = "windows"))]
