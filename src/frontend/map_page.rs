@@ -178,7 +178,11 @@ impl MapPage {
             let car_1_pos = if i < self.car_1.len() {
                 self.car_1[i].pos
             } else {
-                self.car_1.last().unwrap().pos
+                if let Some(v) = self.car_1.last() {
+                    v.pos
+                } else {
+                    pos2(0.0, 0.0)
+                }
             };
 
             let car_2_pos = if i < self.car_2.len() {
@@ -232,17 +236,12 @@ impl MapPage {
                 let row_rect = ui
                     .add_sized(vec2(ui.available_width(), 48.0), |ui: &mut Ui| {
                         ui.horizontal(|ui| {
-                            ui.label(
-                                RichText::new("Blue:")
-                                    .color(Color32::from_rgb(19, 141, 241))
-                                    .size(16.0),
-                            );
                             #[expect(clippy::collapsible_if)]
                             if button(
                                 ui,
                                 vec2(140.0, 32.0),
                                 CornerRadius::same(8),
-                                Color32::from_white_alpha(25),
+                                Color32::from_rgb(19, 141, 241),
                                 "Select ref from file",
                                 FontId::new(14.0, FontFamily::Proportional),
                                 Color32::WHITE,
@@ -315,6 +314,19 @@ impl MapPage {
                                         .collect();
                                 }
                             }
+                            if button(
+                                ui,
+                                vec2(140.0, 32.0),
+                                CornerRadius::same(8),
+                                Color32::RED,
+                                "Clear",
+                                FontId::new(14.0, FontFamily::Proportional),
+                                Color32::WHITE,
+                            )
+                            .clicked()
+                            {
+                                self.car_1 = vec![];
+                            }
 
                             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                                 #[expect(clippy::collapsible_if)]
@@ -322,7 +334,7 @@ impl MapPage {
                                     ui,
                                     vec2(140.0, 32.0),
                                     CornerRadius::same(8),
-                                    Color32::from_white_alpha(25),
+                                    Color32::from_rgb(255, 107, 53),
                                     "Select ref from file",
                                     FontId::new(14.0, FontFamily::Proportional),
                                     Color32::WHITE,
@@ -390,11 +402,20 @@ impl MapPage {
                                             .collect();
                                     }
                                 }
-                                ui.label(
-                                    RichText::new("Orange:")
-                                        .color(Color32::from_rgb(255, 107, 53))
-                                        .size(16.0),
-                                );
+
+                                if button(
+                                    ui,
+                                    vec2(140.0, 32.0),
+                                    CornerRadius::same(8),
+                                    Color32::RED,
+                                    "Clear",
+                                    FontId::new(14.0, FontFamily::Proportional),
+                                    Color32::WHITE,
+                                )
+                                .clicked()
+                                {
+                                    self.car_2 = vec![];
+                                }
                             });
                         })
                         .response
@@ -499,7 +520,11 @@ impl MapPage {
                                                     if i < self.car_1.len() {
                                                         self.car_1[i].throttle
                                                     } else {
-                                                        self.car_1.last().unwrap().throttle
+                                                        if let Some(last) = self.car_1.last() {
+                                                            last.throttle
+                                                        } else {
+                                                            0.0
+                                                        }
                                                     }
                                                 } else {
                                                     0.0
@@ -525,7 +550,11 @@ impl MapPage {
                                                     if i < self.car_1.len() {
                                                         self.car_1[i].brake
                                                     } else {
-                                                        self.car_1.last().unwrap().brake
+                                                        if let Some(last) = self.car_1.last() {
+                                                            last.brake
+                                                        } else {
+                                                            0.0
+                                                        }
                                                     }
                                                 } else {
                                                     0.0
@@ -550,9 +579,11 @@ impl MapPage {
                                                     * 360.0
                                                     * (PI / 180.0)
                                             } else {
-                                                (self.car_1.last().unwrap().steering - 0.5)
-                                                    * 360.0
-                                                    * (PI / 180.0)
+                                                if let Some(last) = self.car_1.last() {
+                                                    (last.steering - 0.5) * 360.0 * (PI / 180.0)
+                                                } else {
+                                                    0.0
+                                                }
                                             }
                                         } else {
                                             0.0
@@ -579,7 +610,11 @@ impl MapPage {
                                                     if i < self.car_1.len() {
                                                         self.car_1[i].speed.round()
                                                     } else {
-                                                        self.car_1.last().unwrap().speed.round()
+                                                        if let Some(last) = self.car_1.last() {
+                                                            last.speed.round()
+                                                        } else {
+                                                            0.0
+                                                        }
                                                     }
                                                 )
                                             } else {
@@ -611,7 +646,11 @@ impl MapPage {
                                                     if i < self.car_1.len() {
                                                         self.car_1[i].gear
                                                     } else {
-                                                        self.car_1.last().unwrap().gear
+                                                        if let Some(last) = self.car_1.last() {
+                                                            last.gear
+                                                        } else {
+                                                            0
+                                                        }
                                                     }
                                                 )
                                             } else {
@@ -704,14 +743,16 @@ impl MapPage {
                                         ))
                                         .rotate(
                                             if let Some(i) = self.cur_dp_index {
-                                                if i < self.car_1.len() {
-                                                    (self.car_1[i].steering - 0.5)
+                                                if i < self.car_2.len() {
+                                                    (self.car_2[i].steering - 0.5)
                                                         * 360.0
                                                         * (PI / 180.0)
                                                 } else {
-                                                    (self.car_1.last().unwrap().steering - 0.5)
-                                                        * 360.0
-                                                        * (PI / 180.0)
+                                                    if let Some(last) = self.car_2.last() {
+                                                        (last.steering - 0.5) * 360.0 * (PI / 180.0)
+                                                    } else {
+                                                        0.0
+                                                    }
                                                 }
                                             } else {
                                                 0.0
