@@ -36,9 +36,9 @@ impl CarInfo {
             car: "".to_string(),
             car_class: IPVehicleClass::Unknown,
             fuel_info: FuelInfo {
-                fuel_percent: 0.64,
-                virt_eng_percent: 0.43,
-                fuel_liters: 55.0,
+                fuel_percent: 0.0,
+                virt_eng_percent: 0.0,
+                fuel_liters: 0.0,
             },
             tires: [
                 TireInfo::default(),
