@@ -283,21 +283,20 @@ impl MapPage {
                                     let mut track: Option<Track> = None;
                                     set_track_reference(&mut track, save_data.track.as_str());
 
-                                    self.track_reference = Some((
-                                        track
-                                            .as_ref()
-                                            .unwrap()
-                                            .line1
-                                            .iter()
-                                            .map(|tv| pos2(tv.x as f32, -tv.z as f32))
-                                            .collect(),
-                                        track
-                                            .unwrap()
-                                            .line2
-                                            .iter()
-                                            .map(|tv| pos2(tv.x as f32, -tv.z as f32))
-                                            .collect(),
-                                    ));
+                                    if let Some(track) = track {
+                                        self.track_reference = Some((
+                                            track
+                                                .line1
+                                                .iter()
+                                                .map(|tv| pos2(tv.x as f32, -tv.z as f32))
+                                                .collect(),
+                                            track
+                                                .line2
+                                                .iter()
+                                                .map(|tv| pos2(tv.x as f32, -tv.z as f32))
+                                                .collect(),
+                                        ));
+                                    }
 
                                     self.cur_dp_index = None;
                                     self.car_1.clear();
