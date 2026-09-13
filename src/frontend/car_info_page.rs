@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use eframe::egui::*;
 
@@ -54,10 +54,13 @@ impl CarInfo {
 
 impl CarInfo {
     pub fn draw_car_info_page(&mut self, ui: &mut Ui) {
+        ui.request_repaint_after(Duration::from_millis(16));
+
         if !self.interface.full_mode {
             telemetry_not_found(ui);
             return;
         }
+
         if self.name.is_empty()
             && let Ok(info) = get_stale_driver_info(
                 &self.interface,

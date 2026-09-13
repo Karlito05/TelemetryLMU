@@ -8,6 +8,7 @@ use eframe::egui::*;
 use egui_phosphor_icons::icons;
 use std::fs;
 use std::sync::Arc;
+use std::time::Duration;
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct TelemetryPage {
@@ -105,6 +106,8 @@ impl TelemetryPage {
 
 impl TelemetryPage {
     pub fn draw_telemetry_page(&mut self, ui: &mut Ui) {
+        ui.request_repaint_after(Duration::from_millis(16));
+
         if self.telemetry_provider.is_none() {
             telemetry_not_found(ui);
             return;
