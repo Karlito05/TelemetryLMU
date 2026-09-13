@@ -80,7 +80,27 @@ impl Interface {
 
     #[cfg(target_os = "windows")]
     fn get_mmap(_path: &str) -> Option<Mmap> {
-        // Windows telemetry is read from the named mapping object directly in update_telemetry.
+        const LMU_SHARED_MEMORY_FILE: &str = "LMU_Data";
+
+        let layout_size = std::mem::size_of::<SharedMemoryLayout>();
+        let name_wide: Vec<u16> = LMU_SHARED_MEMORY_FILE
+            .encode_utf16()
+            .chain(std::iter::once(0))
+            .collect();
+
+        unsafe {
+            let mapping_handle = OpenFileMappingW(FILE_MAP_READ, 0, name_wide.as_ptr());
+            if mapping_handle.is_null() {
+                return None;
+            }
+
+            let mapped_view = MapViewOfFile(mapping_handle, FILE_MAP_READ, 0, 0, layout_size);
+            if mapped_view.Value.is_null() {
+                CloseHandle(mapping_handle);
+                return None;
+            }
+        }
+
         Some(Self::mmap_fallback())
     }
 
