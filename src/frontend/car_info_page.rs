@@ -3,12 +3,12 @@ use std::{sync::Arc, time::Duration};
 use eframe::egui::*;
 
 use crate::{
-    backend::car_info::{FuelInfo, TireInfo, get_dyn_driver_info, get_stale_driver_info},
     frontend::{
         components::telemetry_not_found,
         frontend_main::{SettingsProvider, StateProvider},
     },
-    interface::{IPVehicleClass, Interface},
+    interface::{IPVehicleClass, i8_array32_to_string, i8_array64_to_string},
+    telemetry::Telemetry,
 };
 
 #[derive(Debug)]
@@ -19,18 +19,45 @@ pub struct CarInfo {
     driver_index: usize,
     fuel_info: FuelInfo,
     tires: [TireInfo; 4],
-    interface: Interface,
+    telemetry_provider: Arc<Option<Telemetry>>,
     settings_provider: Arc<SettingsProvider>,
     state_provider: Arc<StateProvider>,
+}
+
+#[derive(Debug)]
+pub struct FuelInfo {
+    pub fuel_percent: f32,
+    pub virt_eng_percent: f32,
+    pub fuel_liters: f32,
+}
+
+#[derive(Default, Debug)]
+pub struct TireInfo {
+    pub inside_temp: f32,
+    pub outside_temp: f32,
+    pub brake_temp: f32,
+    pub health_percent: f32,
+}
+pub struct StaleDriverInfo {
+    pub name: String,
+    pub car: String,
+    pub car_class: IPVehicleClass,
+    pub index: usize,
+}
+
+pub struct DynDriverInfo {
+    pub tires: [TireInfo; 4],
+    pub fuel: FuelInfo,
 }
 
 impl CarInfo {
     pub fn new(
         settings_provider: Arc<SettingsProvider>,
         state_provider: Arc<StateProvider>,
+        telemetry_provider: Arc<Option<Telemetry>>,
     ) -> Self {
         Self {
-            interface: Interface::new("/dev/shm/LMU_Data"),
+            telemetry_provider,
             driver_index: 0,
             name: "".to_string(),
             car: "".to_string(),
@@ -56,16 +83,13 @@ impl CarInfo {
     pub fn draw_car_info_page(&mut self, ui: &mut Ui) {
         ui.request_repaint_after(Duration::from_millis(16));
 
-        if !self.interface.full_mode {
+        if self.telemetry_provider.is_none() {
             telemetry_not_found(ui);
             return;
         }
 
         if self.name.is_empty()
-            && let Ok(info) = get_stale_driver_info(
-                &self.interface,
-                self.settings_provider.in_game_name.read().unwrap().clone(),
-            )
+            && let Ok(info) = self.get_stale_driver_info()
         {
             self.name = info.name;
             self.car = info.car;
@@ -74,7 +98,7 @@ impl CarInfo {
         }
 
         if !self.name.is_empty() {
-            let dyn_driver_inf = get_dyn_driver_info(&self.interface, self.driver_index);
+            let dyn_driver_inf = self.get_dyn_driver_info();
             self.tires = dyn_driver_inf.tires;
             self.fuel_info = dyn_driver_inf.fuel;
         }
@@ -617,6 +641,106 @@ impl CarInfo {
             ),
             _ => {}
         };
+    }
+    pub fn get_stale_driver_info(&self) -> Result<StaleDriverInfo, String> {
+        let telemetry = *self
+            .telemetry_provider
+            .as_ref()
+            .as_ref()
+            .unwrap()
+            .get_telemetry_object();
+
+        let mut drivers: Vec<(String, usize)> = Vec::new();
+
+        for (i, car) in telemetry.scoring.veh_scoring_info.iter().enumerate() {
+            let name = i8_array32_to_string(&car.m_driver_name);
+            if !name.is_empty() {
+                drivers.push((name, i));
+            }
+        }
+        let cur_driver_id;
+
+        if let Some(driver) = drivers
+            .iter()
+            .find(|(name, _)| name == &*self.settings_provider.in_game_name.read().unwrap())
+        {
+            cur_driver_id = driver.1
+        } else {
+            return Err("Driver not found".to_owned());
+        }
+
+        let name =
+            i8_array32_to_string(&telemetry.scoring.veh_scoring_info[cur_driver_id].m_driver_name);
+        let car =
+            i8_array64_to_string(&telemetry.scoring.veh_scoring_info[cur_driver_id].m_vehicle_name);
+        let car_class = telemetry.telemetry.telemetry_info[cur_driver_id].m_vehicle_class;
+
+        Ok(StaleDriverInfo {
+            name,
+            car,
+            car_class,
+            index: cur_driver_id,
+        })
+    }
+    pub fn get_dyn_driver_info(&self) -> DynDriverInfo {
+        let telemetry = self
+            .telemetry_provider
+            .as_ref()
+            .as_ref()
+            .unwrap()
+            .get_telemetry_object();
+
+        let wheels = &telemetry.telemetry.telemetry_info[self.driver_index].m_wheel;
+        let wheel0 = wheels[0];
+        let wheel1 = wheels[1];
+        let wheel2 = wheels[2];
+        let wheel3 = wheels[3];
+
+        let inner_temp0 = wheel0.m_tire_inner_layer_temperature;
+        let outside_temp0 = wheel0.m_temperature;
+        let inner_temp1 = wheel1.m_tire_inner_layer_temperature;
+        let outside_temp1 = wheel1.m_temperature;
+        let inner_temp2 = wheel2.m_tire_inner_layer_temperature;
+        let outside_temp2 = wheel2.m_temperature;
+        let inner_temp3 = wheel3.m_tire_inner_layer_temperature;
+        let outside_temp3 = wheel3.m_temperature;
+
+        let tires = [
+            TireInfo {
+                health_percent: wheel0.m_wear as f32,
+                inside_temp: (inner_temp0.iter().sum::<f64>() / 3.0 - 273.15) as f32,
+                outside_temp: (outside_temp0.iter().sum::<f64>() / 3.0 - 273.15) as f32,
+                brake_temp: (wheel0.m_brake_temp - 273.15) as f32,
+            },
+            TireInfo {
+                health_percent: wheel1.m_wear as f32,
+                inside_temp: (inner_temp1.iter().sum::<f64>() / 3.0 - 273.15) as f32,
+                outside_temp: (outside_temp1.iter().sum::<f64>() / 3.0 - 273.15) as f32,
+                brake_temp: (wheel1.m_brake_temp - 273.15) as f32,
+            },
+            TireInfo {
+                health_percent: wheel2.m_wear as f32,
+                inside_temp: (inner_temp2.iter().sum::<f64>() / 3.0 - 273.15) as f32,
+                outside_temp: (outside_temp2.iter().sum::<f64>() / 3.0 - 273.15) as f32,
+                brake_temp: (wheel2.m_brake_temp - 273.15) as f32,
+            },
+            TireInfo {
+                health_percent: wheel3.m_wear as f32,
+                inside_temp: (inner_temp3.iter().sum::<f64>() / 3.0 - 273.15) as f32,
+                outside_temp: (outside_temp3.iter().sum::<f64>() / 3.0 - 273.15) as f32,
+                brake_temp: (wheel3.m_brake_temp - 273.15) as f32,
+            },
+        ];
+        let fuel = FuelInfo {
+            fuel_percent: (telemetry.telemetry.telemetry_info[self.driver_index].m_fuel
+                / telemetry.telemetry.telemetry_info[self.driver_index].m_fuel_capacity)
+                as f32,
+            fuel_liters: telemetry.telemetry.telemetry_info[self.driver_index].m_fuel as f32,
+            virt_eng_percent: telemetry.telemetry.telemetry_info[self.driver_index]
+                .m_virtual_energy,
+        };
+
+        DynDriverInfo { tires, fuel }
     }
 }
 

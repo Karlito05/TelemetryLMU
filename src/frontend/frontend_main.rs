@@ -100,7 +100,11 @@ impl App {
         app.settings_page =
             SettingsPage::new(app.settings_provider.clone(), app.state_provider.clone());
         app.map_page = MapPage::new(app.settings_provider.clone(), app.state_provider.clone());
-        app.car_info_page = CarInfo::new(app.settings_provider.clone(), app.state_provider.clone());
+        app.car_info_page = CarInfo::new(
+            app.settings_provider.clone(),
+            app.state_provider.clone(),
+            app.telemetry_provider.clone(),
+        );
 
         let cur_layout_index = app.telemetry_page.cur_layout_index;
         let layouts = app.telemetry_page.layouts;
@@ -133,7 +137,11 @@ impl Default for App {
                 telemetry_provider.clone(),
             ),
             settings_page: SettingsPage::new(settings_provider.clone(), state_provider.clone()),
-            car_info_page: CarInfo::new(settings_provider.clone(), state_provider.clone()),
+            car_info_page: CarInfo::new(
+                settings_provider.clone(),
+                state_provider.clone(),
+                telemetry_provider.clone(),
+            ),
             interface: crate::interface::Interface::new("/dev/shm/LMU_Data"),
             telemetry_provider,
             state_provider,
