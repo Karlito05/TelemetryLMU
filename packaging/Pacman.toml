@@ -1,9 +1,12 @@
 name = "telemetry_lmu"
 product-name = "Telemetry LMU"
 version = "0.2.3"
-before-packaging-command = "cargo build --release"
+before-packaging-command = "./build-linux-portable.sh"
 formats = ["pacman"]
 out-dir = "../dist/linux"
+
+[deb]
+desktop-template = "../packaging/telemetry_lmu.desktop.hbs"
 
 [pacman.files]
 "../packaging/app_icons/16x16.png" = "usr/share/icons/hicolor/16x16/apps/telemetry_lmu.png"
