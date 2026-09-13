@@ -896,11 +896,15 @@ pub fn telemetry_not_found(ui: &mut Ui) {
         .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
         .show(ui.ctx(), |ui| {
             ui.label(
-                RichText::new("You need to have the game open when launching this app on linux!")
-                    .size(24.0)
-                    .strong(),
+                RichText::new(
+                    "To use this page, you need to have the game open when launching this app.",
+                )
+                .size(24.0)
+                .strong(),
             );
             ui.separator();
-            ui.label(RichText::new("Please restart the app or switch to another page!").size(16.0));
+            ui.label(
+                RichText::new("Please restart this app or switch to another page!").size(16.0),
+            );
         });
 }
