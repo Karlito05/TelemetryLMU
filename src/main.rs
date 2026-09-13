@@ -22,10 +22,15 @@ fn main() -> eframe::Result {
         .expect("failed to build tokio runtime");
     let _ = TOKIO.set(rt);
 
+    let icon =
+        eframe::icon_data::from_png_bytes(include_bytes!("../packaging/app_icons/32x32.png"))
+            .expect("failed to load application icon");
     let options = eframe::NativeOptions {
         viewport: ViewportBuilder::default()
             .with_inner_size([1920.0, 1080.0])
-            .with_min_inner_size([1280.0, 720.0]),
+            .with_min_inner_size([1280.0, 720.0])
+            .with_app_id("telemetry_lmu")
+            .with_icon(icon),
         ..Default::default()
     };
 
