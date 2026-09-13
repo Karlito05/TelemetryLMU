@@ -1,0 +1,13 @@
+FROM rust:bullseye
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends --yes \
+        libfontconfig1-dev \
+        libudev-dev \
+        libwayland-dev \
+        libx11-dev \
+        libxkbcommon-dev \
+        pkg-config \
+    && rustup toolchain install nightly-2026-08-24 \
+    && rustup default nightly-2026-08-24 \
+    && rm -rf /var/lib/apt/lists/*

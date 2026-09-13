@@ -1,0 +1,22 @@
+name = "telemetry_lmu"
+product-name = "Telemetry LMU"
+version = "0.2.3"
+before-packaging-command = "./build-linux-portable.sh"
+formats = ["deb"]
+out-dir = "../dist/linux"
+icons = [
+  "../packaging/app_icons/16x16.png",
+  "../packaging/app_icons/32x32.png",
+  "../packaging/app_icons/48x48.png",
+  "../packaging/app_icons/64x64.png",
+  "../packaging/app_icons/128x128.png",
+  "../packaging/app_icons/256x256.png",
+  "../packaging/app_icons/512x512.png",
+]
+
+[deb]
+desktop-template = "../packaging/telemetry_lmu.desktop.hbs"
+
+[[binaries]]
+path = "../../target/release/telemetry_lmu"
+main = true
