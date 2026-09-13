@@ -1,0 +1,31 @@
+name = "telemetry_lmu"
+product-name = "Telemetry LMU"
+version = "0.2.3"
+before-packaging-command = "cargo build --release"
+formats = ["deb", "pacman"]
+out-dir = "../dist/linux"
+icons = [
+  "../packaging/app_icons/16x16.png",
+  "../packaging/app_icons/32x32.png",
+  "../packaging/app_icons/48x48.png",
+  "../packaging/app_icons/64x64.png",
+  "../packaging/app_icons/128x128.png",
+  "../packaging/app_icons/256x256.png",
+  "../packaging/app_icons/512x512.png",
+]
+
+[deb]
+desktop-template = "../packaging/telemetry_lmu.desktop.hbs"
+
+[pacman.files]
+"../packaging/app_icons/16x16.png" = "usr/share/icons/hicolor/16x16/apps/telemetry_lmu.png"
+"../packaging/app_icons/32x32.png" = "usr/share/icons/hicolor/32x32/apps/telemetry_lmu.png"
+"../packaging/app_icons/48x48.png" = "usr/share/icons/hicolor/48x48/apps/telemetry_lmu.png"
+"../packaging/app_icons/64x64.png" = "usr/share/icons/hicolor/64x64/apps/telemetry_lmu.png"
+"../packaging/app_icons/128x128.png" = "usr/share/icons/hicolor/128x128/apps/telemetry_lmu.png"
+"../packaging/app_icons/256x256.png" = "usr/share/icons/hicolor/256x256/apps/telemetry_lmu.png"
+"../packaging/app_icons/512x512.png" = "usr/share/icons/hicolor/512x512/apps/telemetry_lmu.png"
+
+[[binaries]]
+path = "../../target/release/telemetry_lmu"
+main = true
