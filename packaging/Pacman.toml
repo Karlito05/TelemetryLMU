@@ -1,7 +1,7 @@
 name = "telemetry_lmu"
 product-name = "Telemetry LMU"
 version = "0.2.3"
-before-packaging-command = "./build-linux-portable.sh"
+before-packaging-command = "cargo build --release"
 formats = ["pacman"]
 out-dir = "../dist/linux"
 
@@ -17,3 +17,4 @@ out-dir = "../dist/linux"
 [[binaries]]
 path = "../../target/release/telemetry_lmu"
 main = true
+
