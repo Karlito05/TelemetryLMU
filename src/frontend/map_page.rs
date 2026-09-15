@@ -183,12 +183,12 @@ impl MapPage {
                 ReplayerState::Forwards => {
                     ui.request_repaint_after(Duration::from_millis(16));
                     let dt = ui.input(|inp| inp.stable_dt); // actual elapsed seconds since last frame
-                    self.time = (self.time + dt / max_time).min(1.0);
+                    self.time = (self.time + dt / max_time).clamp(0.0, 1.0);
                 }
                 ReplayerState::Backwards => {
                     ui.request_repaint_after(Duration::from_millis(16));
                     let dt = ui.input(|inp| inp.stable_dt); // actual elapsed seconds since last frame
-                    self.time = (self.time - dt / max_time).min(1.0);
+                    self.time = (self.time - dt / max_time).clamp(0.0, 1.0);
                 }
             }
         }
@@ -264,7 +264,7 @@ impl MapPage {
         }
 
         if let Some(i) = self.cur_dp_2 {
-            let car_1_pos = if i < self.car_2.len() {
+            let car_2_pos = if i < self.car_2.len() {
                 self.car_2[i].pos
             } else {
                 if let Some(v) = self.car_2.last() {
@@ -275,7 +275,7 @@ impl MapPage {
             };
 
             ui.painter().circle_filled(
-                self.to_screen(map_rect, car_1_pos.to_vec2()),
+                self.to_screen(map_rect, car_2_pos.to_vec2()),
                 2.0 * self.zoom,
                 Color32::from_rgb(255, 107, 53),
             );
