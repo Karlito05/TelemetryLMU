@@ -22,9 +22,10 @@ pub struct MapPage {
     zoom: f32,
     offset: Vec2,
     time: f32,
-    cur_dp_index: Option<usize>,
+    cur_dp_1: Option<usize>,
     car_1: Vec<Dp>,
     car_1_info: Option<CarInfo>,
+    cur_dp_2: Option<usize>,
     car_2: Vec<Dp>,
     car_2_info: Option<CarInfo>,
     track_reference: Option<(Vec<Pos2>, Vec<Pos2>)>,
@@ -80,9 +81,10 @@ impl MapPage {
             time: 0.0,
             offset: Vec2::ZERO,
             zoom: 1.0,
-            cur_dp_index: None,
+            cur_dp_1: None,
             car_1: vec![],
             car_1_info: None,
+            cur_dp_2: None,
             car_2: vec![],
             car_2_info: None,
             track_reference: None,
@@ -93,42 +95,100 @@ impl MapPage {
 }
 
 impl MapPage {
+    fn get_current_dp_index(&self, data: &[Dp], lap_time: f32, offset: f32) -> Option<usize> {
+        if data.is_empty() || lap_time <= 0.0 {
+            return None;
+        }
+        let target_time = self.time * lap_time + offset;
+
+        let lower_index = data
+            .iter()
+            .enumerate()
+            .min_by(|(_, a), (_, b)| {
+                let a_diff = (a.time_since_lap_start - target_time).abs();
+                let b_diff = (b.time_since_lap_start - target_time).abs();
+
+                a_diff.partial_cmp(&b_diff).unwrap()
+            })
+            .map(|(i, _)| i)
+            .unwrap_or_default();
+
+        if lower_index == data.len() - 1 {
+            return Some(lower_index);
+        }
+
+        let mut upper_index = lower_index;
+
+        for i in upper_index..data.len() {
+            if data[lower_index].time_since_lap_start != data[i].time_since_lap_start {
+                upper_index = i;
+                break;
+            }
+        }
+
+        let lower_time = data[lower_index].time_since_lap_start;
+        let mut upper_time = data[upper_index].time_since_lap_start;
+
+        if upper_index == lower_index {
+            upper_index = data.len() - 1;
+            upper_time = lap_time;
+        }
+
+        let t = (target_time - lower_time) / (upper_time - lower_time);
+
+        Some((lower_index as f32 + t * (upper_index - lower_index) as f32) as usize)
+    }
     pub fn draw_map_page(&mut self, ui: &mut Ui) {
-        *self.state_provider.sidebar_open.write().unwrap() = ui.viewport_rect().width() > 1500.0;
+        {
+            *self.state_provider.sidebar_open.write().unwrap() =
+                ui.viewport_rect().width() > 1500.0;
+        }
+        let max_time = self
+            .car_1_info
+            .as_ref()
+            .unwrap_or(&CarInfo::default())
+            .laptime
+            .max(
+                self.car_2_info
+                    .as_ref()
+                    .unwrap_or(&CarInfo::default())
+                    .laptime,
+            );
+
+        let time_1 = self.car_1_info.as_ref().map_or(0.0, |x| x.laptime);
+        let time_2 = self.car_2_info.as_ref().map_or(0.0, |x| x.laptime);
 
         let ref_len = self.car_1.len().max(self.car_2.len());
         if ref_len > 0 {
-            self.cur_dp_index = Some((self.time * (ref_len - 1) as f32) as usize);
+            if time_1 > 0.0 && time_2 > 0.0 {
+                if time_1 < time_2 {
+                    self.cur_dp_1 = self.get_current_dp_index(&self.car_1, time_1, 0.0);
+                    self.cur_dp_2 = self.get_current_dp_index(&self.car_2, time_2, time_1 - time_2)
+                } else {
+                    self.cur_dp_1 = self.get_current_dp_index(&self.car_1, time_1, time_2 - time_1);
+
+                    self.cur_dp_2 = self.get_current_dp_index(&self.car_2, time_2, 0.0)
+                }
+            }
+        } else {
+            self.cur_dp_1 = self.get_current_dp_index(&self.car_1, time_1, 0.0);
+            self.cur_dp_2 = self.get_current_dp_index(&self.car_2, time_2, 0.0)
         }
 
-        if let Some(i) = self.cur_dp_index.as_mut() {
+        println!("{}", self.cur_dp_1.unwrap_or_default());
+
+        if max_time > 0.0 {
             match self.replayer_state {
                 ReplayerState::Paused => {}
                 ReplayerState::Forwards => {
                     ui.request_repaint_after(Duration::from_millis(16));
                     let dt = ui.input(|inp| inp.stable_dt); // actual elapsed seconds since last frame
-                    let total_duration_secs = self
-                        .car_1
-                        .last()
-                        .copied()
-                        .unwrap_or_default()
-                        .time_since_lap_start
-                        .max(
-                            self.car_2
-                                .last()
-                                .copied()
-                                .unwrap_or_default()
-                                .time_since_lap_start,
-                        );
-                    self.time = (self.time + dt / total_duration_secs).min(1.0);
-                    *i = (self.time * (ref_len - 1) as f32) as usize;
+                    self.time = (self.time + dt / max_time).min(1.0);
                 }
                 ReplayerState::Backwards => {
                     ui.request_repaint_after(Duration::from_millis(16));
-                    if *i > 0 {
-                        *i -= 1;
-                    }
-                    self.time = *i as f32 / (ref_len - 1).max(1) as f32;
+                    let dt = ui.input(|inp| inp.stable_dt); // actual elapsed seconds since last frame
+                    self.time = (self.time - dt / max_time).min(1.0);
                 }
             }
         }
@@ -185,42 +245,40 @@ impl MapPage {
                 ],
             );
         }
-        if let Some(i) = self.cur_dp_index {
-            if !self.car_1.is_empty() {
-                let car_1_pos = if i < self.car_1.len() {
-                    self.car_1[i].pos
+        if let Some(i) = self.cur_dp_1 {
+            let car_1_pos = if i < self.car_1.len() {
+                self.car_1[i].pos
+            } else {
+                if let Some(v) = self.car_1.last() {
+                    v.pos
                 } else {
-                    if let Some(v) = self.car_1.last() {
-                        v.pos
-                    } else {
-                        pos2(0.0, 0.0)
-                    }
-                };
+                    pos2(0.0, 0.0)
+                }
+            };
 
-                ui.painter().circle_filled(
-                    self.to_screen(map_rect, car_1_pos.to_vec2()),
-                    2.0 * self.zoom,
-                    Color32::from_rgb(19, 141, 241),
-                );
-            }
+            ui.painter().circle_filled(
+                self.to_screen(map_rect, car_1_pos.to_vec2()),
+                2.0 * self.zoom,
+                Color32::from_rgb(19, 141, 241),
+            );
+        }
 
-            if !self.car_2.is_empty() {
-                let car_2_pos = if i < self.car_2.len() {
-                    self.car_2[i].pos
+        if let Some(i) = self.cur_dp_2 {
+            let car_1_pos = if i < self.car_2.len() {
+                self.car_2[i].pos
+            } else {
+                if let Some(v) = self.car_2.last() {
+                    v.pos
                 } else {
-                    if let Some(v) = self.car_2.last() {
-                        v.pos
-                    } else {
-                        pos2(0.0, 0.0)
-                    }
-                };
+                    pos2(0.0, 0.0)
+                }
+            };
 
-                ui.painter().circle_filled(
-                    self.to_screen(map_rect, car_2_pos.to_vec2()),
-                    2.0 * self.zoom,
-                    Color32::from_rgb(255, 107, 53),
-                );
-            }
+            ui.painter().circle_filled(
+                self.to_screen(map_rect, car_1_pos.to_vec2()),
+                2.0 * self.zoom,
+                Color32::from_rgb(255, 107, 53),
+            );
         }
 
         let controls_rect = Rect::from_min_max(
@@ -298,7 +356,7 @@ impl MapPage {
                                         ));
                                     }
 
-                                    self.cur_dp_index = None;
+                                    self.cur_dp_1 = None;
                                     self.car_1.clear();
                                     self.car_1_info = Some(CarInfo {
                                         class: save_data.car_class,
@@ -427,7 +485,7 @@ impl MapPage {
                                                 .collect(),
                                         ));
 
-                                        self.cur_dp_index = None;
+                                        self.cur_dp_2 = None;
                                         self.car_2_info = Some(CarInfo {
                                             class: save_data.car_class,
                                             car: save_data.car,
@@ -605,7 +663,7 @@ impl MapPage {
                                         throttle_rect.min,
                                         throttle_rect.size()
                                             * vec2(
-                                                if let Some(i) = self.cur_dp_index {
+                                                if let Some(i) = self.cur_dp_1 {
                                                     if i < self.car_1.len() {
                                                         self.car_1[i].throttle
                                                     } else {
@@ -635,7 +693,7 @@ impl MapPage {
                                         brake_rect.min,
                                         brake_rect.size()
                                             * vec2(
-                                                if let Some(i) = self.cur_dp_index {
+                                                if let Some(i) = self.cur_dp_1 {
                                                     if i < self.car_1.len() {
                                                         self.car_1[i].brake
                                                     } else {
@@ -662,7 +720,7 @@ impl MapPage {
                                         "../../public/icons/steering-wheel-blue.svg"
                                     ))
                                     .rotate(
-                                        if let Some(i) = self.cur_dp_index {
+                                        if let Some(i) = self.cur_dp_1 {
                                             if i < self.car_1.len() {
                                                 (self.car_1[i].steering - 0.5)
                                                     * 360.0
@@ -693,7 +751,7 @@ impl MapPage {
                                                 .color(Color32::from_white_alpha(64)),
                                         );
                                         ui.label(
-                                            RichText::new(if let Some(i) = self.cur_dp_index {
+                                            RichText::new(if let Some(i) = self.cur_dp_1 {
                                                 format!(
                                                     "{}km/h",
                                                     if i < self.car_1.len() {
@@ -729,7 +787,7 @@ impl MapPage {
                                                 .color(Color32::from_white_alpha(64)),
                                         );
                                         ui.label(
-                                            RichText::new(if let Some(i) = self.cur_dp_index {
+                                            RichText::new(if let Some(i) = self.cur_dp_1 {
                                                 format!(
                                                     "{}",
                                                     if i < self.car_1.len() {
@@ -774,7 +832,7 @@ impl MapPage {
                                             throttle_rect.min,
                                             throttle_rect.size()
                                                 * vec2(
-                                                    if let Some(i) = self.cur_dp_index {
+                                                    if let Some(i) = self.cur_dp_2 {
                                                         if i < self.car_2.len() {
                                                             self.car_2[i].throttle
                                                         } else {
@@ -804,7 +862,7 @@ impl MapPage {
                                             brake_rect.min,
                                             brake_rect.size()
                                                 * vec2(
-                                                    if let Some(i) = self.cur_dp_index {
+                                                    if let Some(i) = self.cur_dp_2 {
                                                         if i < self.car_2.len() {
                                                             self.car_2[i].brake
                                                         } else {
@@ -831,7 +889,7 @@ impl MapPage {
                                             "../../public/icons/steering-wheel-orange.svg"
                                         ))
                                         .rotate(
-                                            if let Some(i) = self.cur_dp_index {
+                                            if let Some(i) = self.cur_dp_2 {
                                                 if i < self.car_2.len() {
                                                     (self.car_2[i].steering - 0.5)
                                                         * 360.0
@@ -862,7 +920,7 @@ impl MapPage {
                                                     .color(Color32::from_white_alpha(64)),
                                             );
                                             ui.label(
-                                                RichText::new(if let Some(i) = self.cur_dp_index {
+                                                RichText::new(if let Some(i) = self.cur_dp_2 {
                                                     format!(
                                                         "{}km/h",
                                                         if i < self.car_2.len() {
@@ -898,7 +956,7 @@ impl MapPage {
                                                     .color(Color32::from_white_alpha(64)),
                                             );
                                             ui.label(
-                                                RichText::new(if let Some(i) = self.cur_dp_index {
+                                                RichText::new(if let Some(i) = self.cur_dp_2 {
                                                     format!(
                                                         "{}",
                                                         if i < self.car_2.len() {
@@ -1003,10 +1061,12 @@ impl MapPage {
         }
     }
     fn get_time_delta(&self) -> Option<f32> {
-        let i = self.cur_dp_index?;
-        let car1_cur = self.car_1.get(i)?.distance;
-        let car2_cur = self.car_2.get(i)?.distance;
+        let i_1 = self.cur_dp_1?;
+        let i_2 = self.cur_dp_2?;
+        let car1_cur = self.car_1.get(i_1)?.distance;
+        let car2_cur = self.car_2.get(i_2)?.distance;
 
+        let i = i_2.min(i_1);
         if car1_cur > car2_cur {
             let mut last_diff = car1_cur - car2_cur;
             let mut closest_index = i;
