@@ -215,7 +215,8 @@ impl TelemetryGraphValueType {
     }
 
     pub fn get_time_into_lap(t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
-        t.scoring.veh_scoring_info[car_num].m_time_into_lap
+        t.telemetry.telemetry_info[car_num].m_elapsed_time
+            - t.telemetry.telemetry_info[car_num].m_lap_start_et
     }
 
     pub fn get_distance_into_lap(t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
@@ -255,6 +256,34 @@ pub struct Lap {
     pub positions: Vec<TelemVect3>,
     pub times: Vec<f32>,
     pub laptime: Option<f32>,
+}
+
+impl Lap {
+    fn push_sample(
+        &mut self,
+        datapoints: &[f64; TelemetryGraphValueType::Max as usize],
+        distance: f64,
+        position: TelemVect3,
+        time: f64,
+    ) {
+        const MAX_SAMPLES: usize = 21600;
+
+        if self.distances.len() >= MAX_SAMPLES {
+            for values in &mut self.datapoints {
+                values.remove(0);
+            }
+            self.distances.remove(0);
+            self.positions.remove(0);
+            self.times.remove(0);
+        }
+
+        for (values, datapoint) in self.datapoints.iter_mut().zip(datapoints) {
+            values.push(*datapoint as f32);
+        }
+        self.distances.push(distance as f32);
+        self.positions.push(position);
+        self.times.push(time as f32);
+    }
 }
 
 impl Telemetry {
@@ -345,15 +374,7 @@ impl Telemetry {
                         driver.times.clear();
                         driver.laptime = None;
                     }
-                    for (h, dp) in data.0.iter().enumerate() {
-                        if driver.datapoints[h].len() > 21600 {
-                            driver.datapoints[h].remove(0);
-                        }
-                        driver.datapoints[h].push(*dp as f32);
-                    }
-                    driver.distances.push(data.2 as f32);
-                    driver.positions.push(data.3);
-                    driver.times.push(data.4 as f32);
+                    driver.push_sample(&data.0, data.2, data.3, data.4);
                 }
                 thread::sleep(Duration::from_millis(16));
             }

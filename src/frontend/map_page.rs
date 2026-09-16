@@ -99,7 +99,11 @@ impl MapPage {
         if data.is_empty() || lap_time <= 0.0 {
             return None;
         }
-        let target_time = self.time * lap_time + offset;
+        let mut target_time = (self.time * lap_time) / offset;
+
+        if target_time > lap_time {
+            target_time = lap_time;
+        }
 
         let lower_index = data
             .iter()
@@ -158,21 +162,20 @@ impl MapPage {
         let time_1 = self.car_1_info.as_ref().map_or(0.0, |x| x.laptime);
         let time_2 = self.car_2_info.as_ref().map_or(0.0, |x| x.laptime);
 
+        let offset = time_1.min(time_2) / time_1.max(time_2);
+
         let ref_len = self.car_1.len().max(self.car_2.len());
         if ref_len > 0 {
-            if time_1 > 0.0 && time_2 > 0.0 {
-                if time_1 < time_2 {
-                    self.cur_dp_1 = self.get_current_dp_index(&self.car_1, time_1, 0.0);
-                    self.cur_dp_2 = self.get_current_dp_index(&self.car_2, time_2, time_1 - time_2)
-                } else {
-                    self.cur_dp_1 = self.get_current_dp_index(&self.car_1, time_1, time_2 - time_1);
-
-                    self.cur_dp_2 = self.get_current_dp_index(&self.car_2, time_2, 0.0)
-                }
+            if time_1 > time_2 {
+                self.cur_dp_1 = self.get_current_dp_index(&self.car_1, time_1, 1.0);
+                self.cur_dp_2 = self.get_current_dp_index(&self.car_2, time_2, offset);
+            } else {
+                self.cur_dp_1 = self.get_current_dp_index(&self.car_1, time_1, offset);
+                self.cur_dp_2 = self.get_current_dp_index(&self.car_2, time_2, 1.0);
             }
         } else {
-            self.cur_dp_1 = self.get_current_dp_index(&self.car_1, time_1, 0.0);
-            self.cur_dp_2 = self.get_current_dp_index(&self.car_2, time_2, 0.0)
+            self.cur_dp_1 = self.get_current_dp_index(&self.car_1, time_1, 1.0);
+            self.cur_dp_2 = self.get_current_dp_index(&self.car_2, time_2, 1.0);
         }
 
         println!("{}", self.cur_dp_1.unwrap_or_default());
