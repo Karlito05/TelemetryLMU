@@ -1,7 +1,3 @@
-// NOTE: Problems:
-// - Crashes on load of incorrect data
-// - Make sure user picks a lap in the same class and on the same track
-
 use std::{f32::consts::PI, fs, sync::Arc, time::Duration};
 
 use eframe::egui::*;
