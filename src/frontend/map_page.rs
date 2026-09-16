@@ -1073,6 +1073,7 @@ impl MapPage {
         let mut best_diff = (car2_cur - car1_cur).abs();
 
         if car1_cur > car2_cur {
+            #[expect(clippy::needless_range_loop)]
             for j in (i_2 + 1)..self.car_2.len() {
                 let diff = (self.car_2[j].distance - car1_cur).abs();
                 if diff < best_diff {

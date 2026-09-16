@@ -1,5 +1,5 @@
 use std::{
-    fs,
+    fmt, fs,
     path::PathBuf,
     sync::{
         Arc, Mutex,
@@ -52,6 +52,23 @@ impl TryFrom<usize> for TelemetryGraphValueType {
     }
 }
 
+impl fmt::Display for TelemetryGraphValueType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Self::Rpm => "rpm",
+            Self::Speed => "speed",
+            Self::Throttle => "throttle",
+            Self::Brake => "brake",
+            Self::Delta => "delta",
+            Self::Gear => "gear",
+            Self::Steering => "steering",
+
+            Self::Max => panic!("Can't call to_string on TelemetryValueType::Max"),
+        };
+        write!(f, "{s}")
+    }
+}
+
 impl TelemetryGraphValueType {
     pub fn get_value(&self, t: &SharedMemoryObjectOut, driver: usize) -> f64 {
         match self {
@@ -64,20 +81,6 @@ impl TelemetryGraphValueType {
             Self::Steering => t.telemetry.telemetry_info[driver].m_unfiltered_steering,
 
             Self::Max => panic!("Can't call get value on TelemetryValueType::Max"),
-        }
-    }
-
-    pub fn to_string(&self) -> String {
-        match self {
-            Self::Rpm => "rpm".to_owned(),
-            Self::Speed => "speed".to_owned(),
-            Self::Throttle => "throttle".to_owned(),
-            Self::Brake => "brake".to_owned(),
-            Self::Delta => "delta".to_owned(),
-            Self::Gear => "gear".to_owned(),
-            Self::Steering => "steering".to_owned(),
-
-            Self::Max => panic!("Can't call to_string on TelemetryValueType::Max"),
         }
     }
 
@@ -223,6 +226,7 @@ impl TelemetryGraphValueType {
         t.scoring.veh_scoring_info[car_num].m_lap_dist
     }
 
+    #[expect(unused)]
     pub fn get_normalized_distance_into_lap(t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
         t.scoring.veh_scoring_info[car_num].m_lap_dist / t.scoring.scoring_info.m_lap_dist
     }
@@ -401,26 +405,19 @@ impl Telemetry {
     }
 }
 
-/// Returns A new DP for each of the arrays and an optional lap number if it has changed
-fn get_telemetry(
-    t: &interface::Interface,
-    cur_laps: [i32; 104],
-) -> [(
+type NewData = [(
     [f64; TelemetryGraphValueType::Max as usize],
     Option<i32>,
     f64,
     TelemVect3,
     f64,
-); 104] {
+); 104];
+
+/// Returns A new DP for each of the arrays and an optional lap number if it has changed
+fn get_telemetry(t: &interface::Interface, cur_laps: [i32; 104]) -> NewData {
     let cur_data = t.update_telemetry().unwrap();
 
-    let mut ret: [(
-        [f64; TelemetryGraphValueType::Max as usize],
-        Option<i32>,
-        f64,
-        TelemVect3,
-        f64,
-    ); 104] = std::array::from_fn(|_| {
+    let mut ret: NewData = std::array::from_fn(|_| {
         (
             std::array::from_fn(|_| 0.0),
             None,
@@ -436,6 +433,8 @@ fn get_telemetry(
         {
             ret[j].1 = Some(new_lap_num);
         }
+
+        #[expect(clippy::needless_range_loop)]
         for i in 0..TelemetryGraphValueType::Max as usize {
             let tel_type = TelemetryGraphValueType::try_from(i).unwrap();
             ret[j].0[i] = tel_type.get_value(&cur_data, j);
@@ -479,10 +478,10 @@ async fn set_best(
     let mut best_lap_guard = best_lap.lock().unwrap();
     let last_lap_guard = last_lap.lock().unwrap();
     if let Some(best_laptime) = best_lap_guard[car_num].laptime {
-        if let Some(last_laptime) = last_lap_guard[car_num].laptime {
-            if best_laptime > last_laptime {
-                best_lap_guard[car_num] = last_lap_guard[car_num].clone();
-            }
+        if let Some(last_laptime) = last_lap_guard[car_num].laptime
+            && best_laptime > last_laptime
+        {
+            best_lap_guard[car_num] = last_lap_guard[car_num].clone();
         }
     } else {
         if let Some(last_laptime) = last_lap_guard[car_num].laptime
