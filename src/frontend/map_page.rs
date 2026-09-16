@@ -34,6 +34,8 @@ pub struct MapPage {
     settings_provider: Arc<SettingsProvider>,
     #[serde(skip)]
     state_provider: Arc<StateProvider>,
+    #[serde(skip)]
+    show_track_not_same_popup: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, Default, Clone)]
@@ -42,6 +44,7 @@ struct CarInfo {
     car: String,
     driver: String,
     laptime: f32,
+    track: String,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, Default, Clone)]
@@ -90,6 +93,7 @@ impl MapPage {
             track_reference: None,
             settings_provider,
             state_provider,
+            show_track_not_same_popup: false,
         }
     }
 }
@@ -178,7 +182,32 @@ impl MapPage {
             self.cur_dp_2 = self.get_current_dp_index(&self.car_2, time_2, 1.0);
         }
 
-        println!("{}", self.cur_dp_1.unwrap_or_default());
+        if self.show_track_not_same_popup {
+            Window::new("Couldn't show lap")
+                .collapsible(false)
+                .resizable(false)
+                .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
+                .show(ui.ctx(), |ui| {
+                    ui.label("You can't compare 2 laps that are on a different track!");
+                    ui.label("If you want to compare this lap with some other lap on the same track, please clear the pervious before proceeding.");
+
+                    ui.horizontal(|ui| {
+                        if button(
+                            ui,
+                            vec2(64.0, 32.0),
+                            CornerRadius::same(8),
+                            Color32::from_white_alpha(25),
+                            "Ok",
+                            FontId::new(16.0, FontFamily::Proportional),
+                            Color32::WHITE,
+                        )
+                        .clicked()
+                        {
+                            self.show_track_not_same_popup = false;
+                        }
+                    });
+                });
+        }
 
         if max_time > 0.0 {
             match self.replayer_state {
@@ -344,56 +373,122 @@ impl MapPage {
                                     let mut track: Option<Track> = None;
                                     set_track_reference(&mut track, save_data.track.as_str());
 
-                                    if let Some(track) = track {
-                                        self.track_reference = Some((
-                                            track
-                                                .line1
+                                    if let Some(info) = self.car_2_info.as_ref() {
+                                        if info.track == save_data.track {
+                                            if let Some(track) = track {
+                                                self.track_reference = Some((
+                                                    track
+                                                        .line1
+                                                        .iter()
+                                                        .map(|tv| pos2(tv.x as f32, -tv.z as f32))
+                                                        .collect(),
+                                                    track
+                                                        .line2
+                                                        .iter()
+                                                        .map(|tv| pos2(tv.x as f32, -tv.z as f32))
+                                                        .collect(),
+                                                ));
+                                            }
+                                            self.cur_dp_1 = None;
+                                            self.car_1.clear();
+                                            self.car_1_info = Some(CarInfo {
+                                                class: save_data.car_class,
+                                                car: save_data.car,
+                                                driver: save_data.driver_name,
+                                                laptime: save_data.lap_time,
+                                                track: save_data.track,
+                                            });
+                                            self.car_1 = save_data
+                                                .positions
                                                 .iter()
-                                                .map(|tv| pos2(tv.x as f32, -tv.z as f32))
-                                                .collect(),
-                                            track
-                                                .line2
-                                                .iter()
-                                                .map(|tv| pos2(tv.x as f32, -tv.z as f32))
-                                                .collect(),
-                                        ));
+                                                .enumerate()
+                                                .map(|(mut i, pd)| {
+                                                    if i > 21600 {
+                                                        i = 21600;
+                                                    }
+                                                    Dp {
+                                                        pos: pos2(pd.x as f32, -pd.z as f32),
+                                                        distance: save_data.distances[i],
+                                                        time_since_lap_start: save_data.times[i],
+                                                        speed: save_data.lap_data
+                                                            [TelemetryGraphValueType::Speed
+                                                                as usize][i],
+                                                        gear: save_data.lap_data
+                                                            [TelemetryGraphValueType::Gear as usize]
+                                                            [i]
+                                                            as i32,
+                                                        throttle: save_data.lap_data
+                                                            [TelemetryGraphValueType::Throttle
+                                                                as usize][i],
+                                                        brake: save_data.lap_data
+                                                            [TelemetryGraphValueType::Brake
+                                                                as usize][i],
+                                                        steering: save_data.lap_data
+                                                            [TelemetryGraphValueType::Steering
+                                                                as usize][i]
+                                                            + 0.5,
+                                                    }
+                                                })
+                                                .collect();
+                                        } else {
+                                            self.show_track_not_same_popup = true
+                                        }
+                                    } else {
+                                        if let Some(track) = track {
+                                            self.track_reference = Some((
+                                                track
+                                                    .line1
+                                                    .iter()
+                                                    .map(|tv| pos2(tv.x as f32, -tv.z as f32))
+                                                    .collect(),
+                                                track
+                                                    .line2
+                                                    .iter()
+                                                    .map(|tv| pos2(tv.x as f32, -tv.z as f32))
+                                                    .collect(),
+                                            ));
+                                        }
+                                        self.cur_dp_1 = None;
+                                        self.car_1.clear();
+                                        self.car_1_info = Some(CarInfo {
+                                            class: save_data.car_class,
+                                            car: save_data.car,
+                                            driver: save_data.driver_name,
+                                            laptime: save_data.lap_time,
+                                            track: save_data.track,
+                                        });
+                                        self.car_1 = save_data
+                                            .positions
+                                            .iter()
+                                            .enumerate()
+                                            .map(|(mut i, pd)| {
+                                                if i > 21600 {
+                                                    i = 21600;
+                                                }
+                                                Dp {
+                                                    pos: pos2(pd.x as f32, -pd.z as f32),
+                                                    distance: save_data.distances[i],
+                                                    time_since_lap_start: save_data.times[i],
+                                                    speed: save_data.lap_data
+                                                        [TelemetryGraphValueType::Speed as usize]
+                                                        [i],
+                                                    gear: save_data.lap_data
+                                                        [TelemetryGraphValueType::Gear as usize][i]
+                                                        as i32,
+                                                    throttle: save_data.lap_data
+                                                        [TelemetryGraphValueType::Throttle
+                                                            as usize][i],
+                                                    brake: save_data.lap_data
+                                                        [TelemetryGraphValueType::Brake as usize]
+                                                        [i],
+                                                    steering: save_data.lap_data
+                                                        [TelemetryGraphValueType::Steering
+                                                            as usize][i]
+                                                        + 0.5,
+                                                }
+                                            })
+                                            .collect();
                                     }
-
-                                    self.cur_dp_1 = None;
-                                    self.car_1.clear();
-                                    self.car_1_info = Some(CarInfo {
-                                        class: save_data.car_class,
-                                        car: save_data.car,
-                                        driver: save_data.driver_name,
-                                        laptime: save_data.lap_time,
-                                    });
-                                    self.car_1 = save_data
-                                        .positions
-                                        .iter()
-                                        .enumerate()
-                                        .map(|(mut i, pd)| {
-                                            if i > 21600 {
-                                                i = 21600;
-                                            }
-                                            Dp {
-                                                pos: pos2(pd.x as f32, -pd.z as f32),
-                                                distance: save_data.distances[i],
-                                                time_since_lap_start: save_data.times[i],
-                                                speed: save_data.lap_data
-                                                    [TelemetryGraphValueType::Speed as usize][i],
-                                                gear: save_data.lap_data
-                                                    [TelemetryGraphValueType::Gear as usize][i]
-                                                    as i32,
-                                                throttle: save_data.lap_data
-                                                    [TelemetryGraphValueType::Throttle as usize][i],
-                                                brake: save_data.lap_data
-                                                    [TelemetryGraphValueType::Brake as usize][i],
-                                                steering: save_data.lap_data
-                                                    [TelemetryGraphValueType::Steering as usize][i]
-                                                    + 0.5,
-                                            }
-                                        })
-                                        .collect();
                                 }
                             }
                             if button(
@@ -469,55 +564,127 @@ impl MapPage {
                                         let save_data: SaveData =
                                             serde_json::from_str(&contents).unwrap_or_default();
 
-                                        let mut track: Option<Track> = None;
-                                        set_track_reference(&mut track, save_data.track.as_str());
+                                        if let Some(info) = self.car_1_info.as_ref() {
+                                            if info.track == save_data.track {
+                                                let mut track: Option<Track> = None;
+                                                set_track_reference(
+                                                    &mut track,
+                                                    save_data.track.as_str(),
+                                                );
 
-                                        self.track_reference = Some((
-                                            track
-                                                .as_ref()
-                                                .unwrap()
-                                                .line1
-                                                .iter()
-                                                .map(|tv| pos2(tv.x as f32, -tv.z as f32))
-                                                .collect(),
-                                            track
-                                                .unwrap()
-                                                .line2
-                                                .iter()
-                                                .map(|tv| pos2(tv.x as f32, -tv.z as f32))
-                                                .collect(),
-                                        ));
+                                                self.track_reference = Some((
+                                                    track
+                                                        .as_ref()
+                                                        .unwrap()
+                                                        .line1
+                                                        .iter()
+                                                        .map(|tv| pos2(tv.x as f32, -tv.z as f32))
+                                                        .collect(),
+                                                    track
+                                                        .unwrap()
+                                                        .line2
+                                                        .iter()
+                                                        .map(|tv| pos2(tv.x as f32, -tv.z as f32))
+                                                        .collect(),
+                                                ));
+                                                self.cur_dp_2 = None;
+                                                self.car_2_info = Some(CarInfo {
+                                                    class: save_data.car_class,
+                                                    car: save_data.car,
+                                                    driver: save_data.driver_name,
+                                                    laptime: save_data.lap_time,
+                                                    track: save_data.track,
+                                                });
+                                                self.car_2.clear();
+                                                self.car_2 = save_data
+                                                    .positions
+                                                    .iter()
+                                                    .enumerate()
+                                                    .map(|(i, pd)| Dp {
+                                                        pos: pos2(pd.x as f32, -pd.z as f32),
+                                                        distance: save_data.distances[i],
+                                                        time_since_lap_start: save_data.times[i],
+                                                        speed: save_data.lap_data
+                                                            [TelemetryGraphValueType::Speed
+                                                                as usize][i],
+                                                        gear: save_data.lap_data
+                                                            [TelemetryGraphValueType::Gear as usize]
+                                                            [i]
+                                                            as i32,
+                                                        throttle: save_data.lap_data
+                                                            [TelemetryGraphValueType::Throttle
+                                                                as usize][i],
+                                                        brake: save_data.lap_data
+                                                            [TelemetryGraphValueType::Brake
+                                                                as usize][i],
+                                                        steering: save_data.lap_data
+                                                            [TelemetryGraphValueType::Steering
+                                                                as usize][i]
+                                                            + 0.5,
+                                                    })
+                                                    .collect();
+                                            } else {
+                                                self.show_track_not_same_popup = true;
+                                                self.show_track_not_same_popup = true;
+                                            }
+                                        } else {
+                                            let mut track: Option<Track> = None;
+                                            set_track_reference(
+                                                &mut track,
+                                                save_data.track.as_str(),
+                                            );
 
-                                        self.cur_dp_2 = None;
-                                        self.car_2_info = Some(CarInfo {
-                                            class: save_data.car_class,
-                                            car: save_data.car,
-                                            driver: save_data.driver_name,
-                                            laptime: save_data.lap_time,
-                                        });
-                                        self.car_2.clear();
-                                        self.car_2 = save_data
-                                            .positions
-                                            .iter()
-                                            .enumerate()
-                                            .map(|(i, pd)| Dp {
-                                                pos: pos2(pd.x as f32, -pd.z as f32),
-                                                distance: save_data.distances[i],
-                                                time_since_lap_start: save_data.times[i],
-                                                speed: save_data.lap_data
-                                                    [TelemetryGraphValueType::Speed as usize][i],
-                                                gear: save_data.lap_data
-                                                    [TelemetryGraphValueType::Gear as usize][i]
-                                                    as i32,
-                                                throttle: save_data.lap_data
-                                                    [TelemetryGraphValueType::Throttle as usize][i],
-                                                brake: save_data.lap_data
-                                                    [TelemetryGraphValueType::Brake as usize][i],
-                                                steering: save_data.lap_data
-                                                    [TelemetryGraphValueType::Steering as usize][i]
-                                                    + 0.5,
-                                            })
-                                            .collect();
+                                            self.track_reference = Some((
+                                                track
+                                                    .as_ref()
+                                                    .unwrap()
+                                                    .line1
+                                                    .iter()
+                                                    .map(|tv| pos2(tv.x as f32, -tv.z as f32))
+                                                    .collect(),
+                                                track
+                                                    .unwrap()
+                                                    .line2
+                                                    .iter()
+                                                    .map(|tv| pos2(tv.x as f32, -tv.z as f32))
+                                                    .collect(),
+                                            ));
+                                            self.cur_dp_2 = None;
+                                            self.car_2_info = Some(CarInfo {
+                                                class: save_data.car_class,
+                                                car: save_data.car,
+                                                driver: save_data.driver_name,
+                                                laptime: save_data.lap_time,
+                                                track: save_data.track,
+                                            });
+                                            self.car_2.clear();
+                                            self.car_2 = save_data
+                                                .positions
+                                                .iter()
+                                                .enumerate()
+                                                .map(|(i, pd)| Dp {
+                                                    pos: pos2(pd.x as f32, -pd.z as f32),
+                                                    distance: save_data.distances[i],
+                                                    time_since_lap_start: save_data.times[i],
+                                                    speed: save_data.lap_data
+                                                        [TelemetryGraphValueType::Speed as usize]
+                                                        [i],
+                                                    gear: save_data.lap_data
+                                                        [TelemetryGraphValueType::Gear as usize][i]
+                                                        as i32,
+                                                    throttle: save_data.lap_data
+                                                        [TelemetryGraphValueType::Throttle
+                                                            as usize][i],
+                                                    brake: save_data.lap_data
+                                                        [TelemetryGraphValueType::Brake as usize]
+                                                        [i],
+                                                    steering: save_data.lap_data
+                                                        [TelemetryGraphValueType::Steering
+                                                            as usize][i]
+                                                        + 0.5,
+                                                })
+                                                .collect();
+                                        }
                                     }
                                 }
 
