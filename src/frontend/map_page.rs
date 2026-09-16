@@ -1069,39 +1069,34 @@ impl MapPage {
         let car1_cur = self.car_1.get(i_1)?.distance;
         let car2_cur = self.car_2.get(i_2)?.distance;
 
-        let i = i_2.min(i_1);
+        let mut closest_index = i_2;
+        let mut best_diff = (car2_cur - car1_cur).abs();
+
         if car1_cur > car2_cur {
-            let mut last_diff = car1_cur - car2_cur;
-            let mut closest_index = i;
-            for j in i..self.car_2.len() {
-                if (self.car_2[j].distance - car1_cur).abs() < last_diff {
-                    last_diff = self.car_2[j].distance - car1_cur;
+            for j in (i_2 + 1)..self.car_2.len() {
+                let diff = (self.car_2[j].distance - car1_cur).abs();
+                if diff < best_diff {
+                    best_diff = diff;
                     closest_index = j;
-                } else {
+                }
+                if self.car_2[j].distance > car1_cur && diff > best_diff {
                     break;
                 }
             }
-            return Some(
-                self.car_2[closest_index].time_since_lap_start - self.car_1[i].time_since_lap_start,
-            );
-        }
-        if car1_cur <= car2_cur {
-            let mut last_diff = car1_cur - car2_cur;
-            let mut closest_index = i;
-            for j in (0..i).rev() {
-                if (self.car_2[j].distance - car1_cur).abs() < last_diff {
-                    last_diff = self.car_2[j].distance - car1_cur;
+        } else {
+            for j in (0..i_2).rev() {
+                let diff = (self.car_2[j].distance - car1_cur).abs();
+                if diff < best_diff {
+                    best_diff = diff;
                     closest_index = j;
-                } else {
+                }
+                if self.car_2[j].distance < car1_cur && diff > best_diff {
                     break;
                 }
             }
-            return Some(
-                self.car_2[closest_index].time_since_lap_start - self.car_1[i].time_since_lap_start,
-            );
         }
 
-        None
+        Some(self.car_2[closest_index].time_since_lap_start - self.car_1[i_1].time_since_lap_start)
     }
 }
 fn draw_badge(class: IPVehicleClass, ui: &mut Ui, badge_rect: Rect) {
