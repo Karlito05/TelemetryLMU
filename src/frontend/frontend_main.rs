@@ -18,13 +18,18 @@ use crate::{
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 #[serde(default)]
 pub struct StateProvider {
+    global_first_launch: RwLock<bool>,
+    #[serde(skip)]
     pub page: RwLock<Page>,
+    #[serde(skip)]
     pub sidebar_open: RwLock<bool>,
+    #[serde(skip)]
     pub settings_open: RwLock<bool>,
 }
 impl Default for StateProvider {
     fn default() -> Self {
         Self {
+            global_first_launch: RwLock::new(true),
             page: RwLock::new(Page::Telemetry),
             sidebar_open: RwLock::new(true),
             settings_open: RwLock::new(false),
@@ -64,7 +69,6 @@ pub struct App {
     settings_provider: Arc<SettingsProvider>,
     state_provider: Arc<StateProvider>,
     telemetry_page: telemetry_page::TelemetryPage,
-    first_launch: bool,
     #[serde(skip)]
     sidebar: Sidebar,
     #[serde(skip)]
@@ -131,7 +135,6 @@ impl Default for App {
         let telemetry_provider =
             Arc::new(Telemetry::new("/dev/shm/LMU_Data".into(), settings_provider.clone()).ok());
         Self {
-            first_launch: true,
             sidebar: Sidebar::new(settings_provider.clone(), state_provider.clone()),
             map_page: MapPage::new(settings_provider.clone(), state_provider.clone()),
             telemetry_page: telemetry_page::TelemetryPage::new(
@@ -166,7 +169,7 @@ impl eframe::App for App {
             self.settings_page.draw_settings_page(ui);
         }
 
-        if self.first_launch {
+        if *self.state_provider.global_first_launch.read().unwrap() {
             self.show_onboarding_global(ui);
         }
 
@@ -185,7 +188,7 @@ impl App {
             .resizable(false)
             .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
             .show(ui.ctx(), |ui| {
-ui.set_min_size(vec2(500.0, 400.0));
+                ui.set_min_size(vec2(500.0, 400.0));
                 ui.vertical(|ui| {
                     ui.label(RichText::new("Hello 👋").size(32.0).strong().color(Color32::WHITE));
                     ui.separator();
@@ -321,7 +324,7 @@ ui.set_min_size(vec2(500.0, 400.0));
                     )
                     .clicked()
                     {
-                        self.first_launch = false;
+                        *self.state_provider.global_first_launch.write().unwrap() = false;
                     }
                 });
             });
