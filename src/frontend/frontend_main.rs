@@ -18,7 +18,7 @@ use crate::{
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 #[serde(default)]
 pub struct StateProvider {
-    global_first_launch: RwLock<bool>,
+    pub global_first_launch: RwLock<bool>,
     #[serde(skip)]
     pub page: RwLock<Page>,
     #[serde(skip)]
@@ -73,7 +73,6 @@ pub struct App {
     sidebar: Sidebar,
     #[serde(skip)]
     settings_page: SettingsPage,
-    #[serde(skip)]
     map_page: MapPage,
     #[serde(skip)]
     car_info_page: CarInfo,
@@ -105,12 +104,15 @@ impl App {
         app.sidebar = Sidebar::new(app.settings_provider.clone(), app.state_provider.clone());
         app.settings_page =
             SettingsPage::new(app.settings_provider.clone(), app.state_provider.clone());
-        app.map_page = MapPage::new(app.settings_provider.clone(), app.state_provider.clone());
         app.car_info_page = CarInfo::new(
             app.settings_provider.clone(),
             app.state_provider.clone(),
             app.telemetry_provider.clone(),
         );
+
+        let first_launch_map_page = app.map_page.first_entry;
+        app.map_page = MapPage::new(app.settings_provider.clone(), app.state_provider.clone());
+        app.map_page.first_entry = first_launch_map_page;
 
         let cur_layout_index = app.telemetry_page.cur_layout_index;
         let layouts = app.telemetry_page.layouts;

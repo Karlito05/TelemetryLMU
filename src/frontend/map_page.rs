@@ -15,16 +15,28 @@ use crate::{
 #[derive(serde::Deserialize, serde::Serialize, Debug, Default)]
 #[serde(default)]
 pub struct MapPage {
+    pub first_entry: bool,
+    #[serde(skip)]
     zoom: f32,
+    #[serde(skip)]
     offset: Vec2,
+    #[serde(skip)]
     time: f32,
+    #[serde(skip)]
     cur_dp_1: Option<usize>,
+    #[serde(skip)]
     car_1: Vec<Dp>,
+    #[serde(skip)]
     car_1_info: Option<CarInfo>,
+    #[serde(skip)]
     cur_dp_2: Option<usize>,
+    #[serde(skip)]
     car_2: Vec<Dp>,
+    #[serde(skip)]
     car_2_info: Option<CarInfo>,
+    #[serde(skip)]
     track_reference: Option<(Vec<Pos2>, Vec<Pos2>)>,
+    #[serde(skip)]
     replayer_state: ReplayerState,
     #[serde(skip)]
     settings_provider: Arc<SettingsProvider>,
@@ -77,6 +89,7 @@ impl MapPage {
     ) -> Self {
         Self {
             replayer_state: ReplayerState::default(),
+            first_entry: true,
             time: 0.0,
             offset: Vec2::ZERO,
             zoom: 1.0,
@@ -142,7 +155,45 @@ impl MapPage {
 
         Some((lower_index as f32 + t * (upper_index - lower_index) as f32) as usize)
     }
+    fn first_entry(&mut self, ui: &mut Ui) {
+        Window::new("Hello")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
+            .show(ui.ctx(), |ui| {
+                ui.set_min_size(vec2(500.0, 0.0));
+                ui.vertical(|ui| {
+                    ui.label(
+                        RichText::new("Hello 👋")
+                            .size(32.0)
+                            .strong()
+                            .color(Color32::WHITE),
+                    );
+                    ui.label(RichText::new("Welcome to the map page, where you can review your laps and see exactly where you drove. Selecting any lap recorded by the app will bring it up on the map for review.").size(18.0));
+                    ui.label(RichText::new("
+The bottom control bar gives you a closer look at that lap: your inputs (throttle in green, brakes in red, and steering wheel rotation), along with details like the driver, lap time, and car class. Clicking the play button lets you watch the lap unfold in real time. You can also bring in a second lap - useful for comparing against a reference - and the app will show you the live delta between the two as they play out.").size(18.0)
+                    );
+                    if button(
+                        ui,
+                        vec2(64.0, 32.0),
+                        CornerRadius::same(8),
+                        Color32::from_white_alpha(25),
+                        "Close",
+                        FontId::new(16.0, FontFamily::Proportional),
+                        Color32::WHITE,
+                    )
+                    .clicked()
+                    {
+                        self.first_entry = false;
+                    }
+                });
+            });
+    }
+
     pub fn draw_map_page(&mut self, ui: &mut Ui) {
+        if self.first_entry && !*self.state_provider.global_first_launch.read().unwrap() {
+            self.first_entry(ui);
+        }
         {
             *self.state_provider.sidebar_open.write().unwrap() =
                 ui.viewport_rect().width() > 1500.0;
