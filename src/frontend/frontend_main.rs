@@ -74,7 +74,6 @@ pub struct App {
     #[serde(skip)]
     settings_page: SettingsPage,
     map_page: MapPage,
-    #[serde(skip)]
     car_info_page: CarInfo,
     #[serde(skip)]
     interface: crate::interface::Interface,
@@ -104,11 +103,14 @@ impl App {
         app.sidebar = Sidebar::new(app.settings_provider.clone(), app.state_provider.clone());
         app.settings_page =
             SettingsPage::new(app.settings_provider.clone(), app.state_provider.clone());
+
+        let first_launch_car_info_page = app.car_info_page.first_entry;
         app.car_info_page = CarInfo::new(
             app.settings_provider.clone(),
             app.state_provider.clone(),
             app.telemetry_provider.clone(),
         );
+        app.car_info_page.first_entry = first_launch_car_info_page;
 
         let first_launch_map_page = app.map_page.first_entry;
         app.map_page = MapPage::new(app.settings_provider.clone(), app.state_provider.clone());

@@ -4,27 +4,38 @@ use eframe::egui::*;
 
 use crate::{
     frontend::{
-        components::telemetry_not_found,
+        components::{button, telemetry_not_found},
         frontend_main::{SettingsProvider, StateProvider},
     },
     interface::{IPVehicleClass, i8_array32_to_string, i8_array64_to_string},
     telemetry::Telemetry,
 };
 
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, Default)]
+#[serde(default)]
 pub struct CarInfo {
+    pub first_entry: bool,
+    #[serde(skip)]
     name: String,
+    #[serde(skip)]
     car: String,
+    #[serde(skip)]
     car_class: IPVehicleClass,
+    #[serde(skip)]
     driver_index: usize,
+    #[serde(skip)]
     fuel_info: FuelInfo,
+    #[serde(skip)]
     tires: [TireInfo; 4],
+    #[serde(skip)]
     telemetry_provider: Arc<Option<Telemetry>>,
+    #[serde(skip)]
     settings_provider: Arc<SettingsProvider>,
+    #[serde(skip)]
     state_provider: Arc<StateProvider>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct FuelInfo {
     pub fuel_percent: f32,
     pub virt_eng_percent: f32,
@@ -57,6 +68,7 @@ impl CarInfo {
         telemetry_provider: Arc<Option<Telemetry>>,
     ) -> Self {
         Self {
+            first_entry: true,
             telemetry_provider,
             driver_index: 0,
             name: "".to_string(),
@@ -82,6 +94,10 @@ impl CarInfo {
 impl CarInfo {
     pub fn draw_car_info_page(&mut self, ui: &mut Ui) {
         ui.request_repaint_after(Duration::from_millis(16));
+
+        if self.first_entry && !*self.state_provider.global_first_launch.read().unwrap() {
+            self.draw_first_entry_dialog(ui);
+        }
 
         if self.telemetry_provider.is_none() {
             telemetry_not_found(ui);
@@ -148,6 +164,37 @@ impl CarInfo {
             vec2(fuel_rect.size().x / 2.0 - 8.0, 250.0),
         );
         self.draw_input_panel(ui, input_rect);
+    }
+
+    fn draw_first_entry_dialog(&mut self, ui: &mut Ui) {
+        Window::new("Hello")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
+            .show(ui.ctx(), |ui| {
+                ui.set_min_size(vec2(500.0, 0.0));
+                ui.vertical(|ui| {
+                    ui.label(
+                        RichText::new(
+                            "Welcome to the car info page, where you can see the current state of your car. Because of a game limitation, this only works for your own car - the app identifies it automatically based on the in-game name you've set in your settings. Beyond that, the page is fairly self-explanatory.",
+                        )
+                        .size(18.0),
+                    );
+                    if button(
+                        ui,
+                        vec2(64.0, 32.0),
+                        CornerRadius::same(8),
+                        Color32::from_white_alpha(25),
+                        "Close",
+                        FontId::new(16.0, FontFamily::Proportional),
+                        Color32::WHITE,
+                    )
+                    .clicked()
+                    {
+                        self.first_entry = false;
+                    }
+                });
+            });
     }
 
     fn draw_tires_panel(&self, ui: &mut Ui, tires_rect: Rect) {
