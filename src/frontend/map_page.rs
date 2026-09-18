@@ -666,7 +666,6 @@ The bottom control bar gives you a closer look at that lap: your inputs (throttl
                                                     .collect();
                                             } else {
                                                 self.show_track_not_same_popup = true;
-                                                self.show_track_not_same_popup = true;
                                             }
                                         } else {
                                             let mut track: Option<Track> = None;

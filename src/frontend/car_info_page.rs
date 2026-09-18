@@ -100,7 +100,9 @@ impl CarInfo {
         }
 
         if self.telemetry_provider.is_none() {
-            telemetry_not_found(ui);
+            if !self.first_entry {
+                telemetry_not_found(ui);
+            }
             return;
         }
 

@@ -14,6 +14,7 @@ use std::time::Duration;
 pub struct TelemetryPage {
     pub cur_layout_index: usize,
     pub layouts: Vec<LayoutInfo>,
+    pub first_entry: bool,
 
     #[serde(skip)]
     cur_driver: (String, i32),
@@ -70,6 +71,7 @@ impl TelemetryPage {
         telemetry_provider: Arc<Option<Telemetry>>,
     ) -> Self {
         Self {
+            first_entry: true,
             settings_provider,
             state_provider,
             telemetry_provider,
@@ -108,8 +110,14 @@ impl TelemetryPage {
     pub fn draw_telemetry_page(&mut self, ui: &mut Ui) {
         ui.request_repaint_after(Duration::from_millis(16));
 
+        if self.first_entry && !*self.state_provider.global_first_launch.read().unwrap() {
+            self.draw_first_entry_dialog(ui);
+        }
+
         if self.telemetry_provider.is_none() {
-            telemetry_not_found(ui);
+            if !self.first_entry {
+                telemetry_not_found(ui);
+            }
             return;
         }
 
@@ -118,6 +126,33 @@ impl TelemetryPage {
         } else {
             self.draw_edit_mode(ui);
         }
+    }
+
+    fn draw_first_entry_dialog(&mut self, ui: &mut Ui) {
+        Window::new("Hello")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
+            .show(ui.ctx(), |ui| {
+                ui.set_min_size(vec2(500.0, 0.0));
+                ui.vertical(|ui| {
+                    ui.label(RichText::new("Welcome to the telemetry page, where you can view live telemetry data as you race. The dropdown on the top bar lets you select any car currently in the lobby, so you can follow your own data or keep an eye on another driver. Next to it, the layout dropdown lets you switch between layouts - two default layouts are available to start with.").size(18.0));
+                    ui.label(RichText::new("If you want to customize what you see, click the pen icon in the top-right corner to enter edit mode. Once inside, the top bar shows you which layout you're currently editing, along with controls to save your changes, discard them, save the layout as a new one, or delete it entirely. You can also add new graphs using the Add Graph button on the top bar. Any graph on the page can be resized vertically, and its individual properties can be adjusted directly through the fields shown on the graph itself.").size(18.0));
+                    if button(
+                        ui,
+                        vec2(64.0, 32.0),
+                        CornerRadius::same(8),
+                        Color32::from_white_alpha(25),
+                        "Close",
+                        FontId::new(16.0, FontFamily::Proportional),
+                        Color32::WHITE,
+                    )
+                    .clicked()
+                    {
+                        self.first_entry = false;
+                    }
+                });
+            });
     }
 
     fn draw_edit_mode(&mut self, ui: &mut Ui) {

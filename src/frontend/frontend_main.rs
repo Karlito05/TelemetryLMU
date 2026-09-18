@@ -118,14 +118,15 @@ impl App {
 
         let cur_layout_index = app.telemetry_page.cur_layout_index;
         let layouts = app.telemetry_page.layouts;
+        let first_launch_telemetry_page = app.telemetry_page.first_entry;
         app.telemetry_page = TelemetryPage::new(
             app.settings_provider.clone(),
             app.state_provider.clone(),
             app.telemetry_provider.clone(),
         );
-
         app.telemetry_page.layouts = layouts;
         app.telemetry_page.cur_layout_index = cur_layout_index;
+        app.telemetry_page.first_entry = first_launch_telemetry_page;
 
         app.settings_page.restore_pfp(&cc.egui_ctx);
         app
