@@ -16,6 +16,8 @@ use crate::{
 pub struct CarInfo {
     pub first_entry: bool,
     #[serde(skip)]
+    inputs: Inputs,
+    #[serde(skip)]
     name: String,
     #[serde(skip)]
     car: String,
@@ -42,6 +44,13 @@ pub struct FuelInfo {
     pub fuel_liters: f32,
 }
 
+#[derive(Debug, Default)]
+pub struct Inputs {
+    pub brake: f32,
+    pub throttle: f32,
+    pub steering: f32,
+}
+
 #[derive(Default, Debug)]
 pub struct TireInfo {
     pub inside_temp: f32,
@@ -59,6 +68,7 @@ pub struct StaleDriverInfo {
 pub struct DynDriverInfo {
     pub tires: [TireInfo; 4],
     pub fuel: FuelInfo,
+    pub inputs: Inputs,
 }
 
 impl CarInfo {
@@ -79,6 +89,7 @@ impl CarInfo {
                 virt_eng_percent: 0.0,
                 fuel_liters: 0.0,
             },
+            inputs: Inputs::default(),
             tires: [
                 TireInfo::default(),
                 TireInfo::default(),
@@ -116,9 +127,10 @@ impl CarInfo {
         }
 
         if !self.name.is_empty() {
-            let dyn_driver_inf = self.get_dyn_driver_info();
-            self.tires = dyn_driver_inf.tires;
-            self.fuel_info = dyn_driver_inf.fuel;
+            let dyn_driver_info = self.get_dyn_driver_info();
+            self.tires = dyn_driver_info.tires;
+            self.fuel_info = dyn_driver_info.fuel;
+            self.inputs = dyn_driver_info.inputs;
         }
 
         let rect = Rect::from_min_size(
@@ -462,7 +474,7 @@ impl CarInfo {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
                     ui.label(
-                        egui_phosphor_icons::icons::TIRE
+                        egui_phosphor_icons::icons::GAME_CONTROLLER
                             .regular()
                             .size(14.0)
                             .color(Color32::from_white_alpha(64)),
@@ -489,7 +501,10 @@ impl CarInfo {
                     ui.painter().rect_filled(
                         Rect::from_min_size(
                             ui.max_rect().min,
-                            vec2(ui.max_rect().size().x * 0.6, ui.max_rect().size().y),
+                            vec2(
+                                ui.max_rect().size().x * self.inputs.throttle,
+                                ui.max_rect().size().y,
+                            ),
                         ),
                         8.0,
                         Color32::GREEN,
@@ -509,7 +524,10 @@ impl CarInfo {
                     ui.painter().rect_filled(
                         Rect::from_min_size(
                             ui.max_rect().min,
-                            vec2(ui.max_rect().size().x * 0.3, ui.max_rect().size().y),
+                            vec2(
+                                ui.max_rect().size().x * self.inputs.brake,
+                                ui.max_rect().size().y,
+                            ),
                         ),
                         8.0,
                         Color32::RED,
@@ -524,7 +542,7 @@ impl CarInfo {
                         .family(FontFamily::Name("JetBrainsMono".into()))
                         .color(Color32::WHITE),
                 );
-                let input = 1.0;
+                let input = self.inputs.steering.clamp(-1.0, 1.0);
                 ui.allocate_ui(vec2(ui.available_width(), 12.0), |ui| {
                     ui.painter()
                         .rect_filled(ui.max_rect(), 8.0, Color32::from_white_alpha(25));
@@ -888,7 +906,19 @@ impl CarInfo {
                 .m_virtual_energy,
         };
 
-        DynDriverInfo { tires, fuel }
+        let inputs = Inputs {
+            throttle: telemetry.telemetry.telemetry_info[self.driver_index].m_unfiltered_throttle
+                as f32,
+            brake: telemetry.telemetry.telemetry_info[self.driver_index].m_unfiltered_brake as f32,
+            steering: telemetry.telemetry.telemetry_info[self.driver_index].m_unfiltered_steering
+                as f32,
+        };
+
+        DynDriverInfo {
+            tires,
+            fuel,
+            inputs,
+        }
     }
 }
 
