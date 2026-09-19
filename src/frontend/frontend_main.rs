@@ -273,7 +273,11 @@ impl App {
                     ui.add_space(8.0);
                     ui.horizontal(|ui| {
                         ui.vertical(|ui| {
-                            ui.label(RichText::new("Lap Save Path").size(20.0).color(Color32::from_gray(200)));
+                            if self.settings_provider.record_save_path.read().unwrap().is_empty() {
+                                ui.label(RichText::new("Lap Save Path").size(20.0).color(Color32::RED));
+                            } else {
+                                ui.label(RichText::new("Lap Save Path").size(20.0).color(Color32::from_gray(200)));
+                            }
                             ui.label(
                                 RichText::new(
                                     &*self.settings_provider.record_save_path.read().unwrap(),
@@ -329,7 +333,9 @@ impl App {
                     )
                     .clicked()
                     {
-                        *self.state_provider.global_first_launch.write().unwrap() = false;
+                        if !self.settings_provider.record_save_path.read().unwrap().is_empty() {
+                           *self.state_provider.global_first_launch.write().unwrap() = false;
+                        }
                     }
                 });
             });
