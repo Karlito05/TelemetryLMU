@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use eframe::egui::*;
+use eframe::egui::{Key::P, *};
 use egui_phosphor_icons::{Icon, icons};
 
 use crate::frontend::frontend_main::{Page, SettingsProvider, StateProvider};
@@ -208,6 +208,13 @@ impl Sidebar {
             ui.put(
                 image_rect,
                 Image::new(img)
+                    .fit_to_exact_size(vec2(48.0, 48.0))
+                    .corner_radius(CornerRadius::same(8)),
+            );
+        } else {
+            ui.put(
+                image_rect,
+                Image::new(include_image!("../../public/icons/pfp_default.svg"))
                     .fit_to_exact_size(vec2(48.0, 48.0))
                     .corner_radius(CornerRadius::same(8)),
             );
