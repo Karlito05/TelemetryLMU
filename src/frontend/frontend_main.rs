@@ -4,13 +4,10 @@ use std::sync::{Arc, RwLock};
 use eframe::egui::*;
 
 use crate::{
-    frontend::{
-        car_info_page::CarInfo,
-        components::{button, input, switch},
-        map_page::MapPage,
-        settings_page::SettingsPage,
-        sidebar::Sidebar,
-        telemetry_page::{self, TelemetryPage},
+    components::{button::button, input::input, sidebar::sidebar_main::Sidebar, switch::switch},
+    pages::{
+        car_info::car_info_main::CarInfo, map::map_main::MapPage,
+        settings::settings_main::SettingsPage, telemetry::telemetry_main::TelemetryPage,
     },
     telemetry::Telemetry,
 };
@@ -68,7 +65,7 @@ impl fmt::Debug for SettingsProvider {
 pub struct App {
     settings_provider: Arc<SettingsProvider>,
     state_provider: Arc<StateProvider>,
-    telemetry_page: telemetry_page::TelemetryPage,
+    telemetry_page: TelemetryPage,
     #[serde(skip)]
     sidebar: Sidebar,
     #[serde(skip)]
@@ -142,7 +139,7 @@ impl Default for App {
         Self {
             sidebar: Sidebar::new(settings_provider.clone(), state_provider.clone()),
             map_page: MapPage::new(settings_provider.clone(), state_provider.clone()),
-            telemetry_page: telemetry_page::TelemetryPage::new(
+            telemetry_page: TelemetryPage::new(
                 settings_provider.clone(),
                 state_provider.clone(),
                 telemetry_provider.clone(),
