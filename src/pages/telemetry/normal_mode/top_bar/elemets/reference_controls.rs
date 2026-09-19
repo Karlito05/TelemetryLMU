@@ -3,7 +3,7 @@ use std::fs;
 use crate::{
     components::button::button,
     pages::telemetry::telemetry_main::TelemetryPage,
-    telemetry::{Lap, SaveData},
+    providers::telemetry_provider::telemetry_provider_main::{Lap, SaveData},
 };
 use eframe::egui::*;
 

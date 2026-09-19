@@ -1,5 +1,5 @@
 use std::{
-    fmt, fs,
+    fs,
     path::PathBuf,
     sync::{
         Arc, Mutex,
@@ -13,232 +13,17 @@ use chrono::Local;
 
 use crate::{
     TOKIO,
-    frontend::frontend_main::SettingsProvider,
-    interface::{
-        self, IPVehicleClass, Interface, SharedMemoryObjectOut, TelemVect3, i8_array32_to_string,
-        i8_array64_to_string,
+    providers::{
+        settings_provider::SettingsProvider,
+        telemetry_provider::{
+            interface::{
+                IPVehicleClass, Interface, SharedMemoryObjectOut, TelemVect3, i8_array32_to_string,
+                i8_array64_to_string,
+            },
+            telemetry_value_type::TelemetryValueType,
+        },
     },
 };
-
-#[derive(serde::Deserialize, serde::Serialize, Clone, Default, Debug)]
-pub enum TelemetryGraphValueType {
-    #[default]
-    Rpm,
-    Speed,
-    Throttle,
-    Brake,
-    Delta,
-    Gear,
-    Steering,
-
-    Max,
-}
-
-impl TryFrom<usize> for TelemetryGraphValueType {
-    type Error = ();
-
-    fn try_from(value: usize) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Self::Rpm),
-            1 => Ok(Self::Speed),
-            2 => Ok(Self::Throttle),
-            3 => Ok(Self::Brake),
-            4 => Ok(Self::Delta),
-            5 => Ok(Self::Gear),
-            6 => Ok(Self::Steering),
-
-            _ => Err(()),
-        }
-    }
-}
-
-impl fmt::Display for TelemetryGraphValueType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Rpm => "rpm",
-            Self::Speed => "speed",
-            Self::Throttle => "throttle",
-            Self::Brake => "brake",
-            Self::Delta => "delta",
-            Self::Gear => "gear",
-            Self::Steering => "steering",
-
-            Self::Max => panic!("Can't call to_string on TelemetryValueType::Max"),
-        };
-        write!(f, "{s}")
-    }
-}
-
-impl TelemetryGraphValueType {
-    pub fn get_value(&self, t: &SharedMemoryObjectOut, driver: usize) -> f64 {
-        match self {
-            Self::Rpm => t.telemetry.telemetry_info[driver].m_engine_rpm,
-            Self::Speed => -t.telemetry.telemetry_info[driver].m_local_vel.z * 3.6,
-            Self::Throttle => t.telemetry.telemetry_info[driver].m_unfiltered_throttle,
-            Self::Brake => t.telemetry.telemetry_info[driver].m_unfiltered_brake,
-            Self::Delta => t.telemetry.telemetry_info[driver].m_delta_best,
-            Self::Gear => t.telemetry.telemetry_info[driver].m_gear as f64,
-            Self::Steering => t.telemetry.telemetry_info[driver].m_unfiltered_steering,
-
-            Self::Max => panic!("Can't call get value on TelemetryValueType::Max"),
-        }
-    }
-
-    pub fn from_string(s: &str) -> Self {
-        match s {
-            "rpm" => Self::Rpm,
-            "speed" => Self::Speed,
-            "throttle" => Self::Throttle,
-            "brake" => Self::Brake,
-            "delta" => Self::Delta,
-            "gear" => Self::Gear,
-            "steering" => Self::Steering,
-
-            other => panic!("Unknown TelemetryValueType: {other}"),
-        }
-    }
-
-    pub fn get_unit(&self) -> String {
-        match self {
-            Self::Rpm => "RPM".to_owned(),
-            Self::Speed => "km/h".to_owned(),
-            Self::Throttle => "%".to_owned(),
-            Self::Brake => "%".to_owned(),
-            Self::Delta => "s".to_owned(),
-            Self::Gear => "".to_owned(),
-            Self::Steering => "deg".to_owned(),
-
-            Self::Max => panic!("Can't call get_unit on TelemetryValueType::Max"),
-        }
-    }
-
-    pub fn get_max_value(&self, t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
-        match self {
-            Self::Rpm => t.telemetry.telemetry_info[car_num].m_engine_max_rpm,
-            Self::Speed => 350.0,
-            Self::Throttle => 1.0,
-            Self::Brake => 1.0,
-            Self::Delta => 10.0,
-            Self::Gear => t.telemetry.telemetry_info[car_num].m_max_gears as f64,
-            Self::Steering => 1.0,
-
-            Self::Max => panic!("Can't call get_max_value on TelemetryValueType::Max"),
-        }
-    }
-
-    pub fn normalize(&self, v: f64, t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
-        match self {
-            Self::Delta => v / (self.get_max_value(t, car_num) / 2.0) + 0.5,
-            Self::Steering => v / self.get_max_value(t, car_num) + 0.5,
-
-            Self::Max => panic!("Can't call get_max_value on TelemetryValueType::Max"),
-            _ => v / self.get_max_value(t, car_num),
-        }
-    }
-
-    pub fn get_unit_labels(
-        &self,
-        telemetry: &SharedMemoryObjectOut,
-        n_gridlines: i32,
-        car_num: usize,
-    ) -> Vec<String> {
-        let mut ret = vec![];
-        match self {
-            Self::Throttle => {
-                for i in 0..n_gridlines {
-                    let str = format!(
-                        "{} {}",
-                        self.get_max_value(telemetry, car_num) * (n_gridlines - 1 - i) as f64
-                            / (n_gridlines - 1) as f64
-                            * 100.0,
-                        self.get_unit()
-                    );
-                    ret.push(str);
-                }
-            }
-            Self::Brake => {
-                for i in 0..n_gridlines {
-                    let str = format!(
-                        "{} {}",
-                        self.get_max_value(telemetry, car_num) * (n_gridlines - 1 - i) as f64
-                            / (n_gridlines - 1) as f64
-                            * 100.0,
-                        self.get_unit()
-                    );
-                    ret.push(str);
-                }
-            }
-            Self::Delta => {
-                for i in 0..n_gridlines {
-                    let str = format!(
-                        "{} {}",
-                        self.get_max_value(telemetry, car_num) * (n_gridlines - 1 - i) as f64
-                            / (n_gridlines - 1) as f64
-                            - 5.0,
-                        self.get_unit()
-                    );
-                    ret.push(str);
-                }
-            }
-            Self::Steering => {
-                for i in 0..n_gridlines {
-                    let str = format!(
-                        "{} {}",
-                        (self.get_max_value(telemetry, car_num) * (n_gridlines - 1 - i) as f64
-                            / (n_gridlines - 1) as f64
-                            - 0.5)
-                            * 180.0,
-                        self.get_unit()
-                    );
-                    ret.push(str);
-                }
-            }
-            Self::Max => {
-                panic!("Can't call get_car_unit_labels() on GraphViewDataType::Unknown ")
-            }
-            _ => {
-                for i in 0..n_gridlines {
-                    let str = format!(
-                        "{} {}",
-                        self.get_max_value(telemetry, car_num) * (n_gridlines - 1 - i) as f64
-                            / (n_gridlines - 1) as f64,
-                        self.get_unit()
-                    );
-                    ret.push(str);
-                }
-            }
-        }
-        ret
-    }
-
-    pub fn get_all_string() -> Vec<String> {
-        (0..TelemetryGraphValueType::Max as usize)
-            .map(|i| TelemetryGraphValueType::try_from(i).unwrap().to_string())
-            .collect()
-    }
-
-    pub fn get_time_into_lap(t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
-        t.telemetry.telemetry_info[car_num].m_elapsed_time
-            - t.telemetry.telemetry_info[car_num].m_lap_start_et
-    }
-
-    pub fn get_distance_into_lap(t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
-        t.scoring.veh_scoring_info[car_num].m_lap_dist
-    }
-
-    #[expect(unused)]
-    pub fn get_normalized_distance_into_lap(t: &SharedMemoryObjectOut, car_num: usize) -> f64 {
-        t.scoring.veh_scoring_info[car_num].m_lap_dist / t.scoring.scoring_info.m_lap_dist
-    }
-
-    pub fn normalize_distance_into_lap(t: &SharedMemoryObjectOut, v: f64) -> f64 {
-        v / t.scoring.scoring_info.m_lap_dist
-    }
-
-    pub fn get_pos(t: &SharedMemoryObjectOut, car_num: usize) -> TelemVect3 {
-        t.telemetry.telemetry_info[car_num].m_pos
-    }
-}
 
 #[derive(Debug)]
 #[expect(unused)]
@@ -247,7 +32,7 @@ pub struct Telemetry {
     pub last_lap: Arc<Mutex<[Lap; 104]>>,
     pub best_lap: Arc<Mutex<[Lap; 104]>>,
     pub cur_lap_nums: Arc<Mutex<[i32; 104]>>,
-    telemetry: Arc<Mutex<interface::Interface>>,
+    telemetry: Arc<Mutex<Interface>>,
     running: Arc<AtomicBool>,
     handle: Option<JoinHandle<()>>,
     settings_provider: Arc<SettingsProvider>,
@@ -255,7 +40,7 @@ pub struct Telemetry {
 
 #[derive(Default, Clone, Debug)]
 pub struct Lap {
-    pub datapoints: [Vec<f32>; TelemetryGraphValueType::Max as usize],
+    pub datapoints: [Vec<f32>; TelemetryValueType::Max as usize],
     pub distances: Vec<f32>,
     pub positions: Vec<TelemVect3>,
     pub times: Vec<f32>,
@@ -265,7 +50,7 @@ pub struct Lap {
 impl Lap {
     fn push_sample(
         &mut self,
-        datapoints: &[f64; TelemetryGraphValueType::Max as usize],
+        datapoints: &[f64; TelemetryValueType::Max as usize],
         distance: f64,
         position: TelemVect3,
         time: f64,
@@ -292,9 +77,7 @@ impl Lap {
 
 impl Telemetry {
     pub fn new(path: PathBuf, settings_provider: Arc<SettingsProvider>) -> Result<Self, String> {
-        let telemetry = Arc::new(Mutex::new(interface::Interface::new(
-            &path.to_string_lossy(),
-        )));
+        let telemetry = Arc::new(Mutex::new(Interface::new(&path.to_string_lossy())));
 
         if !telemetry.lock().unwrap().full_mode {
             return Err("Could not start telemetry. Check if the game is running!".to_owned());
@@ -406,7 +189,7 @@ impl Telemetry {
 }
 
 type NewData = [(
-    [f64; TelemetryGraphValueType::Max as usize],
+    [f64; TelemetryValueType::Max as usize],
     Option<i32>,
     f64,
     TelemVect3,
@@ -414,7 +197,7 @@ type NewData = [(
 ); 104];
 
 /// Returns A new DP for each of the arrays and an optional lap number if it has changed
-fn get_telemetry(t: &interface::Interface, cur_laps: [i32; 104]) -> NewData {
+fn get_telemetry(t: &Interface, cur_laps: [i32; 104]) -> NewData {
     let cur_data = t.update_telemetry().unwrap();
 
     let mut ret: NewData = std::array::from_fn(|_| {
@@ -429,19 +212,19 @@ fn get_telemetry(t: &interface::Interface, cur_laps: [i32; 104]) -> NewData {
     for j in 0..104 {
         let new_lap_num = cur_data.telemetry.telemetry_info[j].m_lap_number;
         if cur_laps[j] != new_lap_num
-            && TelemetryGraphValueType::get_distance_into_lap(&cur_data, j) < 100.0
+            && TelemetryValueType::get_distance_into_lap(&cur_data, j) < 100.0
         {
             ret[j].1 = Some(new_lap_num);
         }
 
         #[expect(clippy::needless_range_loop)]
-        for i in 0..TelemetryGraphValueType::Max as usize {
-            let tel_type = TelemetryGraphValueType::try_from(i).unwrap();
+        for i in 0..TelemetryValueType::Max as usize {
+            let tel_type = TelemetryValueType::try_from(i).unwrap();
             ret[j].0[i] = tel_type.get_value(&cur_data, j);
         }
-        ret[j].2 = TelemetryGraphValueType::get_distance_into_lap(&cur_data, j);
-        ret[j].3 = TelemetryGraphValueType::get_pos(&cur_data, j);
-        ret[j].4 = TelemetryGraphValueType::get_time_into_lap(&cur_data, j);
+        ret[j].2 = TelemetryValueType::get_distance_into_lap(&cur_data, j);
+        ret[j].3 = TelemetryValueType::get_pos(&cur_data, j);
+        ret[j].4 = TelemetryValueType::get_time_into_lap(&cur_data, j);
     }
     ret
 }
@@ -492,11 +275,7 @@ async fn set_best(
     }
 }
 
-async fn set_laptime(
-    last_lap: Arc<Mutex<[Lap; 104]>>,
-    interface: &interface::Interface,
-    car_num: usize,
-) {
+async fn set_laptime(last_lap: Arc<Mutex<[Lap; 104]>>, interface: &Interface, car_num: usize) {
     tokio::time::sleep(Duration::from_millis(100)).await;
 
     let laptime = {
@@ -523,15 +302,10 @@ pub struct SaveData {
     pub times: Vec<f32>,
     pub lap_time: f32,
     // Conditions
-    pub lap_data: [Vec<f32>; TelemetryGraphValueType::Max as usize],
+    pub lap_data: [Vec<f32>; TelemetryValueType::Max as usize],
 }
 
-async fn save(
-    lap: Arc<Mutex<[Lap; 104]>>,
-    interface: &interface::Interface,
-    car_num: usize,
-    path: String,
-) {
+async fn save(lap: Arc<Mutex<[Lap; 104]>>, interface: &Interface, car_num: usize, path: String) {
     let time = Local::now().format("%d-%m-%Y-%H-%M-%S").to_string();
     let telemetry = interface.update_telemetry().unwrap();
 
@@ -560,7 +334,7 @@ async fn save(
     };
 
     if save_data.lap_time > 0.0
-        && TelemetryGraphValueType::normalize_distance_into_lap(
+        && TelemetryValueType::normalize_distance_into_lap(
             &telemetry,
             *save_data.distances.first().unwrap() as f64,
         ) < 0.5

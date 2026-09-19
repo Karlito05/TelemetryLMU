@@ -7,7 +7,7 @@ use crate::{
         switch::switch,
     },
     pages::telemetry::{edit_mode::graphs::graphs_main::GraphChange, telemetry_main::GraphInfo},
-    telemetry::TelemetryGraphValueType,
+    providers::telemetry_provider::telemetry_value_type::TelemetryValueType,
 };
 use eframe::egui::*;
 
@@ -72,7 +72,7 @@ pub(in crate::pages::telemetry::edit_mode::graphs) fn graph_edit(
                             &mut new_graph_type,
                             "Select a type",
                             FontId::new(14.0, FontFamily::Proportional),
-                            TelemetryGraphValueType::get_all_string()
+                            TelemetryValueType::get_all_string()
                                 .iter()
                                 .map(|s| DropdownItem {
                                     value: s.clone(),
@@ -183,7 +183,7 @@ pub(in crate::pages::telemetry::edit_mode::graphs) fn graph_edit(
                     &mut new_graph_type,
                     "Select a type",
                     FontId::new(14.0, FontFamily::Proportional),
-                    TelemetryGraphValueType::get_all_string()
+                    TelemetryValueType::get_all_string()
                         .iter()
                         .map(|s| DropdownItem {
                             value: s.clone(),

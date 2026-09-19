@@ -1,5 +1,9 @@
-use crate::{interface::IPVehicleClass, pages::car_info::car_info_main::CarInfo};
 use eframe::egui::*;
+
+use crate::{
+    pages::car_info::car_info_main::CarInfo,
+    providers::telemetry_provider::interface::IPVehicleClass,
+};
 
 impl CarInfo {
     pub(super) fn draw_title(&self, ui: &mut Ui, rect: Rect) -> Rect {

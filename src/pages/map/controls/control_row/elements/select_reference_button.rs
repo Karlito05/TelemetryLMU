@@ -2,12 +2,16 @@ use std::{fs, sync::Arc};
 
 use crate::{
     components::button::button,
-    frontend::frontend_main::SettingsProvider,
     pages::map::{
         map_main::{CarInfo, Dp, MapPage, Track},
         utils::track_reference::set_track_reference,
     },
-    telemetry::{SaveData, TelemetryGraphValueType},
+    providers::{
+        settings_provider::SettingsProvider,
+        telemetry_provider::{
+            telemetry_provider_main::SaveData, telemetry_value_type::TelemetryValueType,
+        },
+    },
 };
 use eframe::egui::*;
 
@@ -84,16 +88,16 @@ impl MapPage {
                                     pos: pos2(pd.x as f32, -pd.z as f32),
                                     distance: save_data.distances[i],
                                     time_since_lap_start: save_data.times[i],
-                                    speed: save_data.lap_data
-                                        [TelemetryGraphValueType::Speed as usize][i],
-                                    gear: save_data.lap_data[TelemetryGraphValueType::Gear as usize]
-                                        [i] as i32,
+                                    speed: save_data.lap_data[TelemetryValueType::Speed as usize]
+                                        [i],
+                                    gear: save_data.lap_data[TelemetryValueType::Gear as usize][i]
+                                        as i32,
                                     throttle: save_data.lap_data
-                                        [TelemetryGraphValueType::Throttle as usize][i],
-                                    brake: save_data.lap_data
-                                        [TelemetryGraphValueType::Brake as usize][i],
+                                        [TelemetryValueType::Throttle as usize][i],
+                                    brake: save_data.lap_data[TelemetryValueType::Brake as usize]
+                                        [i],
                                     steering: save_data.lap_data
-                                        [TelemetryGraphValueType::Steering as usize][i]
+                                        [TelemetryValueType::Steering as usize][i]
                                         + 0.5,
                                 }
                             })
@@ -137,16 +141,14 @@ impl MapPage {
                                 pos: pos2(pd.x as f32, -pd.z as f32),
                                 distance: save_data.distances[i],
                                 time_since_lap_start: save_data.times[i],
-                                speed: save_data.lap_data[TelemetryGraphValueType::Speed as usize]
-                                    [i],
-                                gear: save_data.lap_data[TelemetryGraphValueType::Gear as usize][i]
+                                speed: save_data.lap_data[TelemetryValueType::Speed as usize][i],
+                                gear: save_data.lap_data[TelemetryValueType::Gear as usize][i]
                                     as i32,
-                                throttle: save_data.lap_data
-                                    [TelemetryGraphValueType::Throttle as usize][i],
-                                brake: save_data.lap_data[TelemetryGraphValueType::Brake as usize]
+                                throttle: save_data.lap_data[TelemetryValueType::Throttle as usize]
                                     [i],
-                                steering: save_data.lap_data
-                                    [TelemetryGraphValueType::Steering as usize][i]
+                                brake: save_data.lap_data[TelemetryValueType::Brake as usize][i],
+                                steering: save_data.lap_data[TelemetryValueType::Steering as usize]
+                                    [i]
                                     + 0.5,
                             }
                         })

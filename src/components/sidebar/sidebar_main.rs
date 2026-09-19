@@ -1,6 +1,7 @@
-use crate::frontend::frontend_main::{SettingsProvider, StateProvider};
 use eframe::egui::*;
 use std::sync::Arc;
+
+use crate::providers::{settings_provider::SettingsProvider, state_provider::StateProvider};
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct Sidebar {

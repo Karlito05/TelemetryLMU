@@ -1,7 +1,7 @@
 use crate::{
     components::button::button,
     pages::telemetry::telemetry_main::{GraphInfo, TelemetryPage},
-    telemetry::TelemetryGraphValueType,
+    providers::telemetry_provider::telemetry_value_type::TelemetryValueType,
 };
 use eframe::egui::*;
 
@@ -27,7 +27,7 @@ impl TelemetryPage {
                     show_ref: true,
                     n_gridlines: 3,
                     size_percent: 0.0,
-                    ref_val_type: TelemetryGraphValueType::Rpm,
+                    ref_val_type: TelemetryValueType::Rpm,
                 });
 
                 let new_num_graphs = self.edit_mode_context.layout.graphs.len();

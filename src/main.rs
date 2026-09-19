@@ -1,18 +1,16 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+mod app;
 mod components;
-mod frontend;
-mod interface;
 mod pages;
-mod telemetry;
+mod providers;
 mod utils;
-
-use std::sync::OnceLock;
 
 use eframe::egui::*;
 use egui_phosphor_icons::add_fonts;
+use std::sync::OnceLock;
 
-use crate::frontend::frontend_main::App;
+use crate::app::App;
 
 pub static TOKIO: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
 

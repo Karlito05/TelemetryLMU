@@ -1,64 +1,17 @@
-use core::fmt;
-use std::sync::{Arc, RwLock};
-
-use eframe::egui::*;
-
 use crate::{
     components::{button::button, input::input, sidebar::sidebar_main::Sidebar, switch::switch},
     pages::{
-        car_info::car_info_main::CarInfo, map::map_main::MapPage,
+        Page, car_info::car_info_main::CarInfo, map::map_main::MapPage,
         settings::settings_main::SettingsPage, telemetry::telemetry_main::TelemetryPage,
     },
-    telemetry::Telemetry,
+    providers::{
+        settings_provider::SettingsProvider,
+        state_provider::StateProvider,
+        telemetry_provider::{interface::Interface, telemetry_provider_main::Telemetry},
+    },
 };
-
-#[derive(serde::Deserialize, serde::Serialize, Debug)]
-#[serde(default)]
-pub struct StateProvider {
-    pub global_first_launch: RwLock<bool>,
-    #[serde(skip)]
-    pub page: RwLock<Page>,
-    #[serde(skip)]
-    pub sidebar_open: RwLock<bool>,
-    #[serde(skip)]
-    pub settings_open: RwLock<bool>,
-}
-impl Default for StateProvider {
-    fn default() -> Self {
-        Self {
-            global_first_launch: RwLock::new(true),
-            page: RwLock::new(Page::Telemetry),
-            sidebar_open: RwLock::new(true),
-            settings_open: RwLock::new(false),
-        }
-    }
-}
-
-#[derive(serde::Deserialize, serde::Serialize, Default)]
-#[serde(default)]
-pub struct SettingsProvider {
-    pub name: RwLock<String>,
-    pub in_game_name: RwLock<String>,
-    pub record_laps: RwLock<bool>,
-    pub record_save_path: RwLock<String>,
-    pub pfp_bytes: RwLock<Option<Vec<u8>>>,
-    #[serde(skip)] // textures can't be serialized, recreate on load
-    pub pfp_texture: RwLock<Option<TextureHandle>>,
-    pub log_all_cars: RwLock<bool>,
-}
-
-impl fmt::Debug for SettingsProvider {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SettingsProvider")
-            .field("name", &self.name)
-            .field("in_game_name", &self.in_game_name)
-            .field("record_laps", &self.record_laps)
-            .field("record_save_path", &self.record_save_path)
-            .field("pfp_bytes", &self.pfp_bytes)
-            .field("log_all_cars", &self.log_all_cars)
-            .finish()
-    }
-}
+use eframe::egui::*;
+use std::sync::Arc;
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 #[serde(default)]
@@ -66,24 +19,16 @@ pub struct App {
     settings_provider: Arc<SettingsProvider>,
     state_provider: Arc<StateProvider>,
     telemetry_page: TelemetryPage,
+    map_page: MapPage,
+    car_info_page: CarInfo,
     #[serde(skip)]
     sidebar: Sidebar,
     #[serde(skip)]
     settings_page: SettingsPage,
-    map_page: MapPage,
-    car_info_page: CarInfo,
     #[serde(skip)]
-    interface: crate::interface::Interface,
+    interface: Interface,
     #[serde(skip)]
     telemetry_provider: Arc<Option<Telemetry>>,
-}
-
-#[derive(Debug, PartialEq, serde::Deserialize, serde::Serialize, Default)]
-pub enum Page {
-    #[default]
-    Telemetry,
-    Info,
-    Map,
 }
 
 impl App {
@@ -150,7 +95,7 @@ impl Default for App {
                 state_provider.clone(),
                 telemetry_provider.clone(),
             ),
-            interface: crate::interface::Interface::new("/dev/shm/LMU_Data"),
+            interface: Interface::new("/dev/shm/LMU_Data"),
             telemetry_provider,
             state_provider,
             settings_provider,

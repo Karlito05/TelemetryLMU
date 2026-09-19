@@ -1,6 +1,8 @@
 use crate::{
-    interface::{IPVehicleClass, i8_array32_to_string, i8_array64_to_string},
     pages::car_info::car_info_main::{CarInfo, FuelInfo, Inputs, TireInfo},
+    providers::telemetry_provider::interface::{
+        IPVehicleClass, i8_array32_to_string, i8_array64_to_string,
+    },
 };
 
 pub(super) struct StaleDriverInfo {

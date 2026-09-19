@@ -4,9 +4,11 @@ use eframe::egui::*;
 
 use crate::{
     components::telemetry_not_found::telemetry_not_found,
-    frontend::frontend_main::{SettingsProvider, StateProvider},
-    interface::IPVehicleClass,
-    telemetry::Telemetry,
+    providers::{
+        settings_provider::SettingsProvider,
+        state_provider::StateProvider,
+        telemetry_provider::{interface::IPVehicleClass, telemetry_provider_main::Telemetry},
+    },
 };
 
 #[derive(Debug, serde::Deserialize, serde::Serialize, Default)]

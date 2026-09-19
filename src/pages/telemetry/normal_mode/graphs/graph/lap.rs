@@ -1,9 +1,10 @@
 use eframe::egui::*;
 
 use crate::{
-    interface::SharedMemoryObjectOut,
     pages::telemetry::telemetry_main::{GraphInfo, Lap},
-    telemetry::TelemetryGraphValueType,
+    providers::telemetry_provider::{
+        interface::SharedMemoryObjectOut, telemetry_value_type::TelemetryValueType,
+    },
 };
 
 #[expect(clippy::too_many_arguments)]
@@ -24,7 +25,7 @@ pub(super) fn draw_lap(
 
     for i in 0..lap.values.len().min(lap.distances.len()) {
         points.push(pos2(
-            TelemetryGraphValueType::normalize_distance_into_lap(telemetry, lap.distances[i] as f64)
+            TelemetryValueType::normalize_distance_into_lap(telemetry, lap.distances[i] as f64)
                 as f32
                 * size.x
                 + pos.x,

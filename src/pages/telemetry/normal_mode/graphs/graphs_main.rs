@@ -1,9 +1,11 @@
 use eframe::egui::*;
 
 use crate::{
-    pages::telemetry::normal_mode::graphs::graph::graph_main::graph,
-    pages::telemetry::telemetry_main::{DynGraphData, Lap, TelemetryPage},
-    telemetry,
+    pages::telemetry::{
+        normal_mode::graphs::graph::graph_main::graph,
+        telemetry_main::{DynGraphData, Lap, TelemetryPage},
+    },
+    providers::telemetry_provider::telemetry_provider_main,
 };
 
 impl TelemetryPage {
@@ -38,7 +40,7 @@ impl TelemetryPage {
                         .unwrap();
                     let cur = &cur_lap_guard[self.cur_driver.1 as usize];
 
-                    let best: &telemetry::Lap;
+                    let best: &telemetry_provider_main::Lap;
                     if let Some(best_lap) = &self.ref_lap_override {
                         best = best_lap;
                     } else {

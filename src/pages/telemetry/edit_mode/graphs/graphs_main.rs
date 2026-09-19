@@ -2,7 +2,7 @@ use crate::{
     pages::telemetry::{
         edit_mode::graphs::graph_dummy::graph_dummy_main::graph_edit, telemetry_main::TelemetryPage,
     },
-    telemetry::TelemetryGraphValueType,
+    providers::telemetry_provider::telemetry_value_type::TelemetryValueType,
 };
 use eframe::egui::*;
 
@@ -144,7 +144,7 @@ impl TelemetryPage {
                         }
                         GraphChange::Type(i, new_type) => {
                             self.edit_mode_context.layout.graphs[i].ref_val_type =
-                                TelemetryGraphValueType::from_string(&new_type);
+                                TelemetryValueType::from_string(&new_type);
                         }
                         GraphChange::Color(i, new_color) => {
                             self.edit_mode_context.layout.graphs[i].color = new_color;

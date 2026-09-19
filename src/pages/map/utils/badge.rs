@@ -1,5 +1,6 @@
-use crate::interface::IPVehicleClass;
 use eframe::egui::*;
+
+use crate::providers::telemetry_provider::interface::IPVehicleClass;
 
 pub fn draw_badge(class: IPVehicleClass, ui: &mut Ui, badge_rect: Rect) {
     let draw_badge = |badge_rect: Rect, color: Color32, name: &str| {

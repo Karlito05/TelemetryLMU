@@ -1,7 +1,9 @@
 use crate::components::button::button;
 use crate::components::telemetry_not_found::telemetry_not_found;
-use crate::frontend::frontend_main::{SettingsProvider, StateProvider};
-use crate::telemetry::{self, Telemetry, TelemetryGraphValueType};
+use crate::providers::settings_provider::SettingsProvider;
+use crate::providers::state_provider::StateProvider;
+use crate::providers::telemetry_provider::telemetry_provider_main::{self, Telemetry};
+use crate::providers::telemetry_provider::telemetry_value_type::TelemetryValueType;
 use eframe::egui::*;
 
 use std::sync::Arc;
@@ -16,7 +18,7 @@ pub struct TelemetryPage {
     #[serde(skip)]
     pub(super) cur_driver: (String, i32),
     #[serde(skip)]
-    pub(super) ref_lap_override: Option<telemetry::Lap>,
+    pub(super) ref_lap_override: Option<telemetry_provider_main::Lap>,
     #[serde(skip)]
     pub(super) in_layout_edit_mode: bool,
     #[serde(skip)]
@@ -69,7 +71,7 @@ pub(super) struct GraphInfo {
     pub(super) show_ref: bool,
     pub(super) n_gridlines: i32,
     pub(super) size_percent: f32,
-    pub(super) ref_val_type: TelemetryGraphValueType,
+    pub(super) ref_val_type: TelemetryValueType,
 }
 #[derive(Clone, Debug)]
 pub(super) struct Lap<'a> {
@@ -115,7 +117,7 @@ impl TelemetryPage {
                 name: "Main".to_owned(),
                 graphs: vec![GraphInfo {
                     show_ref: false,
-                    ref_val_type: TelemetryGraphValueType::Rpm,
+                    ref_val_type: TelemetryValueType::Rpm,
                     color: Color32::WHITE,
                     n_gridlines: 3,
                     size_percent: 1.0,

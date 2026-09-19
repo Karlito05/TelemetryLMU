@@ -2,8 +2,11 @@
 
 use crate::{
     components::button::button,
-    frontend::frontend_main::{SettingsProvider, StateProvider},
-    interface::{IPVehicleClass, TelemVect3},
+    providers::{
+        settings_provider::SettingsProvider,
+        state_provider::StateProvider,
+        telemetry_provider::interface::{IPVehicleClass, TelemVect3},
+    },
 };
 use eframe::egui::*;
 use std::{sync::Arc, time::Duration};

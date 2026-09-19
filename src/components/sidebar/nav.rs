@@ -1,4 +1,4 @@
-use crate::{components::sidebar::sidebar_main::Sidebar, frontend::frontend_main::Page};
+use crate::{components::sidebar::sidebar_main::Sidebar, pages::Page};
 use eframe::egui::*;
 use egui_phosphor_icons::{Icon, icons};
 

@@ -1,11 +1,11 @@
 use eframe::egui::*;
 
 use crate::{
-    interface::SharedMemoryObjectOut,
     pages::telemetry::{
         normal_mode::graphs::graph::{gridlines::draw_gridlines, lap::draw_lap, title::draw_title},
         telemetry_main::{DynGraphData, GraphInfo},
     },
+    providers::telemetry_provider::interface::SharedMemoryObjectOut,
     utils::capitalize_first::capitalize_first,
 };
 
