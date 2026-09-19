@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use eframe::egui::{Key::P, *};
+use eframe::egui::*;
 use egui_phosphor_icons::{Icon, icons};
 
 use crate::frontend::frontend_main::{Page, SettingsProvider, StateProvider};
@@ -225,7 +225,7 @@ impl Sidebar {
             pos2(rect.min.x + 68.0, rect.center().y),
             Align2::LEFT_CENTER,
             self.settings_provider.name.read().unwrap().clone(),
-            FontId::proportional(24.0),
+            FontId::proportional(20.0),
             Color32::from_white_alpha(200),
         );
 

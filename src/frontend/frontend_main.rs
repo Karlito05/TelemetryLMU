@@ -211,7 +211,12 @@ impl App {
                                 &mut self.settings_provider.name.write().unwrap(),
                                 FontSelection::FontId(FontId::proportional(16.0)),
                                 32,
-                            )
+                            );
+                            let mut name = self.settings_provider.name.write().unwrap();
+                            let name_len = name.len();
+                            if name.len() >= 16 {
+                                name.remove( name_len - 1);
+                            }
                         })
                     });
                     ui.add_space(4.0);
@@ -322,6 +327,7 @@ impl App {
                     ui.label(RichText::new("Here you must select a folder where your laps should be stored!").size(16.0));
                     ui.separator();
                     ui.label(RichText::new("You can change all of these and more in the settings which you can get to by clicking the settings icon on the sidebar!").size(20.0));
+                    #[expect(clippy::collapsible_if)]
                     if button(
                         ui,
                         vec2(64.0, 32.0),
