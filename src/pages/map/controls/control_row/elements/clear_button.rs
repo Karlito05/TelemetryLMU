@@ -9,6 +9,7 @@ impl MapPage {
         ui: &mut Ui,
         car_info: &mut Option<CarInfo>,
         car: &mut Vec<Dp>,
+        cur_dp: &mut Option<usize>,
     ) {
         if button(
             ui,
@@ -23,6 +24,7 @@ impl MapPage {
         {
             *car_info = None;
             car.clear();
+            *cur_dp = None;
         }
     }
 }

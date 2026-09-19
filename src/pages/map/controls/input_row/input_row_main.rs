@@ -1,3 +1,5 @@
+// FIXME: Add right to left versions for display functions.
+
 use crate::pages::map::map_main::MapPage;
 use eframe::egui::*;
 
@@ -19,7 +21,7 @@ impl MapPage {
                         if let Some(i) = self.cur_dp_1 {
                             self.draw_wheel_input(ui, self.car_1[i].steering);
                         } else {
-                            self.draw_wheel_input(ui, 0.0);
+                            self.draw_wheel_input(ui, 0.5);
                         }
 
                         ui.separator();
@@ -54,7 +56,7 @@ impl MapPage {
                             if let Some(i) = self.cur_dp_2 {
                                 self.draw_wheel_input(ui, self.car_2[i].steering);
                             } else {
-                                self.draw_wheel_input(ui, 0.0);
+                                self.draw_wheel_input(ui, 0.5);
                             }
 
                             ui.separator();

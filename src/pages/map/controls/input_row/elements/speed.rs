@@ -12,7 +12,7 @@ impl MapPage {
                         .color(Color32::from_white_alpha(64)),
                 );
                 ui.label(
-                    RichText::new(format!("{}km/h", speed))
+                    RichText::new(format!("{}km/h", speed.round()))
                         .size(24.0)
                         .color(Color32::WHITE)
                         .family(FontFamily::Name("JetBrainsMono".into())),

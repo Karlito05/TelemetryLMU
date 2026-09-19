@@ -17,7 +17,12 @@ impl MapPage {
                         &mut self.show_track_not_same_popup,
                     );
 
-                    Self::draw_clear_button(ui, &mut self.car_1_info, &mut self.car_1);
+                    Self::draw_clear_button(
+                        ui,
+                        &mut self.car_1_info,
+                        &mut self.car_1,
+                        &mut self.cur_dp_1,
+                    );
 
                     if let Some(info) = self.car_1_info.clone() {
                         let driver_info_rect =
@@ -28,16 +33,21 @@ impl MapPage {
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         Self::draw_select_reference_button(
                             ui,
-                            &mut self.cur_dp_1,
-                            &mut self.car_1,
-                            &mut self.car_1_info,
-                            &self.car_2_info,
+                            &mut self.cur_dp_2,
+                            &mut self.car_2,
+                            &mut self.car_2_info,
+                            &self.car_1_info,
                             self.settings_provider.clone(),
                             &mut self.track_reference,
                             &mut self.show_track_not_same_popup,
                         );
 
-                        Self::draw_clear_button(ui, &mut self.car_2_info, &mut self.car_2);
+                        Self::draw_clear_button(
+                            ui,
+                            &mut self.car_2_info,
+                            &mut self.car_2,
+                            &mut self.cur_dp_2,
+                        );
 
                         if let Some(info) = self.car_2_info.clone() {
                             let driver_info_rect =
