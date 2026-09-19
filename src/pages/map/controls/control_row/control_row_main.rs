@@ -27,7 +27,7 @@ impl MapPage {
                     if let Some(info) = self.car_1_info.clone() {
                         let driver_info_rect =
                             ui.allocate_exact_size(vec2(140.0, 36.0), Sense::empty()).0;
-                        self.draw_lap_info(ui, driver_info_rect, info);
+                        self.draw_lap_info(ui, driver_info_rect, info, false);
                     }
 
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -52,7 +52,7 @@ impl MapPage {
                         if let Some(info) = self.car_2_info.clone() {
                             let driver_info_rect =
                                 ui.allocate_exact_size(vec2(140.0, 36.0), Sense::empty()).0;
-                            self.draw_lap_info(ui, driver_info_rect, info);
+                            self.draw_lap_info(ui, driver_info_rect, info, true);
                         }
                     });
                 })

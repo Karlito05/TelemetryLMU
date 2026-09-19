@@ -27,9 +27,9 @@ impl MapPage {
                         ui.separator();
 
                         if let Some(i) = self.cur_dp_1 {
-                            self.draw_speed(ui, self.car_1[i].speed);
+                            self.draw_speed(ui, self.car_1[i].speed, false);
                         } else {
-                            self.draw_speed(ui, 0.0);
+                            self.draw_speed(ui, 0.0, false);
                         }
 
                         ui.separator();
@@ -62,9 +62,9 @@ impl MapPage {
                             ui.separator();
 
                             if let Some(i) = self.cur_dp_2 {
-                                self.draw_speed(ui, self.car_2[i].speed);
+                                self.draw_speed(ui, self.car_2[i].speed, true);
                             } else {
-                                self.draw_speed(ui, 0.0);
+                                self.draw_speed(ui, 0.0, true);
                             }
 
                             ui.separator();

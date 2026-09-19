@@ -12,6 +12,7 @@ use crate::{
 use eframe::egui::*;
 
 impl MapPage {
+    #[expect(clippy::too_many_arguments)]
     pub(in crate::pages::map::controls::control_row) fn draw_select_reference_button(
         ui: &mut Ui,
         cur_dp: &mut Option<usize>,
