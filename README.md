@@ -20,18 +20,18 @@ src="https://img.shields.io/github/issues/Karlito05/TelemetryLMU" alt="Issues">
 
 ## 🚀 Quick Start
 
-### 🪟 Windows
+### Windows
 
 1. Navigate to the [Releases Page](https://github.com/Karlito05/TelemetryLMU/releases).
 2. Download and run the latest `.exe` installer.
 
-### 🐧 Linux
+### Linux
 
 1. **Prerequisite:** Install SimpleBridge
 2. Download the Arch Linux or Debian package from our
    [Releases](https://github.com/Karlito05/TelemetryLMU/release).
 
-## ✨ Fereliess
+## ✨ Features
 
 ### Telemetry
 
