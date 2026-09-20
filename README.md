@@ -27,7 +27,7 @@ src="https://img.shields.io/github/issues/Karlito05/TelemetryLMU" alt="Issues">
 
 ### Linux
 
-1. **Prerequisite:** Install SimpleBridge
+1. **Prerequisite:** Install [SIMple Bridge](https://github.com/Karlito05/SIMple-Bridge)
 2. Download the Arch Linux or Debian package from our [Releases](https://github.com/Karlito05/TelemetryLMU/releases).
 
 ## ✨ Features
