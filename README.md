@@ -31,23 +31,20 @@ src="https://img.shields.io/github/issues/Karlito05/TelemetryLMU" alt="Issues">
 2. Download the Arch Linux or Debian package from our
    [Releases](https://github.com/Karlito05/TelemetryLMU/release).
 
-## ✨ Features
+## ✨ Fereliess
 
-### ⏱️ Telemetry
-
-Experience real-time data plotting for yourself and your
-competitors!
+### Telemetry
 
 - **Customizable Layouts:** Tailor the UI to your preference.
 - **Graphing:** Choose from multiple graph types to suit your needs.
 - **Graph Customization:** Customize the graph color, the number of grid lines and more to suit your needs.
 
-### 🚗 Car Info
+### Car Info
 
 - **Detailed info:** See detailed information about your car at a glance.
 - **Automatic detection:** Automatically detects your car and shows precise info.
 
-### 🗺️ Map
+### Map
 
 - **Accelerated learning:** See your line against a reference and see where you made mistakes.
 - **Inputs at a glance:** Shows your and the reference's inputs at a glance.
