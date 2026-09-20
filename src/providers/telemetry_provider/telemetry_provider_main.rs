@@ -127,6 +127,21 @@ impl Telemetry {
                             ) == *thread_settings_provider.in_game_name.read().unwrap())
                             && *thread_settings_provider.record_laps.read().unwrap()
                         {
+                            #[cfg(not(target_os = "windows"))]
+                            let path = thread_settings_provider
+                                .record_save_path
+                                .read()
+                                .unwrap()
+                                .clone()
+                                + "/";
+                            #[cfg(target_os = "windows")]
+                            let path = thread_settings_provider
+                                .record_save_path
+                                .read()
+                                .unwrap()
+                                .clone()
+                                + "\\";
+
                             TOKIO.get().expect("tokio runtime not initialised").spawn(
                                 set_laptime_best_and_save(
                                     Arc::clone(&thread_last_lap),
@@ -135,12 +150,7 @@ impl Telemetry {
                                     // just make a new interface here because it's inexpensive and would
                                     // cause deadlocks if we didn't
                                     j,
-                                    thread_settings_provider
-                                        .record_save_path
-                                        .read()
-                                        .unwrap()
-                                        .clone()
-                                        + "/",
+                                    path,
                                 ),
                             );
                         } else {
