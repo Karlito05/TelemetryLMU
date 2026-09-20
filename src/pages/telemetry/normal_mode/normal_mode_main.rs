@@ -3,7 +3,7 @@ use eframe::egui::*;
 
 impl TelemetryPage {
     pub(in crate::pages::telemetry) fn draw_normal_mode(&mut self, ui: &mut Ui) {
-        let top_bar_rect = Rect::from_min_max(
+        let top_bar_rect = Rect::from_min_size(
             pos2(
                 if *self.state_provider.sidebar_open.read().unwrap() {
                     300.0
@@ -12,12 +12,20 @@ impl TelemetryPage {
                 },
                 16.0,
             ),
-            ui.viewport_rect().max - vec2(16.0, 16.0),
+            vec2(
+                ui.available_width()
+                    - if *self.state_provider.sidebar_open.read().unwrap() {
+                        0.0
+                    } else {
+                        16.0
+                    },
+                48.0,
+            ),
         );
 
         self.draw_top_bar_normal(ui, top_bar_rect);
 
-        let graphs_rect = Rect::from_min_size(
+        let graphs_rect = Rect::from_min_max(
             pos2(
                 if *self.state_provider.sidebar_open.read().unwrap() {
                     300.0
@@ -26,15 +34,7 @@ impl TelemetryPage {
                 },
                 80.0,
             ),
-            vec2(
-                ui.available_width()
-                    - if *self.state_provider.sidebar_open.read().unwrap() {
-                        8.0
-                    } else {
-                        16.0
-                    },
-                ui.viewport_rect().size().y - (32.0 + 64.0),
-            ),
+            ui.viewport_rect().max - vec2(16.0, 16.0),
         );
 
         self.draw_graphs_normal(ui, graphs_rect);
