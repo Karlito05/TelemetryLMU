@@ -107,7 +107,7 @@ impl CarInfo {
 
         self.update();
 
-        let rect = Rect::from_min_size(
+        let rect = Rect::from_min_max(
             pos2(
                 if *self.state_provider.sidebar_open.read().unwrap() {
                     300.0
@@ -116,15 +116,7 @@ impl CarInfo {
                 },
                 16.0,
             ),
-            vec2(
-                ui.available_width()
-                    - if *self.state_provider.sidebar_open.read().unwrap() {
-                        8.0
-                    } else {
-                        16.0
-                    },
-                ui.available_height() - 16.0,
-            ),
+            ui.viewport_rect().max - vec2(16.0, 16.0),
         );
 
         ui.painter()
