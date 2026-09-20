@@ -1,6 +1,6 @@
 name = "telemetry_lmu"
 product-name = "Telemetry LMU"
-version = "1.0.0"
+version = "1.0.1"
 before-packaging-command = "./build-linux-portable.sh"
 formats = ["pacman"]
 out-dir = "../dist/linux"

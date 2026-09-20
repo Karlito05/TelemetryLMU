@@ -1,6 +1,6 @@
 name = "telemetry_lmu"
 product-name = "Telemetry LMU"
-version = "1.0.0"
+version = "1.0.1"
 before-packaging-command = "cargo build --release --target x86_64-pc-windows-gnu"
 formats = ["nsis"]
 out-dir = "../dist/windows"
