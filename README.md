@@ -22,6 +22,8 @@ src="https://img.shields.io/github/issues/Karlito05/TelemetryLMU" alt="Issues">
 
 https://youtu.be/aW0ga2AiyTQ
 
+<img src="https://github.com/Karlito05/TelemetryLMU/blob/egui/Demo.png" />
+
 ## 🚀 Quick Start
 
 ### Windows
