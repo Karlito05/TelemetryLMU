@@ -18,6 +18,10 @@ src="https://img.shields.io/github/stars/Karlito05/TelemetryLMU" alt="Stars">
 src="https://img.shields.io/github/issues/Karlito05/TelemetryLMU" alt="Issues">
 </p>
 
+## 📺 Demo
+
+https://youtu.be/aW0ga2AiyTQ
+
 ## 🚀 Quick Start
 
 ### Windows
