@@ -10,21 +10,13 @@ src="https://github.com/Karlito05/TelemetryLMU/blob/egui/public/icons/Logo.svg" 
 tool for Le Mans Ultimate.</strong>
 </p>
 
-<p align="center">
-  <img alt="GitHub License" src="https://img.shields.io/github/license/Karlito05/TelemetryLMU">
-  <img
-src="https://img.shields.io/github/stars/Karlito05/TelemetryLMU" alt="Stars">
-  <img
-src="https://img.shields.io/github/issues/Karlito05/TelemetryLMU" alt="Issues">
-</p>
-
-## 📺 Demo
+## Demo
 
 https://youtu.be/aW0ga2AiyTQ
 
 <img src="https://github.com/Karlito05/TelemetryLMU/blob/egui/Demo.png" />
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Windows
 
@@ -36,7 +28,7 @@ https://youtu.be/aW0ga2AiyTQ
 1. **Prerequisite:** Install [SIMple Bridge](https://github.com/Karlito05/SIMple-Bridge)
 2. Download the Arch Linux or Debian package from our [Releases](https://github.com/Karlito05/TelemetryLMU/releases).
 
-## ✨ Features
+## Features
 
 ### Telemetry
 
@@ -55,7 +47,7 @@ https://youtu.be/aW0ga2AiyTQ
 - **Inputs at a glance:** Shows your and the reference's inputs at a glance.
 - **Delta:** Shows the time delta between you and your reference in real time.
 
-## 🔨 Building
+## Building
 
 ### Prerequisites
 
@@ -70,18 +62,15 @@ https://youtu.be/aW0ga2AiyTQ
 
 4. Optionally you can make packages via running the `package_all.sh` in the root of the project.
 
-## ⚙️ How it works
+## How it works
 
 This app is made fully in rust! On the frontend side of things I am using [egui](https://github.com/emilk/egui) although almost all of the elements seen are custom made via the painter functionality.
 
 On the backend side of things stuff gets more interesting. A thread (separate to the UI) is running a "telemetry provider" which records and stores all of the needed telemetry data. This means that the UI doesn't have to refresh when the app is minimized or when pages that don't need to update constantly (like the map page). The logger is also very light weight on the CPU side of things. It takes up a lot of RAM (around 200Mb) due to the amounts of data it is working with. However doing this this way ensures a smoother experience for the user!
 
-## 📚 Credits
+## Credits
 
 - This project relies heavily on the [egui](https://github.com/emilk/egui) library.
 - Thanks to [Thrillonek](https://github.com/Thrillonek) for helping with the UI design.
 
----
 
-<p align="center">Built for the Le Mans Ultimate community
-🏎️</p>
