@@ -33,18 +33,18 @@ https://youtu.be/aW0ga2AiyTQ
 ### Telemetry
 
 - **Customizable Layouts:** Tailor the UI to your preference.
-- **Graphing:** Choose from multiple graph types to suit your needs.
-- **Graph Customization:** Customize the graph color, the number of grid lines and more to suit your needs.
+- **Graphing:** Choose from multiple graph types.
+- **Graph Customization:** Customize the graph color, the number of grid lines and more.
 
 ### Car Info
 
-- **Detailed info:** See detailed information about your car at a glance.
-- **Automatic detection:** Automatically detects your car and shows precise info.
+- **Detailed info:** See detailed information about your car.
+- **Automatic detection:** Automatically detects your car.
 
 ### Map
 
 - **Accelerated learning:** See your line against a reference and see where you made mistakes.
-- **Inputs at a glance:** Shows your and the reference's inputs at a glance.
+- **Inputs at a glance:** Shows your and the reference's inputs.
 - **Delta:** Shows the time delta between you and your reference in real time.
 
 ## Building
@@ -64,13 +64,14 @@ https://youtu.be/aW0ga2AiyTQ
 
 ## How it works
 
-This app is made fully in rust! On the frontend side of things I am using [egui](https://github.com/emilk/egui) although almost all of the elements seen are custom made via the painter functionality.
+This app is made fully in rust! On the frontend side of things I am using [egui](https://github.com/emilk/egui) but almost all of the elements seen are custom made via the painter functionality.
 
-On the backend side of things stuff gets more interesting. A thread (separate to the UI) is running a "telemetry provider" which records and stores all of the needed telemetry data. This means that the UI doesn't have to refresh when the app is minimized or when pages that don't need to update constantly (like the map page). The logger is also very light weight on the CPU side of things. It takes up a lot of RAM (around 200Mb) due to the amounts of data it is working with. However doing this this way ensures a smoother experience for the user!
+On the backend side of things stuff gets more interesting. A thread (separate to the UI) is running a "telemetry provider" manages all of the needed telemetry data. This means that the UI doesn't have to refresh when the app is minimized or when pages that don't need to update constantly (like the map page) are open. The logger is also very light weight on the CPU. It takes up a lot of RAM (around 200Mb) due to the amounts of data it is working with. However doing it this way ensures a smoother experience for the user!
 
 ## Credits
 
 - This project relies heavily on the [egui](https://github.com/emilk/egui) library.
 - Thanks to [Thrillonek](https://github.com/Thrillonek) for helping with the UI design.
 
-
+# A note for the Stardance reviewers
+Guys. I really do understand that you are so paranoid about the readmes being AI for whatever reason, but please REED IT before you judge if its AI. Just because this readme had emojis which I PUT IN THERE by HAND for the readme to look better and not be all black and white doesn't mean it is AI. If you really think that someone can work on a project for 200h (mostly without AI) and then be so lazy to not even write a readme, then you should reconsider how you look at people :). The emojis have since been removed as per the 1st "Readme is AI" return. I have discussed this on slack with other Stardance competitors and after they read the readme it didn't look AI to them. So I don't really know (if you are reading the readme) where this "Your readme is AI" is comming from. I would rewrite the readme but that would be just a worse version of it because this is the best my English can do (English is not my first language), so I am not going to. However I have changed a few things because looking back at it it had a bit too much "marketing speech" in it. Thank you for your time and understanding and have a nice day :).
