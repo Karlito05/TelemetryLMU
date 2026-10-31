@@ -30,22 +30,22 @@ https://youtu.be/aW0ga2AiyTQ
 
 ## Features
 
-### Telemetry
+### Telemetry Page
 
-- **Customizable Layouts:** Tailor the UI to your preference.
-- **Graphing:** Choose from multiple graph types.
-- **Graph Customization:** Customize the graph color, the number of grid lines and more.
+- **Customizable Layout**
+- **Multiple Graph Types**
+- **Customizable Graphs**
 
-### Car Info
+### Car Info Page
 
-- **Detailed info:** See detailed information about your car.
-- **Automatic detection:** Automatically detects your car.
+- **Detailed info**
+- **Automatic detection**
 
-### Map
+### Map Page
 
-- **Accelerated learning:** See your line against a reference and see where you made mistakes.
-- **Inputs at a glance:** Shows your and the reference's inputs.
-- **Delta:** Shows the time delta between you and your reference in real time.
+- **See where you drove**
+- **Detailed delta and inputs**
+- **Learn faster**
 
 ## Building
 
@@ -73,5 +73,6 @@ On the backend side of things stuff gets more interesting. A thread (separate to
 - This project relies heavily on the [egui](https://github.com/emilk/egui) library.
 - Thanks to [Thrillonek](https://github.com/Thrillonek) for helping with the UI design.
 
-# A note for the Stardance reviewers
-Guys. I really do understand that you are so paranoid about the readmes being AI for whatever reason, but please READ IT before you judge if its AI. Just because this readme had emojis which I PUT IN THERE by HAND for the readme to look better and not be all black and white doesn't mean it is AI. If you really think that someone can work on a project for 200h (mostly without AI) and then be so lazy to not even write a readme, then you should reconsider how you look at people :). The emojis have since been removed as per the 1st "Readme is AI" return. I have discussed this on slack with other Stardance competitors and after they read the readme it didn't look AI to them. So I don't really know (if you are reading the readme) where this "Your readme is AI" is comming from. I would rewrite the readme but that would be just a worse version of it because this is the best my English can do (English is not my first language), so I am not going to. However I have changed a few things because looking back at it it had a bit too much "marketing speech" in it. And you know it's getting very silly. I have been woerking on this project for more than 3 months and now I am waiting more than a month getting my readme project rejected for technicalities which aren't even my fault or don't matter. Thank you for your time and understanding and have a nice day :).
+[!NOTE]
+> A note for the Stardance reviewers
+> Guys. I really do understand that you are so paranoid about the readmes being AI for whatever reason, but please READ IT before you judge if its AI. Just because this readme had emojis which I PUT IN THERE by HAND for the readme to look better and not be all black and white doesn't mean it is AI. If you really think that someone can work on a project for 200h (mostly without AI) and then be so lazy to not even write a readme, then you should reconsider how you look at people :). The emojis have since been removed as per the 1st "Readme is AI" return. I have discussed this on slack with other Stardance competitors and after they read the readme it didn't look AI to them. So I don't really know (if you are reading the readme) where this "Your readme is AI" is comming from. I would rewrite the readme but that would be just a worse version of it because this is the best my English can do (English is not my first language), so I am not going to. However I have changed a few things because looking back at it it had a bit too much "marketing speech" in it. And you know it's getting very silly. I have been woerking on this project for more than 3 months and now I am waiting more than a month getting my readme project rejected for technicalities which aren't even my fault or don't matter. Thank you for your time and understanding and have a nice day :).
